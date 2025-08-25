@@ -29,7 +29,7 @@ export default function Navbar() {
         setUser({
           email: authUser.email,
           role: appUser?.role,
-          sede: appUser?.sede?.nombre
+          sede: appUser?.sede?.[0]?.nombre
         });
       }
     };
