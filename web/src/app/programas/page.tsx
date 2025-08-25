@@ -21,8 +21,9 @@ export default function Programas() {
 
   useEffect(()=>{
     (async()=>{
-      const { data: s } = await supabase.from("sede").select("id,nombre,slug");
-      setSedes((s||[]).map((x:any)=>({ value:x.id, label:`${x.nombre}` })));
+      const s = await supabase.rpc("list_sedes");
+      const sd = Array.isArray(s.data) ? s.data : [];
+      setSedes(sd.map((x:any)=>({ value:x.id, label:`${x.nombre}` })));
       const { data } = await supabase.from("programa").select("id,nombre,objetivo,sede_id,estado").order("created_at",{ascending:false});
       setList(data||[]);
     })();
