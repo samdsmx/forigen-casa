@@ -89,7 +89,7 @@ export default function Dashboard() {
           id: a.id,
           type: 'actividad' as const,
           title: `Nueva actividad programada`,
-          description: `${a.programa?.nombre} - ${a.fecha} ${a.hora_inicio}`,
+          description: `${a.programa?.[0]?.nombre} - ${a.fecha} ${a.hora_inicio}`,
           date: a.created_at,
           icon: '🎯'
         }))
