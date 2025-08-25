@@ -45,7 +45,7 @@ export default function Asistencia({ params }: any) {
 
   return (
     <Protected>
-      <main className="max-w-3xl mx-auto p-6 space-y-6">
+      <section className="max-w-3xl mx-auto space-y-6">
         <h1 className="text-2xl font-semibold">Registrar asistencia</h1>
 
         <form onSubmit={registrar} className="card space-y-4">
@@ -88,7 +88,7 @@ export default function Asistencia({ params }: any) {
           <button className="button" type="submit">Registrar</button>
           {msg && <p className="text-sm">{msg}</p>}
         </form>
-      </main>
+      </section>
     </Protected>
   );
 }

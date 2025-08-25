@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Page() {
   return (
-    <main className="max-w-3xl mx-auto p-6">
+    <section className="max-w-3xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">forigen-casa (MVP)</h1>
       <div className="card space-y-3">
         <p>Selecciona una acción:</p>
@@ -13,6 +13,6 @@ export default function Page() {
           <Link href="/actividades" className="button">Actividades</Link>
         </div>
       </div>
-    </main>
+    </section>
   );
 }
