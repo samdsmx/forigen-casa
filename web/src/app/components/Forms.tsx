@@ -1,8 +1,20 @@
-
 "use client";
-import { useState } from "react";
 
-export function Field({ label, ...props }: any) {
+import type {
+  InputHTMLAttributes,
+  SelectHTMLAttributes,
+} from "react";
+
+export interface Option {
+  value: string;
+  label: string;
+}
+
+interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+}
+
+export function Field({ label, ...props }: FieldProps) {
   return (
     <div>
       <label className="label">{label}</label>
@@ -11,13 +23,22 @@ export function Field({ label, ...props }: any) {
   );
 }
 
-export function Select({ label, options, ...props }: any) {
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  options?: Option[];
+}
+
+export function Select({ label, options = [], ...props }: SelectProps) {
   return (
     <div>
       <label className="label">{label}</label>
       <select className="input" {...props}>
         <option value="">Seleccione…</option>
-        {(options||[]).map((o: any)=> <option key={o.value} value={o.value}>{o.label}</option>)}
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
       </select>
     </div>
   );
