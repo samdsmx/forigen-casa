@@ -5,6 +5,7 @@ web/.vercel/
 web/.env
 web/.env.local
 web/.env.*.local
+web/package-lock.json
 
 # Logs
 **/*.log
