@@ -1,4 +1,3 @@
-
 "use client";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
@@ -21,6 +20,7 @@ export default function Programas() {
 
   useEffect(()=>{
     (async()=>{
+      // sedes via RPC para evitar fricciones de RLS
       const s = await supabase.rpc("list_sedes");
       const sd = Array.isArray(s.data) ? s.data : [];
       setSedes(sd.map((x:any)=>({ value:x.id, label:`${x.nombre}` })));
@@ -31,17 +31,16 @@ export default function Programas() {
 
   const create = async (e:any) => {
     e.preventDefault();
-    const { data, error } = await supabase.from("programa").insert({
+    const { error } = await supabase.from("programa").insert({
       nombre: form.nombre,
       objetivo: form.objetivo || null,
       sede_id: form.sede_id
-    }).select("id");
-    if (!error) {
+    });
+    if (error) alert(error.message);
+    else {
       const { data: n } = await supabase.from("programa").select("id,nombre,objetivo,sede_id,estado").order("created_at",{ascending:false});
       setList(n||[]);
       setForm({ nombre:"", objetivo:"", sede_id:"" });
-    } else {
-      alert(error.message);
     }
   };
 

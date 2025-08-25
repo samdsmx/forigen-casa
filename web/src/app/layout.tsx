@@ -1,4 +1,3 @@
-
 import "../styles.css";
 
 export const metadata = {
@@ -9,6 +8,9 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
+      <head>
+        <link rel="icon" href="/favicon.svg" />
+      </head>
       <body className="min-h-screen bg-white text-gray-900">{children}</body>
     </html>
   );
