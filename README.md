@@ -1,6 +1,6 @@
 # forigen-casa (MVP)
 
-Supabase + Next.js (Vercel) MVP para captura en oficina (sin offline), con RLS y Edge Functions para flujos críticos.
+Supabase + Next.js (Vercel) MVP para captura en oficina (sin offline), con RLS y Edge Functions para flujos críticos..
 
 ## Estructura
 ```
