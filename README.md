@@ -1,7 +1,6 @@
 # forigen-casa (MVP)
 
 Supabase + Next.js (Vercel) MVP para captura en oficina (sin offline), con RLS y Edge Functions para flujos críticos.
-**Sin reportes/exportación** en esta fase. Roles: admin, supervisor_central, coordinador_sede, facilitador.
 
 ## Estructura
 ```
