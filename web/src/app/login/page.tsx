@@ -21,7 +21,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="max-w-md mx-auto p-6">
+    <section className="max-w-md mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Iniciar sesión</h1>
       <form onSubmit={onSubmit} className="card space-y-4">
         <div>
@@ -49,6 +49,6 @@ export default function LoginPage() {
           {loading ? "Entrando..." : "Entrar"}
         </button>
       </form>
-    </main>
+    </section>
   );
 }

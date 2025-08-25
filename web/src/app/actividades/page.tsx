@@ -52,7 +52,7 @@ export default function Actividades() {
 
   return (
     <Protected>
-      <main className="max-w-5xl mx-auto p-6 space-y-6">
+      <section className="max-w-5xl mx-auto space-y-6">
         <h1 className="text-2xl font-semibold">Actividades</h1>
 
         <Role allow={['admin','supervisor_central','coordinador_sede']}>
@@ -83,7 +83,7 @@ export default function Actividades() {
             </div>
           ))}
         </section>
-      </main>
+      </section>
     </Protected>
   );
 }

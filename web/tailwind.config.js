@@ -6,9 +6,9 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          DEFAULT: "#1f7a6d",   // provisional verde/teal
-          dark: "#165a51",
-          light: "#6ec6b2"
+          DEFAULT: "#4f46e5", // indigo base
+          dark: "#3730a3",
+          light: "#a5b4fc",
         }
       },
       borderRadius: {
