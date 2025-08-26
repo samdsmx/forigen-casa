@@ -1,5 +1,6 @@
 import "../styles.css";
 import Navbar from "./components/Navbar";
+import Image from "next/image";
 
 export const metadata = {
   title: "Casa Origen - Gestión de Programas",
@@ -32,11 +33,7 @@ export default function RootLayout({
               <div className="flex flex-col md:flex-row justify-between items-center">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                      </svg>
-                    </div>
+                    <Image src="/logo.svg" alt="Origen AC" width={24} height={24} className="w-6 h-6" />
                     <span className="font-semibold text-gray-900">Casa Origen</span>
                   </div>
                 </div>

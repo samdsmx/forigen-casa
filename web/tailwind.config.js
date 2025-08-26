@@ -13,17 +13,17 @@ module.exports = {
       colors: {
         // Brand Colors
         brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',  // Primary
-          600: '#2563eb',  // Primary Dark
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#4f46e5',  // Primary
+          600: '#4338ca',  // Primary Dark
+          700: '#3730a3',
+          800: '#312e81',
+          900: '#1e1b4b',
+          950: '#191e38',
         },
         // Secondary Colors
         secondary: {
@@ -150,7 +150,7 @@ module.exports = {
         'medium': '0 4px 25px 0 rgb(0 0 0 / 0.12)',
         'hard': '0 8px 30px 0 rgb(0 0 0 / 0.18)',
         // Colored Shadows
-        'brand': '0 4px 14px 0 rgb(59 130 246 / 0.15)',
+        'brand': '0 4px 14px 0 rgb(79 70 229 / 0.15)',
         'success': '0 4px 14px 0 rgb(34 197 94 / 0.15)',
         'warning': '0 4px 14px 0 rgb(234 179 8 / 0.15)',
         'error': '0 4px 14px 0 rgb(220 38 38 / 0.15)',

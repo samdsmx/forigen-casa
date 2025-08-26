@@ -5,8 +5,8 @@
 @tailwind utilities;
 
 :root {
-  --brand-primary: #2563eb;
-  --brand-secondary: #0ea5e9;
+  --brand-primary: #4f46e5;
+  --brand-secondary: #4338ca;
   --brand-accent: #f97316;
   --brand-success: #16a34a;
   --brand-warning: #eab308;
@@ -71,12 +71,12 @@ body {
 }
 
 .btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  @apply bg-brand-600 text-white hover:bg-brand-700 focus:ring-brand-500;
   box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary {
-  @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-blue-500;
+  @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-brand-500;
   box-shadow: var(--shadow-sm);
 }
 
@@ -137,9 +137,13 @@ body {
 }
 
 .form-input {
-  @apply w-full px-3 py-2 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200;
+  @apply w-full px-3 py-2 text-sm border border-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors duration-200;
   border-radius: var(--radius-md);
   background: var(--surface-primary);
+}
+
+.form-input::placeholder {
+  @apply text-gray-600;
 }
 
 .form-input:focus {
@@ -165,11 +169,11 @@ body {
 }
 
 .form-checkbox {
-  @apply w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500;
+  @apply w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500;
 }
 
 .form-radio {
-  @apply w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500;
+  @apply w-4 h-4 text-brand-600 border-gray-300 focus:ring-brand-500;
 }
 
 .form-error {
@@ -177,7 +181,7 @@ body {
 }
 
 .form-help {
-  @apply text-sm text-gray-500 mt-1;
+  @apply text-sm text-gray-600 mt-1;
 }
 
 /* Navigation */
@@ -199,7 +203,7 @@ body {
 }
 
 .nav-link.active {
-  @apply text-blue-600 bg-blue-50;
+  @apply text-brand-600 bg-brand-50;
 }
 
 /* Tables */
@@ -226,7 +230,7 @@ body {
 }
 
 .badge-primary {
-  @apply bg-blue-100 text-blue-800;
+  @apply bg-brand-100 text-brand-800;
 }
 
 .badge-success {
@@ -252,7 +256,7 @@ body {
 }
 
 .alert-info {
-  @apply bg-blue-50 border-blue-400 text-blue-700;
+  @apply bg-brand-50 border-brand-400 text-brand-700;
 }
 
 .alert-success {
@@ -269,7 +273,7 @@ body {
 
 /* Loading States */
 .loading-spinner {
-  @apply animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600;
+  @apply animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-brand-600;
 }
 
 .loading-skeleton {

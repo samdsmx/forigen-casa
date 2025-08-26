@@ -167,7 +167,7 @@ export default function Dashboard() {
               <p className="text-gray-600">
                 Bienvenido al sistema de gestión de Casa Origen
                 {userRole && (
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
                     {userRole === 'admin' && 'Administrador'}
                     {userRole === 'supervisor_central' && 'Supervisor'}
                     {userRole === 'coordinador_sede' && 'Coordinador'}
@@ -199,7 +199,7 @@ export default function Dashboard() {
             title="Programas Activos"
             value={stats.programas}
             icon="📋"
-            color="bg-gradient-to-br from-blue-100 to-blue-200"
+            color="bg-gradient-to-br from-brand-100 to-brand-200"
             trend="+12% vs mes anterior"
           />
           <StatCard
@@ -251,7 +251,7 @@ export default function Dashboard() {
                           <p className="text-sm text-gray-500 truncate">
                             {activity.description}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-gray-500 mt-1">
                             {new Date(activity.date).toLocaleDateString('es-MX', {
                               day: 'numeric',
                               month: 'short',
@@ -265,7 +265,7 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="mx-auto h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                     <h3 className="mt-2 text-sm font-medium text-gray-900">Sin actividad reciente</h3>
@@ -287,15 +287,15 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   <Link
                     href="/programas"
-                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50 transition-all group"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                      <div className="w-8 h-8 bg-brand-100 rounded-lg flex items-center justify-center group-hover:bg-brand-200 transition-colors">
                         <span className="text-sm">📋</span>
                       </div>
                       <span className="text-sm font-medium text-gray-900">Gestionar Programas</span>
                     </div>
-                    <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-gray-500 group-hover:text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>
@@ -310,7 +310,7 @@ export default function Dashboard() {
                       </div>
                       <span className="text-sm font-medium text-gray-900">Ver Actividades</span>
                     </div>
-                    <svg className="w-4 h-4 text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-gray-500 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>
