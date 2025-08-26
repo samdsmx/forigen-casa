@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 interface User {
   email?: string;
@@ -41,11 +42,15 @@ export default function Navbar() {
     router.push("/login");
   };
 
-  const navigation = [
+  const baseNavigation = [
     { name: "Dashboard", href: "/", icon: "🏠" },
     { name: "Programas", href: "/programas", icon: "📋" },
     { name: "Actividades", href: "/actividades", icon: "🎯" },
   ];
+  const navigation =
+    user?.role === "admin"
+      ? [...baseNavigation, { name: "Usuarios", href: "/usuarios", icon: "👥" }]
+      : baseNavigation;
 
   const isActive = (href: string) => pathname === href;
 
@@ -58,13 +63,15 @@ export default function Navbar() {
           {/* Logo y Título */}
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-3 group">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                </svg>
-              </div>
+              <Image
+                src="/logo.svg"
+                alt="Origen AC"
+                width={32}
+                height={32}
+                className="w-8 h-8 group-hover:scale-105 transition-transform duration-200"
+              />
               <div className="flex flex-col">
-                <span className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Casa Origen</span>
+                <span className="font-bold text-gray-900 group-hover:text-brand-600 transition-colors">Casa Origen</span>
                 <span className="text-xs text-gray-500 hidden sm:block">Gestión de Programas</span>
               </div>
             </Link>
@@ -107,7 +114,7 @@ export default function Navbar() {
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
                     className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-gradient-to-br from-brand-600 to-purple-600 rounded-full flex items-center justify-center">
                       <span className="text-white text-sm font-semibold">
                         {user.email?.charAt(0).toUpperCase()}
                       </span>

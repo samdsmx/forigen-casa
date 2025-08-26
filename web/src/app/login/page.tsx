@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { Field } from "../components/Forms";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -40,15 +41,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-            </svg>
-          </div>
+          <Image
+            src="/logo.svg"
+            alt="Origen AC"
+            width={64}
+            height={64}
+            className="mx-auto mb-4"
+          />
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Casa Origen</h1>
           <p className="text-gray-600">Sistema de Gestión de Programas</p>
           <p className="text-sm text-gray-500 mt-2">
@@ -131,7 +134,7 @@ export default function LoginPage() {
               <p className="text-sm text-gray-600">
                 Contacte al administrador del sistema para obtener acceso
               </p>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-gray-500 mt-2">
                 samdsmx@gmail.com
               </p>
             </div>
@@ -139,7 +142,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center text-xs text-gray-400">
+        <div className="text-center text-xs text-gray-500">
           <p>Casa Origen - Sistema de Gestión © 2025</p>
           <p className="mt-1">Transformando comunidades a través de la tecnología</p>
         </div>
@@ -147,7 +150,7 @@ export default function LoginPage() {
 
       {/* Background Elements */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-40 -right-32 w-80 h-80 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse-soft"></div>
+        <div className="absolute -top-40 -right-32 w-80 h-80 bg-gradient-to-br from-brand-400 to-indigo-600 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse-soft"></div>
         <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse-soft animation-delay-2000"></div>
         <div className="absolute top-40 left-1/2 transform -translate-x-1/2 w-80 h-80 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-full mix-blend-multiply filter blur-xl opacity-5 animate-pulse-soft animation-delay-4000"></div>
       </div>
