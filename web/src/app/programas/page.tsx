@@ -387,7 +387,7 @@ export default function ProgramasPage() {
               onClear={() => setSearchTerm("")}
             />
           </div>
-          <div className="w-full sm:w-48">
+          <div className="w-full sm:w-64">
             <Select
               label=""
               value={filterEstado}

@@ -80,24 +80,27 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   ...props
 }, ref) => {
   return (
-    <div className="form-group">
+    <div>
       <label className={`form-label ${required ? 'required' : ''}`}>
         {label}
       </label>
       <select
         ref={ref}
         className={`form-select ${error ? 'error' : ''} ${className}`}
+        style={{ backgroundRepeat: "no-repeat", ...(props.style || {}) }}
         {...props}
       >
         <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option 
-            key={option.value} 
-            value={option.value}
-            disabled={option.disabled}
-          >
-            {option.label}
-          </option>
+        {options
+          .filter((option): option is Option => !!option && typeof option.value === "string")
+          .map((option, idx) => (
+            <option 
+              key={option.value || idx} 
+              value={option.value}
+              disabled={option.disabled}
+            >
+              {option.label}
+            </option>
         ))}
       </select>
       {error && <div className="form-error">{error}</div>}
