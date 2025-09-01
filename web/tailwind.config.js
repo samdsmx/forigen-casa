@@ -19,7 +19,7 @@ module.exports = {
           300: '#a5b4fc',
           400: '#818cf8',
           500: '#4f46e5',  // Primary
-          600: '#4338ca',  // Primary Dark
+          600: '#D4651F ',  // Primary Dark
           700: '#3730a3',
           800: '#312e81',
           900: '#1e1b4b',

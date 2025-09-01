@@ -5,8 +5,8 @@
 @tailwind utilities;
 
 :root {
-  --brand-primary: #4f46e5;
-  --brand-secondary: #4338ca;
+  --brand-primary: #D4651F;
+  --brand-secondary: #D4651F;
   --brand-accent: #f97316;
   --brand-success: #16a34a;
   --brand-warning: #eab308;
@@ -137,9 +137,16 @@ body {
 }
 
 .form-input {
-  @apply w-full px-3 py-2 text-sm border border-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors duration-200;
+  @apply w-full py-2 text-sm border border-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors duration-200;
   border-radius: var(--radius-md);
   background: var(--surface-primary);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+/* Cuando tiene icono, ajusta solo el padding-left */
+.form-input.has-icon {
+  padding-left: 2.5rem;
 }
 
 .form-input::placeholder {
@@ -186,7 +193,7 @@ body {
 
 /* Navigation */
 .navbar {
-  background: var(--surface-primary);
+  background: #F78429;
   border-bottom: 1px solid var(--border-primary);
   box-shadow: var(--shadow-sm);
 }
@@ -349,7 +356,7 @@ body {
 /* Dark Mode Support (Optional) */
 @media (prefers-color-scheme: dark) {
   :root {
-    --surface-primary: #1e293b;
+    --surface-primary: #E9ECEF;
     --surface-secondary: #0f172a;
     --surface-tertiary: #334155;
     --text-primary: #f8fafc;
