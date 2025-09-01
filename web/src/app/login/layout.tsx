@@ -14,21 +14,8 @@ export default function LoginLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className="h-full">
-      <head>
-        <link rel="icon" href="/Loguito.png" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-      </head>
-      <body className="min-h-full bg-gray-50 text-gray-900 antialiased">
-        <div className="min-h-screen flex flex-col">
-          <main className="flex-1">{children}</main>
-        </div>
-      </body>
-    </html>
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-1">{children}</main>
+    </div>
   );
 }
