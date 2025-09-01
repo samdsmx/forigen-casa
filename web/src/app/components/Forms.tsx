@@ -307,7 +307,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
       <input
         ref={ref}
         type="search"
-        className={`form-input pl-10 ${value && onClear ? 'pr-10' : ''} ${className}`}
+        className={`form-input has-icon ${value && onClear ? 'pr-10' : ''} ${className}`}
         value={value}
         {...props}
       />

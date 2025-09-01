@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { Field } from "../components/Forms";
@@ -12,13 +12,24 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Verificar si ya está autenticado
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push("/");
+      }
+    };
+    checkUser();
+  }, [router]);
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ 
+      const { data, error } = await supabase.auth.signInWithPassword({ 
         email: email.trim(), 
         password 
       });
@@ -29,9 +40,9 @@ export default function LoginPage() {
             ? 'Credenciales incorrectas. Verifique su email y contraseña.'
             : error.message
         );
-      } else {
+      } else if (data.session) {
+        // El listener de onAuthStateChange en Navbar se encargará de actualizar el estado
         router.push("/");
-        router.refresh();
       }
     } catch (err) {
       setError('Error inesperado. Intente nuevamente.');

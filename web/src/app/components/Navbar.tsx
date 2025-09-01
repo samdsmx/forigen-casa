@@ -14,6 +14,7 @@ interface User {
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -32,9 +33,41 @@ export default function Navbar() {
           role: appUser?.role,
           sede: appUser?.sede?.[0]?.nombre
         });
+      } else {
+        setUser(null);
       }
+      setLoading(false);
     };
     getUser();
+
+    // Escuchar cambios en el estado de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          // Usuario se logueó
+          const { data: appUser } = await supabase
+            .from("app_user")
+            .select("role, sede:sede_id(nombre)")
+            .eq("auth_user_id", session.user.id)
+            .single();
+          
+          setUser({
+            email: session.user.email,
+            role: appUser?.role,
+            sede: appUser?.sede?.[0]?.nombre
+          });
+        } else if (event === 'SIGNED_OUT') {
+          // Usuario se deslogueó
+          setUser(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    // Cleanup: cancelar la suscripción cuando el componente se desmonte
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const isActive = (href: string) => pathname === href;
@@ -43,6 +76,7 @@ export default function Navbar() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setUser(null);
     router.push("/login");
   };
 
@@ -93,7 +127,11 @@ export default function Navbar() {
 
           {/* Usuario y Acciones */}
           <div className="flex items-center space-x-4">
-            {user && (
+            {loading && (
+              <div className="loading-spinner"></div>
+            )}
+            
+            {!loading && user && (
               <>
                 {/* Info del Usuario */}
                 <div className="hidden lg:flex flex-col items-end">
@@ -167,7 +205,7 @@ export default function Navbar() {
               </>
             )}
 
-            {!user && pathname !== "/login" && (
+            {!loading && !user && pathname !== "/login" && (
               <Link
                 href="/login"
                 className="btn btn-primary btn-sm"
