@@ -4,7 +4,7 @@ export const metadata = {
   title: "Casa Origen - Gestión de Programas",
   description: "Sistema de gestión de programas, actividades y asistencia para Casa Origen",
   keywords: "Casa Origen, programas sociales, gestión, asistencia",
-  authors: [{ name: "Casa Origen" }],
+  authors: [{ name: "samdsmx" }],
   viewport: "width=device-width, initial-scale=1",
 };
 
