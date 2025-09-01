@@ -47,7 +47,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(({
         )}
         <input
           ref={ref}
-          className={`form-input ${icon ? 'pl-10' : ''} ${error ? 'error' : ''} ${className}`}
+          className={`form-input ${icon ? 'has-icon' : ''} ${error ? 'error' : ''} ${className}`}
           {...props}
         />
       </div>

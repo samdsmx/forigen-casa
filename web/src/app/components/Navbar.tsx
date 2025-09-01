@@ -37,6 +37,10 @@ export default function Navbar() {
     getUser();
   }, []);
 
+  const isActive = (href: string) => pathname === href;
+
+  if (pathname === "/login") return null;
+
   const signOut = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -47,34 +51,30 @@ export default function Navbar() {
     { name: "Programas", href: "/programas", icon: "📋" },
     { name: "Actividades", href: "/actividades", icon: "🎯" },
   ];
+
   const navigation =
     user?.role === "admin"
       ? [...baseNavigation, { name: "Usuarios", href: "/usuarios", icon: "👥" }]
-      : baseNavigation;
+      : [];
 
-  const isActive = (href: string) => pathname === href;
-
-  if (pathname === "/login") return null;
 
   return (
     <nav className="navbar sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo y Título */}
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center space-x-3 group">
+          <div className="flex items-center space-x-3 group">
               <Image
-                src="/logo.svg"
-                alt="Origen AC"
-                width={32}
-                height={32}
-                className="w-8 h-8 group-hover:scale-105 transition-transform duration-200"
+                src="/logo-casa-origen.jpg"
+                alt="Casa Origen AC"
+                width={166}
+                height={1}
+              
               />
               <div className="flex flex-col">
-                <span className="font-bold text-gray-900 group-hover:text-brand-600 transition-colors">Casa Origen</span>
-                <span className="text-xs text-gray-500 hidden sm:block">Gestión de Programas</span>
+                <span className="font-bold text-gray-800">Gestión de Programas</span>
+                <span className="text-xs text-gray-600 hidden sm:block">Espacios de Empoderamiento Integral</span>
               </div>
-            </Link>
           </div>
 
           {/* Navegación Desktop */}
@@ -97,10 +97,10 @@ export default function Navbar() {
               <>
                 {/* Info del Usuario */}
                 <div className="hidden lg:flex flex-col items-end">
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-gray-800">
                     {user.email}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-600">
                     {user.role === 'admin' && 'Administrador'}
                     {user.role === 'supervisor_central' && 'Supervisor Central'}
                     {user.role === 'coordinador_sede' && `Coordinador - ${user.sede}`}
