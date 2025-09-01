@@ -72,8 +72,6 @@ export default function Navbar() {
 
   const isActive = (href: string) => pathname === href;
 
-  if (pathname === "/login") return null;
-
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
