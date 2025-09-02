@@ -20,47 +20,60 @@ export default function Navbar() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        const { data: appUser } = await supabase
-          .from("app_user")
-          .select("role, sede:sede_id(nombre)")
-          .eq("auth_user_id", authUser.id)
-          .single();
-        
-        setUser({
-          email: authUser.email,
-          role: appUser?.role,
-          sede: appUser?.sede?.[0]?.nombre
-        });
-      } else {
+      try {
+        const { data: { user: authUser }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (authUser) {
+          const { data: appUser } = await supabase
+            .from("app_user")
+            .select("role, sede:sede_id(nombre)")
+            .eq("auth_user_id", authUser.id)
+            .single();
+
+          setUser({
+            email: authUser.email,
+            role: appUser?.role,
+            sede: appUser?.sede?.[0]?.nombre
+          });
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error("[Navbar] Error fetching user", err);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     getUser();
 
     // Escuchar cambios en el estado de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          // Usuario se logueó
-          const { data: appUser } = await supabase
-            .from("app_user")
-            .select("role, sede:sede_id(nombre)")
-            .eq("auth_user_id", session.user.id)
-            .single();
-          
-          setUser({
-            email: session.user.email,
-            role: appUser?.role,
-            sede: appUser?.sede?.[0]?.nombre
-          });
-        } else if (event === 'SIGNED_OUT') {
-          // Usuario se deslogueó
+        try {
+          if (event === 'SIGNED_IN' && session) {
+            // Usuario se logueó
+            const { data: appUser } = await supabase
+              .from("app_user")
+              .select("role, sede:sede_id(nombre)")
+              .eq("auth_user_id", session.user.id)
+              .single();
+
+            setUser({
+              email: session.user.email,
+              role: appUser?.role,
+              sede: appUser?.sede?.[0]?.nombre
+            });
+          } else if (event === 'SIGNED_OUT') {
+            // Usuario se deslogueó
+            setUser(null);
+          }
+        } catch (err) {
+          console.error("[Navbar] auth state change error", err);
           setUser(null);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
