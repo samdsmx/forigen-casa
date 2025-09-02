@@ -30,7 +30,7 @@ export default function Navbar() {
 
     const getUser = async () => {
       try {
-        const { data: { user: authUser }, error } = await withTimeout(supabase.auth.getUser());
+        const { data: { user: authUser }, error } = await supabase.auth.getUser();
         if (!active) return;
         if (error) {
           // No hay sesión: no es un error fatal
@@ -41,20 +41,17 @@ export default function Navbar() {
           return;
         }
         if (authUser) {
-          type AppUserJoined = Pick<Tables<'app_user'>, 'role'> & { sede: Pick<Tables<'sede'>,'nombre'>[] };
-          const appUserRes = await withTimeout<{ data: AppUserJoined | null; error: unknown }>(
-            supabase
-              .from("app_user")
-              .select("role, sede:sede_id(nombre)")
-              .eq("auth_user_id", authUser.id)
-              .single()
-          );
-          const appUser = appUserRes.data;
+          const { data: appUser } = await supabase
+            .from("app_user")
+            .select("role, sede:sede_id(nombre)")
+            .eq("auth_user_id", authUser.id)
+            .maybeSingle();
+          const joined = appUser as (Pick<Tables<'app_user'>,'role'> & { sede: Pick<Tables<'sede'>,'nombre'>[] }) | null;
 
           setUser({
             email: authUser.email,
-            role: appUser?.role,
-            sede: appUser?.sede?.[0]?.nombre
+            role: joined?.role,
+            sede: joined?.sede?.[0]?.nombre
           });
         } else {
           setUser(null);
@@ -78,7 +75,7 @@ export default function Navbar() {
               .from("app_user")
               .select("role, sede:sede_id(nombre)")
               .eq("auth_user_id", session.user.id)
-              .single();
+              .maybeSingle();
             const joined = appUser as (Pick<Tables<'app_user'>,'role'> & { sede: Pick<Tables<'sede'>,'nombre'>[] }) | null;
             setUser({
               email: session.user.email,
@@ -272,3 +269,4 @@ export default function Navbar() {
     </nav>
   );
 }
+
