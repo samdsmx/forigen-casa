@@ -19,16 +19,34 @@ export default function Navbar() {
   const pathname = usePathname();
 
   useEffect(() => {
+    let active = true;
+    const withTimeout = async <T,>(p: Promise<T>, ms = 8000): Promise<T> => {
+      return Promise.race([
+        p,
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)) as Promise<T>,
+      ]);
+    };
+
     const getUser = async () => {
       try {
-        const { data: { user: authUser }, error } = await supabase.auth.getUser();
-        if (error) throw error;
+        const { data: { user: authUser }, error } = await withTimeout(supabase.auth.getUser());
+        if (!active) return;
+        if (error) {
+          // No hay sesión: no es un error fatal
+          if ((error as any).name !== "AuthSessionMissingError") {
+            console.error("[Navbar] getUser error", error);
+          }
+          setUser(null);
+          return;
+        }
         if (authUser) {
-          const { data: appUser } = await supabase
-            .from("app_user")
-            .select("role, sede:sede_id(nombre)")
-            .eq("auth_user_id", authUser.id)
-            .single();
+          const { data: appUser } = await withTimeout(
+            supabase
+              .from("app_user")
+              .select("role, sede:sede_id(nombre)")
+              .eq("auth_user_id", authUser.id)
+              .single()
+          );
 
           setUser({
             email: authUser.email,
@@ -42,7 +60,7 @@ export default function Navbar() {
         console.error("[Navbar] Error fetching user", err);
         setUser(null);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
     getUser();
@@ -79,6 +97,7 @@ export default function Navbar() {
 
     // Cleanup: cancelar la suscripción cuando el componente se desmonte
     return () => {
+      active = false;
       subscription.unsubscribe();
     };
   }, []);

@@ -37,8 +37,18 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
+      // Validar sesión primero para evitar AuthSessionMissingError
+      const { data: sessionRes } = await supabase.auth.getSession();
+      if (!sessionRes.session) {
+        // No hay sesión: Protected hará redirect
+        return;
+      }
+
       // Obtener rol del usuario
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr && (userErr as any).name !== 'AuthSessionMissingError') {
+        console.error('[Dashboard] getUser error:', userErr);
+      }
       if (user) {
         const { data: appUser } = await supabase
           .from("app_user")
