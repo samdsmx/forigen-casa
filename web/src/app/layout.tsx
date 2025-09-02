@@ -1,6 +1,5 @@
 import "../styles.css";
-import Navbar from "./components/Navbar";
-import Image from "next/image";
+import NavbarWrapper from "./components/NavbarWrapper";
 
 export const metadata = {
   title: "Casa Origen - Gestión de Programas",
@@ -24,7 +23,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-gray-50 text-gray-900 antialiased">
         <div className="min-h-screen flex flex-col">
-          <Navbar />
+          <NavbarWrapper />
           <main className="flex-1">
             {children}
           </main>
