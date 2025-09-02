@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
+import type { Tables } from "app/types/supabase";
 import Protected from "./components/Protected";
 import Link from "next/link";
 
@@ -55,7 +56,8 @@ export default function Dashboard() {
           .select("role")
           .eq("auth_user_id", user.id)
           .single();
-        setUserRole(appUser?.role);
+        const row = appUser as (Pick<Tables<'app_user'>, 'role'> | null);
+        setUserRole(row?.role);
       }
 
       // Cargar estadísticas

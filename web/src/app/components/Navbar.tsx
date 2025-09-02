@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import type { Tables } from "app/types/supabase";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -46,12 +47,14 @@ export default function Navbar() {
               .select("role, sede:sede_id(nombre)")
               .eq("auth_user_id", authUser.id)
               .single()
-          ) as any;
+          );
+          type AppUserJoined = Pick<Tables<'app_user'>, 'role'> & { sede: Pick<Tables<'sede'>,'nombre'>[] };
+          const appUser = appUserRes.data as (AppUserJoined | null);
 
           setUser({
             email: authUser.email,
-            role: appUserRes?.data?.role,
-            sede: appUserRes?.data?.sede?.[0]?.nombre
+            role: appUser?.role,
+            sede: appUser?.sede?.[0]?.nombre
           });
         } else {
           setUser(null);
@@ -76,11 +79,11 @@ export default function Navbar() {
               .select("role, sede:sede_id(nombre)")
               .eq("auth_user_id", session.user.id)
               .single();
-
+            const joined = appUser as (Pick<Tables<'app_user'>,'role'> & { sede: Pick<Tables<'sede'>,'nombre'>[] }) | null;
             setUser({
               email: session.user.email,
-              role: appUser?.role,
-              sede: appUser?.sede?.[0]?.nombre
+              role: joined?.role,
+              sede: joined?.sede?.[0]?.nombre
             });
           } else if (event === 'SIGNED_OUT') {
             // Usuario se deslogueó

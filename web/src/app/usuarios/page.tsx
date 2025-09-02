@@ -4,6 +4,7 @@ import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { Field, Select } from "../components/Forms";
 import { supabase } from "../lib/supabaseClient";
+import type { Tables } from "../types/supabase";
 
 interface User {
   id: string;
@@ -43,8 +44,14 @@ export default function UsuariosPage() {
         supabase.from("app_role").select("name"),
         supabase.from("sede").select("id, nombre")
       ]);
-      if (rolesRes.data) setRoles(rolesRes.data.map(r => ({ value: r.name, label: r.name })));
-      if (sedesRes.data) setSedes(sedesRes.data.map(s => ({ value: s.id, label: s.nombre })));
+      if (rolesRes.data) {
+        const r = rolesRes.data as Pick<Tables<'app_role'>, 'name'>[];
+        setRoles(r.map(r => ({ value: r.name, label: r.name })));
+      }
+      if (sedesRes.data) {
+        const s = sedesRes.data as Pick<Tables<'sede'>, 'id' | 'nombre'>[];
+        setSedes(s.map(s => ({ value: s.id, label: s.nombre })));
+      }
     })();
   }, []);
 

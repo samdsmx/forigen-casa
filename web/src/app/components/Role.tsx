@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import type { Tables } from "app/types/supabase";
 
 export default function Role({ allow, children }: { allow: string[]; children: React.ReactNode }) {
   const [ok, setOk] = useState(false);
@@ -16,8 +17,12 @@ export default function Role({ allow, children }: { allow: string[]; children: R
       } catch {}
       if (!role) {
         // Fallback a tabla
-        const q = await supabase.from("app_user").select("role").eq("auth_user_id", user.id).maybeSingle();
-        if (!q.error && q.data) role = (q.data as any).role;
+        const q = await supabase
+          .from("app_user")
+          .select("role")
+          .eq("auth_user_id", user.id)
+          .maybeSingle();
+        if (!q.error && q.data) role = (q.data as Pick<Tables<'app_user'>, 'role'>).role;
       }
       if (role && allow.includes(role)) setOk(true);
     })();

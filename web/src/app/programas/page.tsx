@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabaseClient";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { Field, Select, Textarea, FormCard, SearchInput } from "../components/Forms";
+import type { Tables, TablesInsert } from "../types/supabase";
 
 interface Programa {
   id: string;
@@ -90,13 +91,16 @@ export default function ProgramasPage() {
       ]);
 
       if (sedesRes.data) {
-        setSedes(sedesRes.data.map(s => ({ value: s.id, label: s.nombre })));
+        const s = sedesRes.data as Pick<Tables<'sede'>, 'id' | 'nombre' | 'slug'>[];
+        setSedes(s.map(s => ({ value: s.id, label: s.nombre })));
       }
       if (temasRes.data) {
-        setTemas(temasRes.data.map(t => ({ value: t.id, label: t.nombre })));
+        const t = temasRes.data as Pick<Tables<'tema'>, 'id' | 'nombre'>[];
+        setTemas(t.map(t => ({ value: t.id, label: t.nombre })));
       }
       if (poblacionRes.data) {
-        setPoblacionGrupos(poblacionRes.data.map(p => ({ value: p.id, label: p.nombre })));
+        const p = poblacionRes.data as Pick<Tables<'poblacion_grupo'>, 'id' | 'nombre'>[];
+        setPoblacionGrupos(p.map(p => ({ value: p.id, label: p.nombre })));
       }
 
       // Load programas with relations
@@ -144,7 +148,7 @@ export default function ProgramasPage() {
     setError(null);
 
     try {
-      const payload = {
+      const payload: TablesInsert<'programa'> = {
         nombre: formData.nombre.trim(),
         objetivo: formData.objetivo.trim() || null,
         sede_id: formData.sede_id,

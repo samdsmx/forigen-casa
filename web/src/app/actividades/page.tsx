@@ -3,15 +3,17 @@
 import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { supabase } from "../lib/supabaseClient";
+import type { Tables } from "app/types/supabase";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Field, Select } from "../components/Forms";
+import type { Tables } from "app/types/supabase";
 
 export default function Actividades() {
-  const [programas, setProgramas] = useState<any[]>([]);
-  const [tipos, setTipos] = useState<any[]>([]);
-  const [subtipos, setSubtipos] = useState<any[]>([]);
-  const [list, setList] = useState<any[]>([]);
+  const [programas, setProgramas] = useState<{ value: string; label: string }[]>([]);
+  const [tipos, setTipos] = useState<{ value: string; label: string }[]>([]);
+  const [subtipos, setSubtipos] = useState<{ value: string; label: string }[]>([]);
+  const [list, setList] = useState<Pick<Tables<'actividad'>, 'id' | 'fecha' | 'hora_inicio' | 'hora_fin' | 'programa_id'>[]>([]);
 
   const [form, setForm] = useState<any>({
     programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:""
@@ -22,13 +24,16 @@ export default function Actividades() {
   useEffect(()=>{
     (async()=>{
       const { data: p } = await supabase.from("programa").select("id,nombre");
-      setProgramas((p||[]).map((x:any)=>({value:x.id,label:x.nombre})));
+      setProgramas(((p as Pick<Tables<'programa'>,'id'|'nombre'>[] | null) || [])
+        .map(x => ({ value: x.id, label: x.nombre })));
       const { data: t } = await supabase.from("actividad_tipo").select("id,nombre");
-      setTipos((t||[]).map((x:any)=>({value:x.id,label:x.nombre})));
+      setTipos(((t as Pick<Tables<'actividad_tipo'>,'id'|'nombre'>[] | null) || [])
+        .map(x => ({ value: x.id, label: x.nombre })));
       const { data: s } = await supabase.from("actividad_subtipo").select("id,nombre");
-      setSubtipos((s||[]).map((x:any)=>({value:x.id,label:x.nombre})));
+      setSubtipos(((s as Pick<Tables<'actividad_subtipo'>,'id'|'nombre'>[] | null) || [])
+        .map(x => ({ value: x.id, label: x.nombre })));
       const { data: a } = await supabase.from("actividad").select("id,fecha,hora_inicio,hora_fin,programa_id").order("fecha",{ascending:false});
-      setList(a||[]);
+      setList((a as Pick<Tables<'actividad'>, 'id' | 'fecha' | 'hora_inicio' | 'hora_fin' | 'programa_id'>[] | null) || []);
     })();
   },[]);
 
@@ -59,7 +64,7 @@ export default function Actividades() {
     if (error) alert(error.message);
     else {
       const { data: a } = await supabase.from("actividad").select("id,fecha,hora_inicio,hora_fin,programa_id").order("fecha",{ascending:false});
-      setList(a||[]);
+      setList((a as Pick<Tables<'actividad'>, 'id' | 'fecha' | 'hora_inicio' | 'hora_fin' | 'programa_id'>[] | null) || []);
       setForm({programa_id:"",fecha:"",hora_inicio:"",hora_fin:"",tipo_id:"",subtipo_id:"",facilitador_id:"",cupo:""});
       setErrors({});
     }
@@ -144,7 +149,7 @@ export default function Actividades() {
         )}
 
         <section className="grid gap-3">
-          {list.map((a:any)=> (
+          {list.map((a)=> (
             <div key={a.id} className="card p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <div className="font-medium">{a.fecha} {a.hora_inicio}-{a.hora_fin}</div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "../../lib/supabaseServer";
+import type { Tables, TablesInsert, TablesUpdate } from "app/types/supabase";
 
 export async function GET() {
   const { data: { users }, error } = await supabaseServer.auth.admin.listUsers();
@@ -10,8 +11,12 @@ export async function GET() {
     .select("auth_user_id, role, is_active, sede:sede_id(id,nombre)");
   if (appError) return NextResponse.json({ error: appError.message }, { status: 500 });
 
+  type AppUserRow = Pick<Tables<'app_user'>, 'auth_user_id' | 'role' | 'is_active'> & {
+    sede: Pick<Tables<'sede'>, 'id' | 'nombre'>[]
+  };
+  const typed = (appUsers || []) as AppUserRow[];
   const result = users.map(u => {
-    const app = (appUsers as any[])?.find(a => a.auth_user_id === u.id);
+    const app = typed.find(a => a.auth_user_id === u.id);
     return {
       id: u.id,
       email: u.email,
@@ -36,9 +41,10 @@ export async function POST(request: Request) {
   const userId = data.user?.id;
   if (!userId) return NextResponse.json({ error: "No se pudo crear usuario" }, { status: 500 });
 
+  const insertPayload: TablesInsert<'app_user'> = { auth_user_id: userId, role, sede_id: sede_id || null } as TablesInsert<'app_user'>;
   const { error: insertError } = await supabaseServer
     .from("app_user")
-    .insert({ auth_user_id: userId, role, sede_id: sede_id || null });
+    .insert(insertPayload);
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
 
   return NextResponse.json({ id: userId });
@@ -46,10 +52,10 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const { auth_user_id, role, sede_id, is_active } = await request.json();
-  const updates: Record<string, any> = {};
-  if (typeof role !== "undefined") updates.role = role;
-  if (typeof sede_id !== "undefined") updates.sede_id = sede_id;
-  if (typeof is_active !== "undefined") updates.is_active = is_active;
+  const updates: Partial<TablesUpdate<'app_user'>> = {};
+  if (typeof role !== "undefined") (updates as any).role = role;
+  if (typeof sede_id !== "undefined") (updates as any).sede_id = sede_id;
+  if (typeof is_active !== "undefined") (updates as any).is_active = is_active;
 
   const { error } = await supabaseServer
     .from("app_user")
