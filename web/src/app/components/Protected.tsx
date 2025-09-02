@@ -19,6 +19,7 @@ export default function Protected({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let active = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     // Manejo robusto: esperar INITIAL_SESSION para evitar falsos negativos en refresh
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
@@ -39,15 +40,27 @@ export default function Protected({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Fallback: si por alguna razón no llega INITIAL_SESSION, chequeo puntual sin redirigir inmediato
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      if (data.session) setStatus('authed');
-    }).catch(() => {});
+    // Fallback con timeout: si no llega INITIAL_SESSION en X ms, decide por getSession
+    timer = setTimeout(() => {
+      supabase.auth.getSession().then(({ data }) => {
+        if (!active) return;
+        if (data.session) {
+          setStatus('authed');
+        } else {
+          setStatus('unauthenticated');
+          router.replace('/login');
+        }
+      }).catch(() => {
+        if (!active) return;
+        setStatus('unauthenticated');
+        router.replace('/login');
+      });
+    }, 1200);
 
     return () => {
       active = false;
       subscription.unsubscribe();
+      if (timer) clearTimeout(timer);
     };
   }, [router]);
 
