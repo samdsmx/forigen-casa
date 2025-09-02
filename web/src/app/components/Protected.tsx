@@ -8,10 +8,19 @@ export default function Protected({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const router = useRouter();
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) router.push("/login");
-      else setReady(true);
-    });
+    const checkSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error || !data.session) router.push("/login");
+        else setReady(true);
+      } catch (err) {
+        console.error("[Protected] Error checking session", err);
+        router.push("/login");
+      } finally {
+        setReady(true);
+      }
+    };
+    checkSession();
   }, [router]);
   if (!ready) return null;
   return <>{children}</>;
