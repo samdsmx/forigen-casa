@@ -40,18 +40,18 @@ export default function Navbar() {
           return;
         }
         if (authUser) {
-          const { data: appUser } = await withTimeout(
+          const appUserRes = await withTimeout(
             supabase
               .from("app_user")
               .select("role, sede:sede_id(nombre)")
               .eq("auth_user_id", authUser.id)
               .single()
-          );
+          ) as any;
 
           setUser({
             email: authUser.email,
-            role: appUser?.role,
-            sede: appUser?.sede?.[0]?.nombre
+            role: appUserRes?.data?.role,
+            sede: appUserRes?.data?.sede?.[0]?.nombre
           });
         } else {
           setUser(null);
