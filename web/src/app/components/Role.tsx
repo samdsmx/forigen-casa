@@ -12,7 +12,7 @@ export default function Role({ allow, children }: { allow: string[]; children: R
       // Primero intenta via RPC para evitar fricción con RLS
       let role: string | null = null;
       try {
-        const rp = await supabase.rpc('user_role');
+        const rp: any = await supabase.rpc('user_role');
         if (!rp.error && rp.data) role = rp.data as string;
       } catch {}
       if (!role) {

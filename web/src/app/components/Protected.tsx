@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 type Status = "checking" | "authed" | "unauthenticated";
 
-const withTimeout = async <T,>(p: Promise<T>, ms = 8000): Promise<T> => {
+const withTimeout = async <T,>(p: PromiseLike<T>, ms = 8000): Promise<T> => {
   return Promise.race([
     p,
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)) as Promise<T>,

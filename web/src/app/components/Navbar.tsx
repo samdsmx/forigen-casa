@@ -21,7 +21,7 @@ export default function Navbar() {
 
   useEffect(() => {
     let active = true;
-    const withTimeout = async <T,>(p: Promise<T>, ms = 8000): Promise<T> => {
+    const withTimeout = async <T,>(p: PromiseLike<T>, ms = 8000): Promise<T> => {
       return Promise.race([
         p,
         new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)) as Promise<T>,
@@ -41,15 +41,15 @@ export default function Navbar() {
           return;
         }
         if (authUser) {
-          const appUserRes = await withTimeout(
+          type AppUserJoined = Pick<Tables<'app_user'>, 'role'> & { sede: Pick<Tables<'sede'>,'nombre'>[] };
+          const appUserRes = await withTimeout<{ data: AppUserJoined | null; error: unknown }>(
             supabase
               .from("app_user")
               .select("role, sede:sede_id(nombre)")
               .eq("auth_user_id", authUser.id)
               .single()
           );
-          type AppUserJoined = Pick<Tables<'app_user'>, 'role'> & { sede: Pick<Tables<'sede'>,'nombre'>[] };
-          const appUser = appUserRes.data as (AppUserJoined | null);
+          const appUser = appUserRes.data;
 
           setUser({
             email: authUser.email,

@@ -57,7 +57,7 @@ export default function Dashboard() {
           .eq("auth_user_id", user.id)
           .single();
         const row = appUser as (Pick<Tables<'app_user'>, 'role'> | null);
-        setUserRole(row?.role);
+        setUserRole(row?.role ?? null);
       }
 
       // Cargar estadísticas
@@ -89,20 +89,20 @@ export default function Dashboard() {
         .limit(3);
 
       const activities: RecentActivity[] = [
-        ...(programas || []).map(p => ({
+        ...(((programas as any[]) || [])).map(p => ({
           id: p.id,
           type: 'programa' as const,
           title: `Nuevo programa: ${p.nombre}`,
           description: 'Programa creado exitosamente',
-          date: p.created_at,
+          date: p.created_at ?? '',
           icon: '📋'
         })),
-        ...(actividades || []).map(a => ({
+        ...(((actividades as any[]) || [])).map(a => ({
           id: a.id,
           type: 'actividad' as const,
           title: `Nueva actividad programada`,
-          description: `${a.programa?.[0]?.nombre} - ${a.fecha} ${a.hora_inicio}`,
-          date: a.created_at,
+          description: `${(Array.isArray(a.programa) ? (a.programa as any[])[0]?.nombre : (a.programa as any)?.nombre) ?? ''} - ${a.fecha} ${a.hora_inicio}`,
+          date: a.created_at ?? '',
           icon: '🎯'
         }))
       ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);

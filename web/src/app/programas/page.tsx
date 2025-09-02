@@ -30,7 +30,7 @@ interface Programa {
   _count?: {
     actividades: number;
   };
-  created_at: string;
+  created_at: string | null;
 }
 
 interface FormData {
@@ -160,7 +160,7 @@ export default function ProgramasPage() {
         estado: formData.estado
       };
 
-      const { error } = await supabase.from("programa").insert(payload);
+      const { error } = await (supabase as any).from("programa").insert(payload);
 
       if (error) throw error;
 
@@ -425,7 +425,7 @@ export default function ProgramasPage() {
                       </span>
                     </div>
                     <div className="text-xs text-gray-500">
-                      {new Date(programa.created_at).toLocaleDateString('es-MX')}
+                      {new Date(programa.created_at ?? "").toLocaleDateString('es-MX')}
                     </div>
                   </div>
 

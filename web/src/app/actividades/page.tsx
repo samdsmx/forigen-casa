@@ -7,7 +7,6 @@ import type { Tables } from "app/types/supabase";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Field, Select } from "../components/Forms";
-import type { Tables } from "app/types/supabase";
 
 export default function Actividades() {
   const [programas, setProgramas] = useState<{ value: string; label: string }[]>([]);
@@ -60,7 +59,7 @@ export default function Actividades() {
       subtipo_id: form.subtipo_id || null,
       facilitador_id: form.facilitador_id || null,
       cupo: form.cupo ? Number(form.cupo) : null
-    });
+    } as any);
     if (error) alert(error.message);
     else {
       const { data: a } = await supabase.from("actividad").select("id,fecha,hora_inicio,hora_fin,programa_id").order("fecha",{ascending:false});

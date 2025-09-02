@@ -11,18 +11,20 @@ export async function GET() {
     .select("auth_user_id, role, is_active, sede:sede_id(id,nombre)");
   if (appError) return NextResponse.json({ error: appError.message }, { status: 500 });
 
+  type SedeMini = Pick<Tables<'sede'>, 'id' | 'nombre'>;
   type AppUserRow = Pick<Tables<'app_user'>, 'auth_user_id' | 'role' | 'is_active'> & {
-    sede: Pick<Tables<'sede'>, 'id' | 'nombre'>[]
+    sede: SedeMini[] | SedeMini | null;
   };
   const typed = (appUsers || []) as AppUserRow[];
   const result = users.map(u => {
     const app = typed.find(a => a.auth_user_id === u.id);
+    const sedeObj = Array.isArray(app?.sede) ? app?.sede?.[0] : app?.sede || null;
     return {
       id: u.id,
       email: u.email,
       role: app?.role ?? null,
-      sede_id: app?.sede?.[0]?.id ?? null,
-      sede: app?.sede?.[0]?.nombre ?? null,
+      sede_id: sedeObj?.id ?? null,
+      sede: sedeObj?.nombre ?? null,
       is_active: app?.is_active ?? false
     };
   });

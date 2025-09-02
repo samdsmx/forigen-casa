@@ -1,5 +1,4 @@
 import { createBrowserClient } from "@supabase/ssr";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "app/types/supabase";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -10,11 +9,5 @@ if (!url || !anon) {
   console.error("[Supabase] Falta NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY");
 }
 
-// Singleton del cliente del navegador tipado con nuestra BD
-let browserClient: SupabaseClient<Database> | null = null;
-export const supabase = (() => {
-  if (!browserClient) {
-    browserClient = createBrowserClient<Database>(url!, anon!);
-  }
-  return browserClient;
-})();
+// Cliente del navegador tipado con nuestra BD (no-null)
+export const supabase = createBrowserClient<Database>(url!, anon!);
