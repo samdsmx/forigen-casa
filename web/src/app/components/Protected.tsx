@@ -19,26 +19,35 @@ export default function Protected({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    const checkSession = async () => {
-      try {
-        const { data, error } = await withTimeout(supabase.auth.getSession());
-        if (!active) return;
-        if (error || !data.session) {
-          setStatus("unauthenticated");
-          router.replace("/login");
+    // Manejo robusto: esperar INITIAL_SESSION para evitar falsos negativos en refresh
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
+      if (event === 'INITIAL_SESSION') {
+        if (session) {
+          setStatus('authed');
         } else {
-          setStatus("authed");
+          setStatus('unauthenticated');
+          router.replace('/login');
         }
-      } catch (err) {
-        console.error("[Protected] Error checking session", err);
-        if (!active) return;
-        setStatus("unauthenticated");
-        router.replace("/login");
       }
-    };
-    checkSession();
+      if (event === 'SIGNED_IN') {
+        setStatus('authed');
+      }
+      if (event === 'SIGNED_OUT') {
+        setStatus('unauthenticated');
+        router.replace('/login');
+      }
+    });
+
+    // Fallback: si por alguna razón no llega INITIAL_SESSION, chequeo puntual sin redirigir inmediato
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      if (data.session) setStatus('authed');
+    }).catch(() => {});
+
     return () => {
       active = false;
+      subscription.unsubscribe();
     };
   }, [router]);
 
