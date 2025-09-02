@@ -1,11 +1,16 @@
 import "../../styles.css";
+import type { Viewport } from "next";
 
 export const metadata = {
   title: "Casa Origen - Gestión de Programas",
   description: "Sistema de gestión de programas, actividades y asistencia para Casa Origen",
   keywords: "Casa Origen, programas sociales, gestión, asistencia",
   authors: [{ name: "samdsmx" }],
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function LoginLayout({
@@ -19,3 +24,4 @@ export default function LoginLayout({
     </div>
   );
 }
+

@@ -119,7 +119,7 @@ export default function Navbar() {
   const navigation =
     user?.role === "admin"
       ? [...baseNavigation, { name: "Usuarios", href: "/usuarios", icon: "👥" }]
-      : [];
+      : baseNavigation;
 
 
   return (

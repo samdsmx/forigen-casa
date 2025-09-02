@@ -141,28 +141,20 @@ export default function UsuariosPage() {
                     <tr key={u.id}>
                       <td className="px-4 py-2 text-sm text-gray-900">{u.email}</td>
                       <td className="px-4 py-2 text-sm text-gray-900">
-                        <select
-                          className="form-select"
+                        <Select
+                          label=""
                           value={u.role ?? ""}
                           onChange={e => update(u.id, { role: e.target.value })}
-                        >
-                          <option value="">-</option>
-                          {roles.map(r => (
-                            <option key={r.value} value={r.value}>{r.label}</option>
-                          ))}
-                        </select>
+                          options={roles}
+                        />
                       </td>
                       <td className="px-4 py-2 text-sm text-gray-900">
-                        <select
-                          className="form-select"
+                        <Select
+                          label=""
                           value={u.sede_id ?? ""}
                           onChange={e => update(u.id, { sede_id: e.target.value || null })}
-                        >
-                          <option value="">-</option>
-                          {sedes.map(s => (
-                            <option key={s.value} value={s.value}>{s.label}</option>
-                          ))}
-                        </select>
+                          options={sedes}
+                        />
                       </td>
                       <td className="px-4 py-2 text-sm text-gray-900">{u.is_active ? "Sí" : "No"}</td>
                       <td className="px-4 py-2 text-sm space-x-2">
