@@ -193,6 +193,7 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 slide-up">
+          
           <StatCard
             title="Proyectos Activos"
             value={stats.programas}
@@ -200,6 +201,7 @@ export default function Dashboard() {
             color="bg-gradient-to-br from-brand-100 to-brand-200"
             trend="+12% vs mes anterior"
           />
+          
           <StatCard
             title="Actividades"
             value={stats.actividades}
@@ -207,6 +209,7 @@ export default function Dashboard() {
             color="bg-gradient-to-br from-green-100 to-green-200"
             trend="+8% vs mes anterior"
           />
+          <Link href="/beneficiarios" className="block">
           <StatCard
             title="Beneficiarios"
             value={stats.beneficiarios}
@@ -214,6 +217,7 @@ export default function Dashboard() {
             color="bg-gradient-to-br from-purple-100 to-purple-200"
             trend="+15% vs mes anterior"
           />
+          </Link>
           <StatCard
             title="Asistencias Registradas"
             value={stats.asistencia_total}
