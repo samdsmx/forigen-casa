@@ -109,10 +109,17 @@ export default function Navbar() {
     { name: "Actividades", href: "/actividades", icon: "🎯" },
   ];
 
-  const navigation =
+  const navigation =
     user?.role === "admin"
       ? [...baseNavigation, { name: "Usuarios", href: "/usuarios", icon: "👥" }]
-      : baseNavigation;
+      : baseNavigation;
+
+  const augmentedNavigation =
+    user?.role === "admin"
+      ? [...navigation, { name: "Sedes", href: "/sedes", icon: "📍" }, { name: "Catálogos", href: "/catalogos", icon: "🗂️" }]
+      : user?.role === "supervisor_central"
+        ? [...navigation, { name: "Sedes", href: "/sedes", icon: "📍" }, { name: "Catálogos", href: "/catalogos", icon: "🗂️" }]
+        : navigation;
 
 
   return (
@@ -136,7 +143,7 @@ export default function Navbar() {
 
           {/* Navegación Desktop */}
           <div className="hidden md:flex items-center space-x-1">
-            {navigation.map((item) => (
+            {baseNavigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
@@ -199,7 +206,7 @@ export default function Navbar() {
                       </div>
                       
                       <div className="md:hidden">
-                        {navigation.map((item) => (
+                        {baseNavigation.map((item) => (
                           <Link
                             key={item.name}
                             href={item.href}
@@ -210,10 +217,76 @@ export default function Navbar() {
                             {item.name}
                           </Link>
                         ))}
-                        <hr className="my-1" />
+                        <hr className="my-1" />
+
+                        {(user?.role === 'admin' || user?.role === 'supervisor_central') && (
+                          <>
+                            <div className="px-4 py-2 text-xs font-semibold text-gray-500">Administración</div>
+                            <Link
+                              href="/sedes"
+                              className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              <span>📍</span>
+                              Sedes
+                            </Link>
+                            <Link
+                              href="/catalogos"
+                              className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              <span>🗂️</span>
+                              Catálogos
+                            </Link>
+                            {user?.role === 'admin' && (
+                              <Link
+                                href="/usuarios"
+                                className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                onClick={() => setIsMenuOpen(false)}
+                              >
+                                <span>👤</span>
+                                Usuarios
+                              </Link>
+                            )}
+                            <hr className="my-1" />
+                          </>
+                        )}
                       </div>
 
-                      <button
+                      {(user?.role === 'admin' || user?.role === 'supervisor_central') && (
+                        <div className="py-1">
+                          <div className="px-4 py-2 text-xs font-semibold text-gray-500">Administración</div>
+                          <Link
+                            href="/sedes"
+                            className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <span>📍</span>
+                            Sedes
+                          </Link>
+                          <Link
+                            href="/catalogos"
+                            className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <span>🗂️</span>
+                            Catálogos
+                          </Link>
+                          {user?.role === 'admin' && (
+                            <Link
+                              href="/usuarios"
+                              className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              <span>👤</span>
+                              Usuarios
+                            </Link>
+                          )}
+                          <hr className="my-1" />
+                        </div>
+                      )}
+
+                      <button
                         onClick={signOut}
                         className="flex items-center space-x-3 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                       >
