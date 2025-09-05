@@ -74,6 +74,17 @@ export default function ProyectosPage() {
     loadData();
   }, []);
 
+  // Inicializa filtro desde querystring (estado=...)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : "");
+      const estado = params.get('estado');
+      if (estado) setFilterEstado(estado);
+    } catch (_) {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     filterProgramas();
   }, [programas, searchTerm, filterEstado]);
@@ -491,9 +502,6 @@ export default function ProyectosPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                       </button>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      ID: {programa.id.substring(0, 8)}...
                     </div>
                   </div>
                 </div>

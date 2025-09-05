@@ -12,7 +12,7 @@ export default function Actividades() {
   const [programas, setProgramas] = useState<{ value: string; label: string }[]>([]);
   const [tipos, setTipos] = useState<{ value: string; label: string }[]>([]);
   const [subtipos, setSubtipos] = useState<{ value: string; label: string }[]>([]);
-  const [list, setList] = useState<Pick<Tables<'actividad'>, 'id' | 'fecha' | 'hora_inicio' | 'hora_fin' | 'programa_id'>[]>([]);
+  const [list, setList] = useState<(Pick<Tables<'actividad'>, 'id' | 'fecha' | 'hora_inicio' | 'hora_fin' | 'programa_id'> & { programa?: { nombre?: string } | null })[]>([]);
 
   const [form, setForm] = useState<any>({
     programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:""
@@ -31,8 +31,11 @@ export default function Actividades() {
       const { data: s } = await supabase.from("actividad_subtipo").select("id,nombre");
       setSubtipos(((s as Pick<Tables<'actividad_subtipo'>,'id'|'nombre'>[] | null) || [])
         .map(x => ({ value: x.id, label: x.nombre })));
-      const { data: a } = await supabase.from("actividad").select("id,fecha,hora_inicio,hora_fin,programa_id").order("fecha",{ascending:false});
-      setList((a as Pick<Tables<'actividad'>, 'id' | 'fecha' | 'hora_inicio' | 'hora_fin' | 'programa_id'>[] | null) || []);
+      const { data: a } = await supabase
+        .from("actividad")
+        .select("id,fecha,hora_inicio,hora_fin,programa_id, programa:programa_id(nombre)")
+        .order("fecha",{ascending:false});
+      setList(((a as any[]) || []) as any);
     })();
   },[]);
 
@@ -62,8 +65,11 @@ export default function Actividades() {
     } as any);
     if (error) alert(error.message);
     else {
-      const { data: a } = await supabase.from("actividad").select("id,fecha,hora_inicio,hora_fin,programa_id").order("fecha",{ascending:false});
-      setList((a as Pick<Tables<'actividad'>, 'id' | 'fecha' | 'hora_inicio' | 'hora_fin' | 'programa_id'>[] | null) || []);
+      const { data: a } = await supabase
+        .from("actividad")
+        .select("id,fecha,hora_inicio,hora_fin,programa_id, programa:programa_id(nombre)")
+        .order("fecha",{ascending:false});
+      setList(((a as any[]) || []) as any);
       setForm({programa_id:"",fecha:"",hora_inicio:"",hora_fin:"",tipo_id:"",subtipo_id:"",facilitador_id:"",cupo:""});
       setErrors({});
     }
@@ -152,7 +158,9 @@ export default function Actividades() {
             <div key={a.id} className="card p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <div className="font-medium">{a.fecha} {a.hora_inicio}-{a.hora_fin}</div>
-                <div className="text-xs text-gray-600">Proyecto: {a.programa_id.substring(0,8)}…</div>
+                {a.programa?.nombre && (
+                  <div className="text-xs text-gray-600">Proyecto: {a.programa.nombre}</div>
+                )}
               </div>
               <div className="flex gap-2">
                 <Link className="btn btn-primary btn-sm" href={`/asistencia/${a.id}`}>Registrar asistencia</Link>

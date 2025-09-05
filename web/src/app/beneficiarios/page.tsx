@@ -272,7 +272,6 @@ export default function BeneficiariosPage() {
                         <div className="text-sm font-medium text-gray-900">
                           {b.nombre} {b.primer_apellido} {b.segundo_apellido ?? ''}
                         </div>
-                        <div className="text-xs text-gray-500">ID: {b.id.substring(0,8)}...</div>
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{b.sexo}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
