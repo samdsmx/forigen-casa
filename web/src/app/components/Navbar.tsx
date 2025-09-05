@@ -105,7 +105,7 @@ export default function Navbar() {
 
   const baseNavigation = [
     { name: "Dashboard", href: "/", icon: "🏠" },
-    { name: "Programas", href: "/programas", icon: "📋" },
+    { name: "Proyectos", href: "/proyectos", icon: "📋" },
     { name: "Actividades", href: "/actividades", icon: "🎯" },
   ];
 
@@ -129,7 +129,7 @@ export default function Navbar() {
               
               />
               <div className="flex flex-col">
-                <span className="font-bold text-gray-800">Gestión de Programas</span>
+                <span className="font-bold text-gray-800">Gestión de Proyectos</span>
                 <span className="text-xs text-gray-600 hidden sm:block">Espacios de Empoderamiento Integral</span>
               </div>
           </div>

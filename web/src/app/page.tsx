@@ -92,8 +92,8 @@ export default function Dashboard() {
         ...(((programas as any[]) || [])).map(p => ({
           id: p.id,
           type: 'programa' as const,
-          title: `Nuevo programa: ${p.nombre}`,
-          description: 'Programa creado exitosamente',
+          title: `Nuevo proyecto: ${p.nombre}`,
+          description: 'Proyecto creado exitosamente',
           date: p.created_at ?? '',
           icon: '📋'
         })),
@@ -194,7 +194,7 @@ export default function Dashboard() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 slide-up">
           <StatCard
-            title="Programas Activos"
+            title="Proyectos Activos"
             value={stats.programas}
             icon="📋"
             color="bg-gradient-to-br from-brand-100 to-brand-200"
@@ -267,7 +267,7 @@ export default function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                     <h3 className="mt-2 text-sm font-medium text-gray-900">Sin actividad reciente</h3>
-                    <p className="mt-1 text-sm text-gray-500">Comienza creando tu primer programa.</p>
+                    <p className="mt-1 text-sm text-gray-500">Comienza creando tu primer proyecto.</p>
                   </div>
                 )}
               </div>
@@ -284,14 +284,14 @@ export default function Dashboard() {
               <div className="card-body">
                 <div className="space-y-3">
                   <Link
-                    href="/programas"
+                    href="/proyectos"
                     className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50 transition-all group"
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-brand-100 rounded-lg flex items-center justify-center group-hover:bg-brand-200 transition-colors">
                         <span className="text-sm">📋</span>
                       </div>
-                      <span className="text-sm font-medium text-gray-900">Gestionar Programas</span>
+                      <span className="text-sm font-medium text-gray-900">Gestionar Proyectos</span>
                     </div>
                     <svg className="w-4 h-4 text-gray-500 group-hover:text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />

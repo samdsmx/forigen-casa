@@ -23,7 +23,7 @@ web/
       layout.tsx
       page.tsx
       login/page.tsx
-      programas/page.tsx
+      proyectos/page.tsx
       actividades/page.tsx
       asistencia/[actividadId]/page.tsx
     components/

@@ -45,7 +45,7 @@ interface FormData {
   estado: string;
 }
 
-export default function ProgramasPage() {
+export default function ProyectosPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [filteredProgramas, setFilteredProgramas] = useState<Programa[]>([]);
   const [sedes, setSedes] = useState<{ value: string; label: string }[]>([]);
@@ -235,10 +235,10 @@ export default function ProgramasPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Programas
+              Proyectos
             </h1>
             <p className="text-gray-600">
-              Gestiona los programas activos y sus actividades
+              Gestiona los proyectos activos y sus actividades
             </p>
           </div>
           
@@ -251,7 +251,7 @@ export default function ProgramasPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                {showForm ? 'Cancelar' : 'Nuevo Programa'}
+                {showForm ? 'Cancelar' : 'Nuevo Proyecto'}
               </button>
             </div>
           </Role>
@@ -273,16 +273,16 @@ export default function ProgramasPage() {
         {showForm && (
           <div className="animate-fade-in-down">
             <FormCard
-              title="Crear Nuevo Programa"
+              title="Crear Nuevo Proyecto"
               description="Complete la información del programa que desea crear"
             >
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Field
-                    label="Nombre del Programa"
+                    label="Nombre del Proyecto"
                     value={formData.nombre}
                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                    placeholder="Ej: Programa de Desarrollo Comunitario"
+                    placeholder="Ej: Proyecto de Desarrollo Comunitario"
                     required
                   />
 
@@ -339,10 +339,10 @@ export default function ProgramasPage() {
                 </div>
 
                 <Textarea
-                  label="Objetivo del Programa"
+                  label="Objetivo del Proyecto"
                   value={formData.objetivo}
                   onChange={(e) => setFormData({ ...formData, objetivo: e.target.value })}
-                  placeholder="Describa los objetivos principales del programa..."
+                  placeholder="Describa los objetivos principales del proyecto..."
                   rows={3}
                 />
 
@@ -350,7 +350,7 @@ export default function ProgramasPage() {
                   label="Metas Clave"
                   value={formData.metas_clave}
                   onChange={(e) => setFormData({ ...formData, metas_clave: e.target.value })}
-                  placeholder="Defina las metas específicas y medibles del programa..."
+                  placeholder="Defina las metas específicas y medibles del proyecto..."
                   rows={3}
                 />
 
@@ -373,7 +373,7 @@ export default function ProgramasPage() {
                         <div className="loading-spinner"></div>
                       </div>
                     )}
-                    {creating ? "Creando..." : "Crear Programa"}
+                    {creating ? "Creando..." : "Crear Proyecto"}
                   </button>
                 </div>
               </form>
@@ -508,12 +508,12 @@ export default function ProgramasPage() {
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchTerm || filterEstado ? 'No se encontraron programas' : 'No hay programas creados'}
+              {searchTerm || filterEstado ? 'No se encontraron proyectos' : 'No hay proyectos creados'}
             </h3>
             <p className="text-gray-500 mb-6">
               {searchTerm || filterEstado 
                 ? 'Intenta ajustar los filtros de búsqueda'
-                : 'Comienza creando tu primer programa para organizar las actividades'
+                : 'Comienza creando tu primer proyecto para organizar las actividades'
               }
             </p>
             {!searchTerm && !filterEstado && (
@@ -525,7 +525,7 @@ export default function ProgramasPage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  Crear Primer Programa
+                  Crear Primer Proyecto
                 </button>
               </Role>
             )}
@@ -539,7 +539,7 @@ export default function ProgramasPage() {
               <div>
                 <div className="text-2xl font-bold text-gray-900">{filteredProgramas.length}</div>
                 <div className="text-sm text-gray-500">
-                  {filteredProgramas.length === 1 ? 'Programa' : 'Programas'}
+                  {filteredProgramas.length === 1 ? 'Proyecto' : 'Proyectos'}
                 </div>
               </div>
               <div>

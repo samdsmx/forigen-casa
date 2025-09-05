@@ -63,7 +63,7 @@ export default function LoginPage() {
             height={64}
             className="mx-auto mb-2"
           />
-          <p className="text-gray-600 font-bold">Sistema de Gestión de Programas</p>
+          <p className="text-gray-600 font-bold">Sistema de Gestión de Proyectos</p>
 
         </div>
 

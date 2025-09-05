@@ -97,13 +97,13 @@ export default function Actividades() {
           <Role allow={['admin','supervisor_central','coordinador_sede']}>
             <form onSubmit={create} className="card p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               <Select
-                label="Programa"
+                label="Proyecto"
                 options={programas}
                 value={form.programa_id}
                 onChange={(e:any)=>setForm({...form,programa_id:e.target.value})}
                 required
                 error={errors.programa_id}
-                help="Programa al que pertenece la actividad"
+                help="Proyecto al que pertenece la actividad"
               />
               <Field
                 label="Fecha"
@@ -152,7 +152,7 @@ export default function Actividades() {
             <div key={a.id} className="card p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <div className="font-medium">{a.fecha} {a.hora_inicio}-{a.hora_fin}</div>
-                <div className="text-xs text-gray-600">Programa: {a.programa_id.substring(0,8)}…</div>
+                <div className="text-xs text-gray-600">Proyecto: {a.programa_id.substring(0,8)}…</div>
               </div>
               <div className="flex gap-2">
                 <Link className="btn btn-primary btn-sm" href={`/asistencia/${a.id}`}>Registrar asistencia</Link>
