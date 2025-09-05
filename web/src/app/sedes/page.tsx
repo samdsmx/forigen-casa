@@ -26,8 +26,8 @@ export default function SedesPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const [newForm, setNewForm] = useState<Pick<Sede, "nombre" | "slug" | "estado">>({ nombre: "", slug: "", estado: "" as any });
-  const [editing, setEditing] = useState<Record<string, Pick<Sede, "nombre" | "slug" | "estado">>>({});
+  const [newForm, setNewForm] = useState<Pick<Sede, "nombre" | "estado">>({ nombre: "", estado: "" as any });
+  const [editing, setEditing] = useState<Record<string, Pick<Sede, "nombre" | "estado">>>({});
 
   const slugExists = useMemo(() => new Set(sedes.map(s => s.slug)), [sedes]);
 
@@ -60,7 +60,7 @@ export default function SedesPage() {
       setError("Ingresa el nombre de la sede");
       return;
     }
-    const slug = (newForm.slug || slugify(newForm.nombre));
+    const slug = slugify(newForm.nombre);
     if (slugExists.has(slug)) {
       setError("El slug ya existe. Ajusta el nombre/slug");
       return;
@@ -75,7 +75,7 @@ export default function SedesPage() {
       const { error } = await (supabase as any).from("sede").insert(payload);
       if (error) throw error;
       setNotice("Sede creada");
-      setNewForm({ nombre: "", slug: "", estado: "" as any });
+      setNewForm({ nombre: "", estado: "" as any });
       await load();
       clearNoticeLater();
     } catch (e) {
@@ -86,7 +86,7 @@ export default function SedesPage() {
   };
 
   const startEdit = (s: Sede) => {
-    setEditing(prev => ({ ...prev, [s.id]: { nombre: s.nombre, slug: s.slug, estado: (s.estado as any) ?? "" } }));
+    setEditing(prev => ({ ...prev, [s.id]: { nombre: s.nombre, estado: (s.estado as any) ?? "" } }));
   };
   const cancelEdit = (id: string) => {
     setEditing(prev => { const p = { ...prev }; delete p[id]; return p; });
@@ -99,10 +99,8 @@ export default function SedesPage() {
     setNotice(null);
     try {
       if (!form.nombre.trim()) throw new Error("El nombre es requerido");
-      const newSlug = form.slug?.trim() || slugify(form.nombre);
-      const otherSlugs = new Set(sedes.filter(s => s.id !== id).map(s => s.slug));
-      if (otherSlugs.has(newSlug)) throw new Error("El slug ya existe");
-      const payload: TablesUpdate<'sede'> = { nombre: form.nombre.trim(), slug: newSlug, estado: form.estado || null } as TablesUpdate<'sede'>;
+      // Conserva el slug actual; solo actualiza nombre y estado
+      const payload: TablesUpdate<'sede'> = { nombre: form.nombre.trim(), estado: form.estado || null } as TablesUpdate<'sede'>;
       const { error } = await (supabase as any).from("sede").update(payload).eq("id", id);
       if (error) throw error;
       setNotice("Sede actualizada");
@@ -141,7 +139,7 @@ export default function SedesPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Sedes</h1>
-              <p className="text-gray-600">Administra sedes (nombre, slug y estado)</p>
+              <p className="text-gray-600">Administra sedes (nombre y estado)</p>
             </div>
           </div>
 
@@ -149,7 +147,7 @@ export default function SedesPage() {
           {error && <div className="alert alert-error">{error}</div>}
 
           <div className="card p-5 md:p-6">
-            <form onSubmit={create} className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-end">
+            <form onSubmit={create} className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 items-end">
               <Field
                 label="Nombre"
                 value={newForm.nombre}
@@ -158,18 +156,12 @@ export default function SedesPage() {
                 placeholder="Ej. Centro Comunitario Norte"
               />
               <Field
-                label="Slug"
-                value={newForm.slug || slugify(newForm.nombre)}
-                onChange={e => setNewForm({ ...newForm, slug: e.target.value })}
-                placeholder="centro-comunitario-norte"
-              />
-              <Field
                 label="Estado (opcional)"
                 value={(newForm.estado as any) || ""}
                 onChange={e => setNewForm({ ...newForm, estado: e.target.value as any })}
                 placeholder="Ej. Oaxaca"
               />
-              <div className="sm:col-span-3 flex justify-end">
+              <div className="sm:col-span-2 flex justify-end">
                 <button type="submit" className="btn btn-primary btn-md" disabled={saving === "new"}>
                   {saving === "new" ? "Agregando..." : "Agregar sede"}
                 </button>
@@ -185,7 +177,6 @@ export default function SedesPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Slug</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Estado</th>
                     <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
                   </tr>
@@ -193,7 +184,7 @@ export default function SedesPage() {
                 <tbody className="bg-white divide-y divide-gray-100">
                   {sedes.map(s => {
                     const isEditing = !!editing[s.id];
-                    const form = editing[s.id] || { nombre: s.nombre, slug: s.slug, estado: s.estado as any };
+                    const form = editing[s.id] || { nombre: s.nombre, estado: s.estado as any };
                     return (
                       <tr key={s.id}>
                         <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
@@ -201,13 +192,6 @@ export default function SedesPage() {
                             <Field label="" value={form.nombre} onChange={e => setEditing(prev => ({ ...prev, [s.id]: { ...form, nombre: e.target.value } }))} />
                           ) : (
                             s.nombre
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
-                          {isEditing ? (
-                            <Field label="" value={form.slug} onChange={e => setEditing(prev => ({ ...prev, [s.id]: { ...form, slug: e.target.value } }))} />
-                          ) : (
-                            s.slug
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900 min-w-[160px]">
