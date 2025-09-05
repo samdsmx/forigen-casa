@@ -114,13 +114,13 @@ export default function BeneficiariosPage() {
         const payload: TablesUpdate<'beneficiario'> = {
           ...formData,
         } as any;
-        const { error } = await supabase.from('beneficiario').update(payload).eq('id', editingId);
+        const { error } = await (supabase as any).from('beneficiario').update(payload).eq('id', editingId);
         if (error) throw error;
       } else {
         const payload: TablesInsert<'beneficiario'> = {
           ...formData,
         } as any;
-        const { error } = await supabase.from('beneficiario').insert(payload);
+        const { error } = await (supabase as any).from('beneficiario').insert(payload);
         if (error) throw error;
       }
 
