@@ -31,10 +31,25 @@ export default function Dashboard() {
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    let timeout: any;
+    (async () => {
+      setLoading(true);
+      setLoadError(null);
+      await loadDashboardData();
+    })();
+    timeout = setTimeout(() => {
+      if (loading) {
+        setLoadError('La carga tomó demasiado tiempo.');
+        setLoading(false);
+      }
+    }, 10000);
+    return () => clearTimeout(timeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt]);
 
   const loadDashboardData = async () => {
     try {
@@ -110,6 +125,7 @@ export default function Dashboard() {
       setRecentActivities(activities);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
+      setLoadError(error instanceof Error ? error.message : 'Error al cargar');
     } finally {
       setLoading(false);
     }
@@ -163,6 +179,14 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+          {loadError && (
+            <div className="mt-6 alert alert-error flex items-center justify-between">
+              <span>{loadError}</span>
+              <button className="btn btn-secondary btn-sm" onClick={() => setAttempt(a => a + 1)}>
+                Reintentar
+              </button>
+            </div>
+          )}
         </div>
       </Protected>
     );
