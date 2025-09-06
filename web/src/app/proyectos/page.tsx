@@ -59,6 +59,8 @@ export default function ProyectosPage() {
   const [filterEstado, setFilterEstado] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   
   const [formData, setFormData] = useState<FormData>({
     nombre: "",
@@ -73,8 +75,21 @@ export default function ProyectosPage() {
   });
 
   useEffect(() => {
-    loadData();
-  }, []);
+    let timeout: any;
+    (async () => {
+      setLoading(true);
+      setLoadError(null);
+      await loadData();
+    })();
+    timeout = setTimeout(() => {
+      if (loading) {
+        setLoadError('La carga tomó demasiado tiempo.');
+        setLoading(false);
+      }
+    }, 10000);
+    return () => clearTimeout(timeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt]);
 
   // Inicializa filtro desde querystring (estado=...)
   useEffect(() => {
@@ -95,6 +110,7 @@ export default function ProyectosPage() {
     try {
       setLoading(true);
       setError(null);
+      setLoadError(null);
 
       // Load dropdowns data
       const [sedesRes, temasRes, poblacionRes] = await Promise.all([
@@ -131,6 +147,7 @@ export default function ProyectosPage() {
       setProgramas(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar los datos');
+      setLoadError(err instanceof Error ? err.message : 'Error al cargar');
       console.error('Error loading programas:', err);
     } finally {
       setLoading(false);
@@ -243,6 +260,12 @@ export default function ProyectosPage() {
                 </div>
               ))}
             </div>
+            {loadError && (
+              <div className="alert alert-error flex items-center justify-between">
+                <span>{loadError}</span>
+                <button className="btn btn-secondary btn-sm" onClick={() => setAttempt(a => a + 1)}>Reintentar</button>
+              </div>
+            )}
           </div>
         </div>
       </Protected>

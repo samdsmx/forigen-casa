@@ -12,6 +12,8 @@ export default function BeneficiariosPage() {
   const [beneficiarios, setBeneficiarios] = useState<Beneficiario[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   const [search, setSearch] = useState("");
 
@@ -33,13 +35,27 @@ export default function BeneficiariosPage() {
   });
 
   useEffect(() => {
-    loadBeneficiarios();
-  }, []);
+    let timeout: any;
+    (async () => {
+      setLoading(true);
+      setLoadError(null);
+      await loadBeneficiarios();
+    })();
+    timeout = setTimeout(() => {
+      if (loading) {
+        setLoadError('La carga tomó demasiado tiempo.');
+        setLoading(false);
+      }
+    }, 10000);
+    return () => clearTimeout(timeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attempt]);
 
   const loadBeneficiarios = async () => {
     try {
       setLoading(true);
       setError(null);
+      setLoadError(null);
       const { data, error } = await supabase
         .from("beneficiario")
         .select("*")
@@ -48,6 +64,7 @@ export default function BeneficiariosPage() {
       setBeneficiarios((data as Beneficiario[]) || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar beneficiarios");
+      setLoadError(err instanceof Error ? err.message : 'Error al cargar');
     } finally {
       setLoading(false);
     }
@@ -243,14 +260,25 @@ export default function BeneficiariosPage() {
 
         {/* Lista */}
         {loading ? (
-          <div className="card">
-            <div className="card-body">
-              <div className="animate-pulse h-6 bg-gray-200 rounded w-1/3 mb-3"></div>
-              <div className="animate-pulse h-4 bg-gray-200 rounded w-2/3"></div>
+          <>
+            <div className="card">
+              <div className="card-body">
+                <div className="animate-pulse h-6 bg-gray-200 rounded w-1/3 mb-3"></div>
+                <div className="animate-pulse h-4 bg-gray-200 rounded w-2/3"></div>
+              </div>
             </div>
-          </div>
+            {loadError && (
+              <div className="mt-4 alert alert-error flex items-center justify-between">
+                <span>{loadError}</span>
+                <button className="btn btn-secondary btn-sm" onClick={() => setAttempt(a => a + 1)}>Reintentar</button>
+              </div>
+            )}
+          </>
         ) : error ? (
-          <div className="alert alert-error">{error}</div>
+          <div className="alert alert-error flex items-center justify-between">
+            <span>{error}</span>
+            <button className="btn btn-secondary btn-sm" onClick={() => setAttempt(a => a + 1)}>Reintentar</button>
+          </div>
         ) : filtered.length > 0 ? (
           <div className="card">
             <div className="card-body overflow-x-auto">
