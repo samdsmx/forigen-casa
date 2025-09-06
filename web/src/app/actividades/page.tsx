@@ -6,13 +6,19 @@ import { supabase } from "../lib/supabaseClient";
 import type { Tables } from "app/types/supabase";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Field, Select } from "../components/Forms";
+import { Field, Select, SearchInput } from "../components/Forms";
 
 export default function Actividades() {
   const [programas, setProgramas] = useState<{ value: string; label: string }[]>([]);
   const [tipos, setTipos] = useState<{ value: string; label: string }[]>([]);
   const [subtipos, setSubtipos] = useState<{ value: string; label: string }[]>([]);
   const [list, setList] = useState<(Pick<Tables<'actividad'>, 'id' | 'fecha' | 'hora_inicio' | 'hora_fin' | 'programa_id'> & { programa?: { nombre?: string } | null })[]>([]);
+  const [filterProgramaId, setFilterProgramaId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterTipoId, setFilterTipoId] = useState("");
+  const [filterSubtipoId, setFilterSubtipoId] = useState("");
+  const [filterDesde, setFilterDesde] = useState("");
+  const [filterHasta, setFilterHasta] = useState("");
 
   const [form, setForm] = useState<any>({
     programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:""
@@ -38,6 +44,28 @@ export default function Actividades() {
       setList(((a as any[]) || []) as any);
     })();
   },[]);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : "");
+      const pid = params.get('programa_id');
+      setFilterProgramaId(pid);
+    } catch { /* ignore */ }
+  }, []);
+
+  const filteredList = list.filter(a => {
+    if (filterProgramaId && a.programa_id !== filterProgramaId) return false;
+    if (filterTipoId && (a as any).tipo_id !== filterTipoId) return false;
+    if (filterSubtipoId && (a as any).subtipo_id !== filterSubtipoId) return false;
+    if (filterDesde && a.fecha < filterDesde) return false;
+    if (filterHasta && a.fecha > filterHasta) return false;
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      const nombreProg = a.programa?.nombre?.toLowerCase() || "";
+      if (!nombreProg.includes(q)) return false;
+    }
+    return true;
+  });
 
   const create = async (e:any) => {
     e.preventDefault();
@@ -153,8 +181,71 @@ export default function Actividades() {
           </Role>
         )}
 
+        {/* Filtros de lista */}
+        <div className="card">
+          <div className="card-body">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="lg:col-span-2">
+                <SearchInput
+                  placeholder="Buscar por nombre de proyecto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm((e.target as HTMLInputElement).value)}
+                  onClear={() => setSearchTerm("")}
+                />
+              </div>
+              <Select
+                label="Proyecto"
+                options={programas}
+                value={filterProgramaId ?? ""}
+                onChange={(e:any) => setFilterProgramaId(e.target.value || null)}
+              />
+              <Select
+                label="Tipo"
+                options={[{ value: "", label: "Todos" }, ...tipos]}
+                value={filterTipoId}
+                onChange={(e:any) => setFilterTipoId(e.target.value)}
+              />
+              <Select
+                label="Subtipo"
+                options={[{ value: "", label: "Todos" }, ...subtipos]}
+                value={filterSubtipoId}
+                onChange={(e:any) => setFilterSubtipoId(e.target.value)}
+              />
+              <Field
+                label="Desde"
+                type="date"
+                value={filterDesde}
+                onChange={(e:any) => setFilterDesde(e.target.value)}
+              />
+              <Field
+                label="Hasta"
+                type="date"
+                value={filterHasta}
+                onChange={(e:any) => setFilterHasta(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-3 mt-4">
+              {(filterProgramaId || filterTipoId || filterSubtipoId || filterDesde || filterHasta || searchTerm) && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => { setFilterProgramaId(null); setFilterTipoId(""); setFilterSubtipoId(""); setFilterDesde(""); setFilterHasta(""); setSearchTerm(""); }}
+                >
+                  Limpiar filtros
+                </button>
+              )}
+              {filterProgramaId && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
+                  Proyecto: {programas.find(p => p.value === filterProgramaId)?.label || filterProgramaId}
+                  <button type="button" className="ml-2 text-brand-700 hover:text-brand-900" onClick={() => setFilterProgramaId(null)}>×</button>
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
         <section className="grid gap-3">
-          {list.map((a)=> (
+          {filteredList.map((a)=> (
             <div key={a.id} className="card p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <div className="font-medium">{a.fecha} {a.hora_inicio}-{a.hora_fin}</div>

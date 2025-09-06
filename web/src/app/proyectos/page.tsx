@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "../lib/supabaseClient";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
@@ -57,6 +58,7 @@ export default function ProyectosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterEstado, setFilterEstado] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<FormData>({
     nombre: "",
@@ -171,9 +173,16 @@ export default function ProyectosPage() {
         estado: formData.estado
       };
 
-      const { error } = await (supabase as any).from("programa").insert(payload);
-
-      if (error) throw error;
+      if (editingId) {
+        const { error } = await (supabase as any)
+          .from("programa")
+          .update(payload)
+          .eq("id", editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any).from("programa").insert(payload);
+        if (error) throw error;
+      }
 
       // Reset form and reload data
       setFormData({
@@ -188,6 +197,7 @@ export default function ProyectosPage() {
         estado: "activo"
       });
       setShowForm(false);
+      setEditingId(null);
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear el programa');
@@ -256,7 +266,7 @@ export default function ProyectosPage() {
           <Role allow={['admin', 'supervisor_central', 'coordinador_sede']}>
             <div className="mt-4 sm:mt-0">
               <button
-                onClick={() => setShowForm(!showForm)}
+                onClick={() => { setShowForm(!showForm); if (!showForm) setEditingId(null); }}
                 className="btn btn-primary btn-md"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -424,10 +434,10 @@ export default function ProyectosPage() {
             {filteredProgramas.map((programa, index) => (
               <div
                 key={programa.id}
-                className="card hover:shadow-lg transition-all duration-200 animate-fade-in"
+                className="card hover:shadow-lg transition-all duration-200 animate-fade-in h-full flex flex-col"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div className="card-body">
+                <div className="card-body flex flex-col h-full">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-2">
                       <span className="text-2xl">{getEstadoIcon(programa.estado)}</span>
@@ -489,20 +499,35 @@ export default function ProyectosPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
                     <div className="flex space-x-2">
-                      <button className="btn btn-secondary btn-sm">
+                      <button className="btn btn-secondary btn-sm" onClick={() => {
+                        setFormData({
+                          nombre: programa.nombre,
+                          objetivo: programa.objetivo ?? "",
+                          sede_id: programa.sede?.id ?? "",
+                          tema_id: programa.tema?.id ?? "",
+                          poblacion_grupo_id: programa.poblacion_grupo?.id ?? "",
+                          fecha_inicio: (programa.fecha_inicio as any) || "",
+                          fecha_fin: (programa.fecha_fin as any) || "",
+                          metas_clave: programa.metas_clave ?? "",
+                          estado: programa.estado
+                        });
+                        setEditingId(programa.id);
+                        setShowForm(true);
+                      }}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                       </button>
-                      <button className="btn btn-secondary btn-sm">
+                      <a className="btn btn-secondary btn-sm" href={`/actividades?programa_id=${programa.id}`}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                      </button>
+                      </a>
                     </div>
+                    <div className="text-xs text-gray-500"></div>
                   </div>
                 </div>
               </div>
