@@ -246,6 +246,7 @@ export default function Dashboard() {
             trend="+15% vs mes anterior"
           />
           </Link>
+          <Link href="/asistencias" className="block">
           <StatCard
             title="Asistencias Registradas"
             value={stats.asistencia_total}
@@ -253,6 +254,7 @@ export default function Dashboard() {
             color="bg-gradient-to-br from-orange-100 to-orange-200"
             trend="+25% vs mes anterior"
           />
+          </Link>
         </div>
 
         {/* Content Grid */}
@@ -379,3 +381,5 @@ export default function Dashboard() {
     </Protected>
   );
 }
+
+
