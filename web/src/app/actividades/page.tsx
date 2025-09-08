@@ -1,4 +1,3 @@
-
 "use client";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
@@ -6,12 +5,14 @@ import { supabase } from "../lib/supabaseClient";
 import type { Tables } from "app/types/supabase";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Field, Select, SearchInput } from "../components/Forms";
+import { Field, Select, SearchInput, Textarea } from "../components/Forms";
 
 export default function Actividades() {
   const [programas, setProgramas] = useState<{ value: string; label: string }[]>([]);
   const [tipos, setTipos] = useState<{ value: string; label: string }[]>([]);
   const [subtipos, setSubtipos] = useState<{ value: string; label: string }[]>([]);
+  const [facilitadores, setFacilitadores] = useState<{ value: string; label: string }[]>([]);
+  const [sedes, setSedes] = useState<{ value: string; label: string }[]>([]);
   const [list, setList] = useState<(Pick<Tables<'actividad'>, 'id' | 'fecha' | 'hora_inicio' | 'hora_fin' | 'programa_id'> & { programa?: { nombre?: string } | null })[]>([]);
   const [filterProgramaId, setFilterProgramaId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,12 +20,15 @@ export default function Actividades() {
   const [filterSubtipoId, setFilterSubtipoId] = useState("");
   const [filterDesde, setFilterDesde] = useState("");
   const [filterHasta, setFilterHasta] = useState("");
+  const [filterFacilitadorId, setFilterFacilitadorId] = useState("");
+  const [filterSedeId, setFilterSedeId] = useState("");
 
   const [form, setForm] = useState<any>({
-    programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:""
+    programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:"", ubicacion:"", notas:""
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(()=>{
     (async()=>{
@@ -37,9 +41,24 @@ export default function Actividades() {
       const { data: s } = await supabase.from("actividad_subtipo").select("id,nombre");
       setSubtipos(((s as Pick<Tables<'actividad_subtipo'>,'id'|'nombre'>[] | null) || [])
         .map(x => ({ value: x.id, label: x.nombre })));
+      // Cargar usuarios (excepto admin) para facilitador
+      try {
+        const resp = await fetch('/api/users');
+        const users = await resp.json();
+        const opts = (users as any[])
+          .filter(u => (u.role || '').toLowerCase() !== 'admin')
+          .map(u => ({ value: u.id as string, label: `${u.email || u.id}${u.role ? ' - ' + u.role : ''}` }));
+        setFacilitadores([{ value: '', label: 'Sin facilitador' }, ...opts]);
+      } catch {}
+      // Cargar sedes
+      try {
+        const { data: sed } = await supabase.from('sede').select('id,nombre');
+        setSedes(((sed as Pick<Tables<'sede'>,'id'|'nombre'>[] | null) || [])
+          .map(x => ({ value: x.id, label: x.nombre })));
+      } catch {}
       const { data: a } = await supabase
         .from("actividad")
-        .select("id,fecha,hora_inicio,hora_fin,programa_id, programa:programa_id(nombre)")
+        .select("id,fecha,hora_inicio,hora_fin,programa_id, facilitador_id, tipo:tipo_id(nombre), subtipo:subtipo_id(nombre), sede:sede_id(nombre), programa:programa_id(nombre)")
         .order("fecha",{ascending:false});
       setList(((a as any[]) || []) as any);
     })();
@@ -57,6 +76,8 @@ export default function Actividades() {
     if (filterProgramaId && a.programa_id !== filterProgramaId) return false;
     if (filterTipoId && (a as any).tipo_id !== filterTipoId) return false;
     if (filterSubtipoId && (a as any).subtipo_id !== filterSubtipoId) return false;
+    if (filterFacilitadorId && (a as any).facilitador_id !== filterFacilitadorId) return false;
+    if (filterSedeId && (a as any).sede_id !== filterSedeId) return false;
     if (filterDesde && a.fecha < filterDesde) return false;
     if (filterHasta && a.fecha > filterHasta) return false;
     if (searchTerm) {
@@ -81,24 +102,36 @@ export default function Actividades() {
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
-    const { error } = await supabase.from("actividad").insert({
+    const payload: any = {
       programa_id: form.programa_id,
       fecha: form.fecha,
-      hora_inicio: form.hora_inicio,
-      hora_fin: form.hora_fin,
+      hora_inicio: form.hora_inicio || null,
+      hora_fin: form.hora_fin || null,
       tipo_id: form.tipo_id || null,
       subtipo_id: form.subtipo_id || null,
       facilitador_id: form.facilitador_id || null,
-      cupo: form.cupo ? Number(form.cupo) : null
-    } as any);
+      cupo: form.cupo ? Number(form.cupo) : null,
+      ubicacion: form.ubicacion || null,
+      notas: form.notas || null,
+    };
+
+    let error: any = null;
+    if (editingId) {
+      const resp = await (supabase as any).from("actividad").update(payload).eq("id", editingId);
+      error = resp.error;
+    } else {
+      const resp = await (supabase as any).from("actividad").insert(payload as any);
+      error = resp.error;
+    }
     if (error) alert(error.message);
     else {
       const { data: a } = await supabase
         .from("actividad")
-        .select("id,fecha,hora_inicio,hora_fin,programa_id, programa:programa_id(nombre)")
+        .select("id,fecha,hora_inicio,hora_fin,programa_id, facilitador_id, tipo:tipo_id(nombre), subtipo:subtipo_id(nombre), sede:sede_id(nombre), programa:programa_id(nombre)")
         .order("fecha",{ascending:false});
       setList(((a as any[]) || []) as any);
-      setForm({programa_id:"",fecha:"",hora_inicio:"",hora_fin:"",tipo_id:"",subtipo_id:"",facilitador_id:"",cupo:""});
+      setForm({programa_id:"",fecha:"",hora_inicio:"",hora_fin:"",tipo_id:"",subtipo_id:"",facilitador_id:"",cupo:"", ubicacion:"", notas:""});
+      setEditingId(null);
       setErrors({});
     }
   };
@@ -168,6 +201,27 @@ export default function Actividades() {
               <Select label="Tipo" options={tipos} value={form.tipo_id} onChange={(e:any)=>setForm({...form,tipo_id:e.target.value})} />
               <Select label="Subtipo" options={subtipos} value={form.subtipo_id} onChange={(e:any)=>setForm({...form,subtipo_id:e.target.value})} />
               <Field
+                label="Ubicación"
+                value={form.ubicacion}
+                onChange={(e:any)=>setForm({...form,ubicacion:e.target.value})}
+                placeholder="Lugar donde se realiza"
+              />
+              <Select
+                label="Facilitador"
+                value={form.facilitador_id}
+                onChange={(e:any)=>setForm({...form,facilitador_id:e.target.value})}
+                options={facilitadores}
+              />
+              <div className="lg:col-span-4">
+                <Textarea
+                  label="Notas"
+                  value={form.notas}
+                  onChange={(e:any)=>setForm({...form,notas:e.target.value})}
+                  placeholder="Observaciones relevantes (opcional)"
+                  rows={4}
+                />
+              </div>
+              <Field
                 label="Cupo"
                 type="number"
                 min={0}
@@ -176,8 +230,18 @@ export default function Actividades() {
                 error={errors.cupo}
                 help="Opcional"
               />
-              <div className="sm:col-span-2 lg:col-span-4 flex justify-end">
-                <button className="btn btn-primary btn-md" type="submit">Crear actividad</button>
+              <div className="sm:col-span-2 lg:col-span-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-md"
+                  onClick={() => {
+                    setForm({ programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:"", ubicacion:"", notas:"" });
+                    setEditingId(null);
+                  }}
+                >
+                  Limpiar
+                </button>
+                <button className="btn btn-primary btn-md" type="submit">{editingId ? 'Guardar cambios' : 'Crear actividad'}</button>
               </div>
             </form>
           </Role>
@@ -202,6 +266,12 @@ export default function Actividades() {
                 onChange={(e:any) => setFilterProgramaId(e.target.value || null)}
               />
               <Select
+                label="Sede"
+                options={[{ value: "", label: "Todas" }, ...sedes]}
+                value={filterSedeId}
+                onChange={(e:any) => setFilterSedeId(e.target.value)}
+              />
+              <Select
                 label="Tipo"
                 options={[{ value: "", label: "Todos" }, ...tipos]}
                 value={filterTipoId}
@@ -212,6 +282,12 @@ export default function Actividades() {
                 options={[{ value: "", label: "Todos" }, ...subtipos]}
                 value={filterSubtipoId}
                 onChange={(e:any) => setFilterSubtipoId(e.target.value)}
+              />
+              <Select
+                label="Facilitador"
+                options={[{ value: "", label: "Todos" }, ...facilitadores.filter(f => f.value !== '')]}
+                value={filterFacilitadorId}
+                onChange={(e:any) => setFilterFacilitadorId(e.target.value)}
               />
               <Field
                 label="Desde"
@@ -226,12 +302,12 @@ export default function Actividades() {
                 onChange={(e:any) => setFilterHasta(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-3 mt-4">
-              {(filterProgramaId || filterTipoId || filterSubtipoId || filterDesde || filterHasta || searchTerm) && (
+            <div className="flex items-center gap-3 mt-4 flex-wrap">
+              {(filterProgramaId || filterSedeId || filterTipoId || filterSubtipoId || filterFacilitadorId || filterDesde || filterHasta || searchTerm) && (
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
-                  onClick={() => { setFilterProgramaId(null); setFilterTipoId(""); setFilterSubtipoId(""); setFilterDesde(""); setFilterHasta(""); setSearchTerm(""); }}
+                  onClick={() => { setFilterProgramaId(null); setFilterSedeId(""); setFilterTipoId(""); setFilterSubtipoId(""); setFilterFacilitadorId(""); setFilterDesde(""); setFilterHasta(""); setSearchTerm(""); }}
                 >
                   Limpiar filtros
                 </button>
@@ -242,24 +318,96 @@ export default function Actividades() {
                   <button type="button" className="ml-2 text-brand-700 hover:text-brand-900" onClick={() => setFilterProgramaId(null)}>×</button>
                 </span>
               )}
+              {filterSedeId && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Sede: {sedes.find(s => s.value === filterSedeId)?.label || filterSedeId}
+                  <button type="button" className="ml-2 text-green-700 hover:text-green-900" onClick={() => setFilterSedeId("")}>x</button>
+                </span>
+              )}
+              {filterTipoId && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  Tipo: {tipos.find(t => t.value === filterTipoId)?.label || filterTipoId}
+                  <button type="button" className="ml-2 text-purple-700 hover:text-purple-900" onClick={() => setFilterTipoId("")}>x</button>
+                </span>
+              )}
+              {filterSubtipoId && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  Subtipo: {subtipos.find(st => st.value === filterSubtipoId)?.label || filterSubtipoId}
+                  <button type="button" className="ml-2 text-orange-700 hover:text-orange-900" onClick={() => setFilterSubtipoId("")}>x</button>
+                </span>
+              )}
+              {filterFacilitadorId && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Facilitador: {facilitadores.find(f => f.value === filterFacilitadorId)?.label || filterFacilitadorId}
+                  <button type="button" className="ml-2 text-blue-700 hover:text-blue-900" onClick={() => setFilterFacilitadorId("")}>x</button>
+                </span>
+              )}
             </div>
           </div>
         </div>
 
         <section className="grid gap-3">
-          {filteredList.map((a)=> (
+          {filteredList.map((a)=> {
+            const facilId = (a as any).facilitador_id as string | undefined;
+            const facilLabel = facilId ? (facilitadores.find(f => f.value === facilId)?.label || '') : '';
+            return (
             <div key={a.id} className="card p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <div className="font-medium">{a.fecha} {a.hora_inicio}-{a.hora_fin}</div>
                 {a.programa?.nombre && (
                   <div className="text-xs text-gray-600">Proyecto: {a.programa.nombre}</div>
                 )}
+                {((a as any).subtipo?.nombre || (a as any).tipo?.nombre) && (
+                  <div className="text-xs text-gray-600">Tipo: {(a as any).subtipo?.nombre || (a as any).tipo?.nombre}</div>
+                )}
+                {(a as any).sede?.nombre && (
+                  <div className="text-xs text-gray-600">Sede: {(a as any).sede?.nombre}</div>
+                )}
+                {facilLabel && (
+                  <div className="text-xs text-gray-600">Facilitador: {facilLabel}</div>
+                )}
               </div>
               <div className="flex gap-2">
+                <Role allow={['admin','supervisor_central','coordinador_sede']}>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={async () => {
+                      try {
+                        const { data, error } = await supabase
+                          .from('actividad')
+                          .select('*')
+                          .eq('id', a.id)
+                          .single();
+                        if (error) throw error;
+                        const act: any = data;
+                        setForm({
+                          programa_id: act.programa_id || '',
+                          fecha: act.fecha || '',
+                          hora_inicio: act.hora_inicio || '',
+                          hora_fin: act.hora_fin || '',
+                          tipo_id: act.tipo_id || '',
+                          subtipo_id: act.subtipo_id || '',
+                          facilitador_id: act.facilitador_id || '',
+                          cupo: act.cupo?.toString() || '',
+                          ubicacion: act.ubicacion || '',
+                          notas: act.notas || ''
+                        });
+                        setEditingId(a.id);
+                        setShowForm(true);
+                      } catch (e) {
+                        alert((e as any)?.message || 'No se pudo cargar la actividad');
+                      }
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                </Role>
                 <Link className="btn btn-primary btn-sm" href={`/asistencia/${a.id}`}>Registrar asistencia</Link>
               </div>
             </div>
-          ))}
+          );})}
         </section>
       </div>
     </Protected>
