@@ -182,7 +182,8 @@ export default function Navbar() {
 
                 width={166}
 
-                height={1}
+                height={63}
+                priority
 
               
 

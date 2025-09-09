@@ -22,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="es" className="h-full">
       <head>
+        <meta charSet="utf-8" />
         <link rel="icon" href="/Loguito.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
