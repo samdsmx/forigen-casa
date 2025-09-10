@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { Database } from "app/types/supabase";
 
 export async function GET(request: Request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   // Capture cookie set/remove operations so we can apply them on the response
   type CookieOp = { type: "set" | "remove"; name: string; value?: string; options?: any };
@@ -73,4 +73,3 @@ export async function GET(request: Request) {
 
   return res;
 }
-
