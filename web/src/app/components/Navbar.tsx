@@ -33,6 +33,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
+  const [showRetry, setShowRetry] = useState(false);
 
   const router = useRouter();
 
@@ -116,6 +117,17 @@ export default function Navbar() {
     };
   }, []);
 
+  // Expose a retry button if loading takes too long
+  useEffect(() => {
+    let t: any;
+    if (loading) {
+      t = setTimeout(() => setShowRetry(true), 3000);
+    } else {
+      setShowRetry(false);
+    }
+    return () => { if (t) clearTimeout(t); };
+  }, [loading]);
+
 
 
   const isActive = (href: string) => pathname === href;
@@ -123,13 +135,11 @@ export default function Navbar() {
 
 
   const signOut = async () => {
-
-    await supabase.auth.signOut();
-
-    setUser(null);
-
-    router.push("/login");
-
+    try {
+      router.push('/auth/signout');
+    } catch {
+      if (typeof window !== 'undefined') window.location.href = '/auth/signout';
+    }
   };
 
 
@@ -232,9 +242,47 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
 
             {loading && (
-
-              <div className="loading-spinner"></div>
-
+              <div className="flex items-center space-x-2">
+                <div className="loading-spinner"></div>
+                {showRetry && (
+                  <button
+                    onClick={() => {
+                      // Force a new session check
+                      setLoading(true);
+                      supabase.auth.getUser()
+                        .then(async ({ data: { user: authUser } }) => {
+                          if (authUser) {
+                            const [{ data: roleData }, { data: sedeId }] = await Promise.all([
+                              supabase.rpc('user_role'),
+                              supabase.rpc('user_sede_id')
+                            ] as const);
+                            let sedeName: string | undefined;
+                            if (sedeId) {
+                              const { data: sede } = await supabase
+                                .from('sede')
+                                .select('nombre')
+                                .eq('id', sedeId as string)
+                                .maybeSingle();
+                              sedeName = (sede as any)?.nombre as string | undefined;
+                            }
+                            setUser({
+                              email: authUser.email || undefined,
+                              role: (roleData as string | null) ?? undefined,
+                              sede: sedeName
+                            });
+                          } else {
+                            setUser(null);
+                          }
+                        })
+                        .catch(() => setUser(null))
+                        .finally(() => setLoading(false));
+                    }}
+                    className="text-xs text-gray-600 underline hover:text-gray-800"
+                  >
+                    Reintentar
+                  </button>
+                )}
+              </div>
             )}
 
             
@@ -486,8 +534,6 @@ export default function Navbar() {
   );
 
 }
-
-
 
 
 
