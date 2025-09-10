@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Field } from "../components/Forms";
 import Image from "next/image";
 
@@ -11,13 +11,15 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams?.get('redirectedFrom') || '/';
 
   // Verificar si ya está autenticado
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push("/");
+        router.replace(redirectTo);
       }
     };
     checkUser();
@@ -42,7 +44,7 @@ export default function LoginPage() {
         );
       } else if (data.session) {
         // El listener de onAuthStateChange en Navbar se encargará de actualizar el estado
-        router.push("/");
+        router.replace(redirectTo);
       }
     } catch (err) {
       setError('Error inesperado. Intente nuevamente.');
