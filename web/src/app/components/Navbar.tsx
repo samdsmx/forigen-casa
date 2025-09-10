@@ -11,6 +11,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
 import Image from "next/image";
+import { ensureClientSession } from "../lib/clientSession";
 
 
 
@@ -241,7 +242,8 @@ export default function Navbar() {
                     onClick={() => {
                       // Force a new session check
                       setLoading(true);
-                      fetch('/api/auth/me', { cache: 'no-store' })
+                      ensureClientSession()
+                        .then(() => fetch('/api/auth/me', { cache: 'no-store' }))
                         .then(r => r.ok ? r.json() : null)
                         .then(data => {
                           if (data?.user) setUser(data.user); else setUser(null);
@@ -506,7 +508,6 @@ export default function Navbar() {
   );
 
 }
-
 
 
 
