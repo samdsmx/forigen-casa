@@ -31,6 +31,15 @@ export async function GET(request: Request) {
   const access = cookieStore.get("sb-access-token");
   const refresh = cookieStore.get("sb-refresh-token");
 
+  // New cookie scheme: single auth token cookie per project ref
+  let projectRef: string | null = null;
+  try {
+    const url = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!);
+    projectRef = url.hostname.split(".")[0] || null;
+  } catch {}
+  const newCookieName = projectRef ? `sb-${projectRef}-auth-token` : null;
+  const newCookie = newCookieName ? cookieStore.get(newCookieName) : undefined;
+
   let userEmail: string | null = null;
   let userId: string | null = null;
   let error: string | null = null;
@@ -52,8 +61,9 @@ export async function GET(request: Request) {
       hasAnon: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
     },
     cookiesPresent: {
-      accessToken: Boolean(access?.value),
-      refreshToken: Boolean(refresh?.value),
+      legacyAccessToken: Boolean(access?.value),
+      legacyRefreshToken: Boolean(refresh?.value),
+      unifiedAuthToken: Boolean(newCookie?.value),
     },
     authenticated: Boolean(userId),
     user: userId ? { id: userId, email: userEmail } : null,
