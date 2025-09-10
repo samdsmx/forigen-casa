@@ -14,10 +14,18 @@ export async function middleware(req: NextRequest) {
           return req.cookies.get(name)?.value;
         },
         set(name, value, options) {
-          res.cookies.set(name, value, options);
+          // Ensure auth cookies are set for the entire site and survive redirects.
+          res.cookies.set({
+            name,
+            value,
+            ...options,
+            path: '/',
+            sameSite: 'lax',
+            secure: true,
+          });
         },
         remove(name, options) {
-          res.cookies.set(name, '', { ...options, maxAge: 0 });
+          res.cookies.set({ name, value: '', path: '/', maxAge: 0, ...options });
         },
       },
     }
@@ -56,4 +64,3 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt)$).*)',
   ],
 };
-
