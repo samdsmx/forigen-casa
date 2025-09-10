@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "../../../app/lib/supabaseServer";
+import { supabaseServer } from "../../../lib/supabaseServer";
 
 export async function GET() {
   try {
@@ -24,4 +24,3 @@ export async function GET() {
     return NextResponse.json({ ok: false, error: e?.message || String(e) }, { status: 500 });
   }
 }
-
