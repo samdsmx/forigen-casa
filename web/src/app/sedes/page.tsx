@@ -4,6 +4,7 @@ import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { Field } from "../components/Forms";
 import { supabase } from "../lib/supabaseClient";
+import { ensureClientSession } from "../lib/clientSession";
 import type { Tables, TablesInsert, TablesUpdate } from "app/types/supabase";
 
 type Sede = Tables<'sede'>;
@@ -36,7 +37,7 @@ export default function SedesPage() {
     setError(null);
     try {
       // Hydrate Supabase auth state from cookies
-      await supabase.auth.getSession();
+      await ensureClientSession();
       const { data, error } = await supabase
         .from("sede")
         .select("id,nombre,slug,estado,created_at")

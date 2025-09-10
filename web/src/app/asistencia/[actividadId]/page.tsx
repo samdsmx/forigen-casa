@@ -3,6 +3,7 @@
 import Protected from "../../components/Protected";
 import { supabase } from "../../lib/supabaseClient";
 import { getUserSedeSlug } from "../../lib/auth";
+import { ensureClientSession } from "../../lib/clientSession";
 import { use, useEffect, useRef, useState } from "react";
 import { Field, Select, SearchInput } from "../../components/Forms";
 
@@ -40,7 +41,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
     (async () => {
       try {
         // Ensure session exists before protected queries
-        await supabase.auth.getSession();
+        await ensureClientSession();
         const userSlug = await getUserSedeSlug();
         let slug = userSlug;
         const { data } = await supabase

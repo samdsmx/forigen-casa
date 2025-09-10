@@ -6,6 +6,7 @@ import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { Field, Select, Textarea, FormCard, SearchInput } from "../components/Forms";
 import type { Tables, TablesInsert } from "../types/supabase";
+import { ensureClientSession } from "../lib/clientSession";
 
 interface Programa {
   id: string;
@@ -112,7 +113,7 @@ export default function ProyectosPage() {
       setError(null);
       setLoadError(null);
       // Ensure session is ready; otherwise RLS returns 0 rows
-      await supabase.auth.getSession();
+      await ensureClientSession();
 
       // Load dropdowns data
       const [sedesRes, temasRes, poblacionRes] = await Promise.all([

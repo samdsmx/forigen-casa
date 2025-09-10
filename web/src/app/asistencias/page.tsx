@@ -4,6 +4,7 @@ import Protected from "../components/Protected";
 import { supabase } from "../lib/supabaseClient";
 import { SearchInput, Select } from "../components/Forms";
 import Link from "next/link";
+import { ensureClientSession } from "../lib/clientSession";
 
 interface AsistenciaItem {
   id: string;
@@ -37,8 +38,7 @@ export default function AsistenciasRecientesPage() {
     try {
       setLoading(true);
       setError(null);
-      // Hydrate auth state to avoid anon queries with RLS
-      await supabase.auth.getSession();
+      await ensureClientSession();
 
       const [asistRes, actsRes] = await Promise.all([
         supabase

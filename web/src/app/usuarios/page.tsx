@@ -4,6 +4,7 @@ import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { Field, Select } from "../components/Forms";
 import { supabase } from "../lib/supabaseClient";
+import { ensureClientSession } from "../lib/clientSession";
 import type { Tables } from "../types/supabase";
 
 interface User {
@@ -45,7 +46,7 @@ export default function UsuariosPage() {
     load();
     (async () => {
       // Hydrate session before metadata fetches
-      await supabase.auth.getSession();
+      await ensureClientSession();
       const [rolesRes, sedesRes] = await Promise.all([
         supabase.from("app_role").select("name"),
         supabase.from("sede").select("id, nombre")

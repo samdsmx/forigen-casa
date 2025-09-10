@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabaseClient";
 import type { Tables } from "app/types/supabase";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ensureClientSession } from "../lib/clientSession";
 import { Field, Select, SearchInput, Textarea } from "../components/Forms";
 
 export default function Actividades() {
@@ -32,8 +33,7 @@ export default function Actividades() {
 
   useEffect(()=>{
     (async()=>{
-      // Ensure browser client has the session from cookies before querying
-      await supabase.auth.getSession();
+      await ensureClientSession();
       const { data: p } = await supabase.from("programa").select("id,nombre");
       setProgramas(((p as Pick<Tables<'programa'>,'id'|'nombre'>[] | null) || [])
         .map(x => ({ value: x.id, label: x.nombre })));

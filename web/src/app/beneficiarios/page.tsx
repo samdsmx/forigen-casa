@@ -4,6 +4,7 @@ import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { Field, Select, FormCard, SearchInput } from "../components/Forms";
 import { supabase } from "../lib/supabaseClient";
+import { ensureClientSession } from "../lib/clientSession";
 import type { Tables, TablesInsert, TablesUpdate } from "../types/supabase";
 
 type Beneficiario = Tables<'beneficiario'>;
@@ -56,8 +57,7 @@ export default function BeneficiariosPage() {
       setLoading(true);
       setError(null);
       setLoadError(null);
-      // Hydrate auth state before querying protected tables
-      await supabase.auth.getSession();
+      await ensureClientSession();
       const { data, error } = await supabase
         .from("beneficiario")
         .select("*")
