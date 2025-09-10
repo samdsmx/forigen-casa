@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "app/types/supabase";
 
-export async function GET() {
+export async function GET(request: Request) {
   const cookieStore = await cookies();
   type CookieOp = { type: "set" | "remove"; name: string; value?: string; options?: any };
   const ops: CookieOp[] = [];
@@ -28,11 +28,13 @@ export async function GET() {
 
   await supabase.auth.signOut();
 
-  const res = NextResponse.redirect(new URL("/login", process.env.NEXT_PUBLIC_BASE_URL || "http://localhost"));
+  const target = new URL(request.url);
+  target.pathname = "/login";
+  target.search = "";
+  const res = NextResponse.redirect(target);
   for (const op of ops) {
     if (op.type === "set") res.cookies.set({ name: op.name, value: op.value!, ...op.options });
     else res.cookies.set({ name: op.name, value: "", ...op.options });
   }
   return res;
 }
-
