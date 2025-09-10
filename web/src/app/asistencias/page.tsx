@@ -37,6 +37,8 @@ export default function AsistenciasRecientesPage() {
     try {
       setLoading(true);
       setError(null);
+      // Hydrate auth state to avoid anon queries with RLS
+      await supabase.auth.getSession();
 
       const [asistRes, actsRes] = await Promise.all([
         supabase
@@ -174,4 +176,3 @@ export default function AsistenciasRecientesPage() {
     </Protected>
   );
 }
-

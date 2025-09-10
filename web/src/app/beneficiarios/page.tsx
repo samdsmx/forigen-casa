@@ -56,6 +56,8 @@ export default function BeneficiariosPage() {
       setLoading(true);
       setError(null);
       setLoadError(null);
+      // Hydrate auth state before querying protected tables
+      await supabase.auth.getSession();
       const { data, error } = await supabase
         .from("beneficiario")
         .select("*")

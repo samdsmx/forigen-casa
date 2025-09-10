@@ -39,6 +39,8 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
     let mounted = true;
     (async () => {
       try {
+        // Ensure session exists before protected queries
+        await supabase.auth.getSession();
         const userSlug = await getUserSedeSlug();
         let slug = userSlug;
         const { data } = await supabase
@@ -422,4 +424,3 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
     </Protected>
   );
 }
-

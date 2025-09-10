@@ -35,6 +35,8 @@ export default function SedesPage() {
     setLoading(true);
     setError(null);
     try {
+      // Hydrate Supabase auth state from cookies
+      await supabase.auth.getSession();
       const { data, error } = await supabase
         .from("sede")
         .select("id,nombre,slug,estado,created_at")

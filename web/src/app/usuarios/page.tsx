@@ -44,6 +44,8 @@ export default function UsuariosPage() {
   useEffect(() => {
     load();
     (async () => {
+      // Hydrate session before metadata fetches
+      await supabase.auth.getSession();
       const [rolesRes, sedesRes] = await Promise.all([
         supabase.from("app_role").select("name"),
         supabase.from("sede").select("id, nombre")

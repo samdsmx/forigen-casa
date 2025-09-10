@@ -34,6 +34,8 @@ export default function CatalogosPage() {
     setLoading(true);
     setError(null);
     try {
+      // Ensure session is initialized for RLS-protected selects
+      await supabase.auth.getSession();
       const [tms, tps, sbt] = await Promise.all([
         supabase.from("tema").select("id,nombre,created_at").order("nombre", { ascending: true }),
         supabase.from("actividad_tipo").select("id,nombre,created_at").order("nombre", { ascending: true }),

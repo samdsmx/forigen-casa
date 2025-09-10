@@ -111,6 +111,8 @@ export default function ProyectosPage() {
       setLoading(true);
       setError(null);
       setLoadError(null);
+      // Ensure session is ready; otherwise RLS returns 0 rows
+      await supabase.auth.getSession();
 
       // Load dropdowns data
       const [sedesRes, temasRes, poblacionRes] = await Promise.all([

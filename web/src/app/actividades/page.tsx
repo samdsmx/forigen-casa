@@ -32,6 +32,8 @@ export default function Actividades() {
 
   useEffect(()=>{
     (async()=>{
+      // Ensure browser client has the session from cookies before querying
+      await supabase.auth.getSession();
       const { data: p } = await supabase.from("programa").select("id,nombre");
       setProgramas(((p as Pick<Tables<'programa'>,'id'|'nombre'>[] | null) || [])
         .map(x => ({ value: x.id, label: x.nombre })));
