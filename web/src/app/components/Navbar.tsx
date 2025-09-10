@@ -46,29 +46,21 @@ export default function Navbar() {
 
     const load = async () => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
+        // Prefer server-checked session to avoid client-side stalls after deploys
+        const res = await fetch('/api/auth/me', { cache: 'no-store' });
         if (!active) return;
-        if (authUser) {
-          const [{ data: roleData }, { data: sedeId }] = await Promise.all([
-            supabase.rpc('user_role'),
-            supabase.rpc('user_sede_id')
-          ] as const);
-          let sedeName: string | undefined;
-          if (sedeId) {
-            const { data: sede } = await supabase
-              .from('sede')
-              .select('nombre')
-              .eq('id', sedeId as string)
-              .maybeSingle();
-            sedeName = (sede as any)?.nombre as string | undefined;
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.user) {
+            setUser(data.user);
+          } else {
+            setUser(null);
           }
-          setUser({
-            email: authUser.email || undefined,
-            role: (roleData as string | null) ?? undefined,
-            sede: sedeName
-          });
         } else {
-          setUser(null);
+          // Fallback: try client getUser
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) setUser({ email: authUser.email || undefined });
+          else setUser(null);
         }
       } catch (e) {
         console.error('[Navbar] init error', e);
@@ -249,30 +241,10 @@ export default function Navbar() {
                     onClick={() => {
                       // Force a new session check
                       setLoading(true);
-                      supabase.auth.getUser()
-                        .then(async ({ data: { user: authUser } }) => {
-                          if (authUser) {
-                            const [{ data: roleData }, { data: sedeId }] = await Promise.all([
-                              supabase.rpc('user_role'),
-                              supabase.rpc('user_sede_id')
-                            ] as const);
-                            let sedeName: string | undefined;
-                            if (sedeId) {
-                              const { data: sede } = await supabase
-                                .from('sede')
-                                .select('nombre')
-                                .eq('id', sedeId as string)
-                                .maybeSingle();
-                              sedeName = (sede as any)?.nombre as string | undefined;
-                            }
-                            setUser({
-                              email: authUser.email || undefined,
-                              role: (roleData as string | null) ?? undefined,
-                              sede: sedeName
-                            });
-                          } else {
-                            setUser(null);
-                          }
+                      fetch('/api/auth/me', { cache: 'no-store' })
+                        .then(r => r.ok ? r.json() : null)
+                        .then(data => {
+                          if (data?.user) setUser(data.user); else setUser(null);
                         })
                         .catch(() => setUser(null))
                         .finally(() => setLoading(false));
@@ -534,7 +506,6 @@ export default function Navbar() {
   );
 
 }
-
 
 
 
