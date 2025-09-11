@@ -15,6 +15,7 @@ export default function DebugPage() {
   const [clientUrl, setClientUrl] = useState<string | null>(null);
   const [clientCounts, setClientCounts] = useState<Counts | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
+  const [clientDetails, setClientDetails] = useState<Record<string, string>>({});
   const [serverCounts, setServerCounts] = useState<Counts | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -26,23 +27,24 @@ export default function DebugPage() {
         // Env var is baked at build time; expose for debug
         setClientUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? null);
 
-        const headers: Record<string, string> = { 'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string };
-        if (sess.session?.access_token) headers['Authorization'] = `Bearer ${sess.session.access_token}`;
-
-        const toCounts = async (table: string) => {
-          const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/${table}?select=id&head=true`;
-          const res = await fetch(url, { method: 'GET', headers });
-          if (!res.ok) throw new Error(`${table}: ${res.status} ${res.statusText}`);
-          const count = parseInt(res.headers.get('content-range')?.split('/')?.[1] || '0', 10);
-          return count;
+        // Prefer counting via Supabase client to ensure proper headers/token
+        const toCount = async (table: keyof Counts) => {
+          const { count, error } = await supabase
+            .from(table)
+            .select('id', { count: 'exact', head: true });
+          if (error) {
+            setClientDetails(prev => ({ ...prev, [table]: `${error.code || ''} ${error.message}`.trim() }));
+            return 0;
+          }
+          return count || 0;
         };
 
         const [p, a, b, as, s] = await Promise.all([
-          toCounts('programa'),
-          toCounts('actividad'),
-          toCounts('beneficiario'),
-          toCounts('asistencia'),
-          toCounts('sede'),
+          toCount('programa'),
+          toCount('actividad'),
+          toCount('beneficiario'),
+          toCount('asistencia'),
+          toCount('sede'),
         ]);
         setClientCounts({ programa: p, actividad: a, beneficiario: b, asistencia: as, sede: s });
       } catch (e: any) {
@@ -72,7 +74,15 @@ export default function DebugPage() {
         <h2>Client counts (REST)</h2>
         {clientError && <div style={{ color: 'red' }}>Error: {clientError}</div>}
         {clientCounts && (
-          <pre>{JSON.stringify(clientCounts, null, 2)}</pre>
+          <>
+            <pre>{JSON.stringify(clientCounts, null, 2)}</pre>
+            {Object.keys(clientDetails).length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontWeight: 600 }}>Detalles</div>
+                <pre>{JSON.stringify(clientDetails, null, 2)}</pre>
+              </div>
+            )}
+          </>
         )}
       </div>
       <hr />
@@ -86,4 +96,3 @@ export default function DebugPage() {
     </div>
   );
 }
-
