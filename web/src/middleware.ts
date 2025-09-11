@@ -50,6 +50,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Help avoid browsers serving stale HTML after deploys
+  const accept = req.headers.get('accept') || '';
+  if (accept.includes('text/html')) {
+    res.headers.set('Cache-Control', 'no-store');
+  }
   return res;
 }
 
