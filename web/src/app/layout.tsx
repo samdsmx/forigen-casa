@@ -1,6 +1,7 @@
 import "../styles.css";
 import NavbarWrapper from "./components/NavbarWrapper";
 import SessionHydrator from "./components/SessionHydrator";
+import BuildVersion from "./components/BuildVersion";
 import type { Viewport } from "next";
 
 export const metadata = {
@@ -37,6 +38,7 @@ export default function RootLayout({
           <SessionHydrator />
           <NavbarWrapper />
           <main className="flex-1">{children}</main>
+          <BuildVersion />
         </div>
       </body>
     </html>
