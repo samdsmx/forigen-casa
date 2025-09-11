@@ -31,6 +31,16 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+        {/* Runtime public env injection to avoid stale chunk env issues */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__PUB_ENV=${JSON.stringify({
+              SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || null,
+              SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || null,
+              BUILD_TIME: process.env.NEXT_PUBLIC_BUILD_TIME || null,
+            })};`,
+          }}
+        />
       </head>
       <body className="min-h-full bg-gray-50 text-gray-900 antialiased">
         <div className="min-h-screen flex flex-col">
