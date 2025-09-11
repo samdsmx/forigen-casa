@@ -4,6 +4,7 @@ import { supabase } from "./lib/supabaseClient";
 import type { Tables } from "app/types/supabase";
 import Protected from "./components/Protected";
 import Link from "next/link";
+import { useRef } from "react";
 
 interface DashboardStats {
   programas: number;
@@ -33,6 +34,36 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [build, setBuild] = useState<{ short: string | null; branch: string | null; message: string | null; buildTime: string | null } | null>(null);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const buildRef = useRef<string | null>(null);
+
+  // Poll server build version and detect updates
+  useEffect(() => {
+    let active = true;
+    let timer: any;
+    const loadVersion = async () => {
+      try {
+        const res = await fetch('/api/version', { cache: 'no-store' });
+        if (!active) return;
+        if (res.ok) {
+          const data = await res.json();
+          const short = data?.short || null;
+          const branch = data?.branch || null;
+          const message = data?.message || null;
+          const buildTime = data?.buildTime || null;
+          setBuild({ short, branch, message, buildTime });
+          if (buildRef.current && short && short !== buildRef.current) {
+            setUpdateAvailable(true);
+          }
+          if (!buildRef.current) buildRef.current = short;
+        }
+      } catch {}
+    };
+    loadVersion();
+    timer = setInterval(loadVersion, 60000);
+    return () => { active = false; if (timer) clearInterval(timer); };
+  }, []);
 
   useEffect(() => {
     let timeout: any;
@@ -372,6 +403,32 @@ export default function Dashboard() {
                     <span className="text-sm text-gray-600">Usuarios conectados</span>
                     <span className="text-xs text-gray-500">5 activos</span>
                   </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Última actualización</span>
+                    <span
+                      className="text-xs text-gray-500"
+                      title={build?.short ? `commit ${build.short}${build?.branch ? ` [${build.branch}]` : ''}${build?.message ? ` — ${build.message}` : ''}` : ''}
+                    >
+                      {build?.buildTime
+                        ? new Date(build.buildTime).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
+                        : 'cargando...'}
+                    </span>
+                  </div>
+                  {updateAvailable && (
+                    <div className="flex items-center justify-between p-2 rounded-md bg-yellow-50 border border-yellow-200">
+                      <span className="text-xs text-yellow-800">Hay una actualización disponible</span>
+                      <button
+                        onClick={() => {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set('v', Date.now().toString());
+                          window.location.replace(url.toString());
+                        }}
+                        className="text-xs font-medium text-yellow-900 underline hover:opacity-80"
+                      >
+                        Actualizar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
