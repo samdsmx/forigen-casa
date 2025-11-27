@@ -15,7 +15,7 @@ serve(async (req)=>{
       results = data || [];
     } else {
       // Simple fuzzy-ish search by name prefix (tune later)
-      const q = upper.replaceAll("%", "").replaceAll(",", "");
+      const q = String(curp_or_name ?? "").toUpperCase().replaceAll("%", "").replaceAll(",", "");
       const pattern = `%${q}%`;
       const { data, error } = await supabase.from("beneficiario").select("id, curp, nombre, primer_apellido, fecha_nacimiento, sexo, beneficiario_sede ( sede_id )").or(`nombre.ilike.${pattern},primer_apellido.ilike.${pattern}`);
       results = data || [];
