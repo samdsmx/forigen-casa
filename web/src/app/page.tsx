@@ -99,11 +99,18 @@ export default function Dashboard() {
       if (user) {
         const { data: appUser } = await supabase
           .from("app_user")
-          .select("role")
+          .select("role, sede_id")
           .eq("auth_user_id", user.id)
           .single();
-        const row = appUser as (Pick<Tables<'app_user'>, 'role'> | null);
+        const row = appUser as (Pick<Tables<'app_user'>, 'role' | 'sede_id'> | null);
         setUserRole(row?.role ?? null);
+
+        if (!row || !row.sede_id) {
+          const message = "No se encontró tu sede o rol. Contacta al admin para asignarte sede/rol.";
+          console.error('[Dashboard] Usuario sin sede o rol en app_user', { userId: user.id, appUser: row });
+          setLoadError(message);
+          return;
+        }
       }
 
       // Cargar estadísticas
@@ -246,9 +253,21 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {loadError && (
+          <div className="alert alert-error flex items-center justify-between">
+            <div>
+              <span className="font-semibold">No pudimos cargar el dashboard.</span>
+              <span className="ml-2">{loadError}</span>
+            </div>
+            <button className="btn btn-secondary btn-sm" onClick={() => setAttempt(a => a + 1)}>
+              Reintentar
+            </button>
+          </div>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 slide-up">
-          
+
           <Link href={{ pathname: "/proyectos", query: { estado: "activo" } }} className="block">
           <StatCard
             title="Proyectos Activos"
