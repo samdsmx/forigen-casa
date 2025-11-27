@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "./lib/supabaseClient";
 import type { Tables } from "app/types/supabase";
 import Protected from "./components/Protected";
@@ -34,9 +35,16 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [sessionMissing, setSessionMissing] = useState(false);
   const [build, setBuild] = useState<{ short: string | null; branch: string | null; message: string | null; buildTime: string | null } | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const buildRef = useRef<string | null>(null);
+  const router = useRouter();
+
+  const handleLoginRedirect = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   // Poll server build version and detect updates
   useEffect(() => {
@@ -66,6 +74,22 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
+        setSessionMissing(false);
+        setAttempt((a) => a + 1);
+      }
+      if (event === "SIGNED_OUT") {
+        setSessionMissing(true);
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     let timeout: any;
     (async () => {
       setLoading(true);
@@ -87,7 +111,9 @@ export default function Dashboard() {
       // Validar sesión primero para evitar AuthSessionMissingError
       const { data: sessionRes } = await supabase.auth.getSession();
       if (!sessionRes.session) {
-        // No hay sesión: Protected hará redirect
+        setSessionMissing(true);
+        setLoadError("Tu sesión ha expirado. Por favor vuelve a iniciar sesión.");
+        setLoading(false);
         return;
       }
 
@@ -193,6 +219,27 @@ export default function Dashboard() {
       </div>
     </div>
   );
+
+  if (sessionMissing) {
+    return (
+      <Protected>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="card shadow-lg">
+            <div className="card-body text-center space-y-4">
+              <div className="mx-auto w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-red-600 text-2xl">⚠️</div>
+              <h2 className="text-2xl font-semibold text-gray-900">Sesión no disponible</h2>
+              <p className="text-gray-600">{loadError || "Tu sesión expiró o fue cerrada. Vuelve a iniciar sesión para continuar."}</p>
+              <div className="pt-2">
+                <button className="btn btn-primary" onClick={handleLoginRedirect}>
+                  Volver a iniciar sesión
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Protected>
+    );
+  }
 
   if (loading) {
     return (
