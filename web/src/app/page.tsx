@@ -74,7 +74,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
         setSessionMissing(false);
         setAttempt((a) => a + 1);
@@ -85,7 +85,7 @@ export default function Dashboard() {
     });
 
     return () => {
-      subscription?.unsubscribe();
+      authListener?.subscription.unsubscribe();
     };
   }, []);
 
