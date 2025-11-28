@@ -58,21 +58,29 @@ export default function Actividades() {
         setSedes(((sed as Pick<Tables<'sede'>,'id'|'nombre'>[] | null) || [])
           .map(x => ({ value: x.id, label: x.nombre })));
       } catch {}
-      const { data: a } = await supabase
+
+      // Determine filtered program from URL
+      let pid = null;
+      try {
+        const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : "");
+        pid = params.get('programa_id');
+        setFilterProgramaId(pid);
+      } catch { /* ignore */ }
+
+      // Optimize query to filter by program_id if present
+      let query = supabase
         .from("actividad")
         .select("id,fecha,hora_inicio,hora_fin,programa_id, facilitador_id, tipo:tipo_id(nombre), subtipo:subtipo_id(nombre), sede:sede_id(nombre), programa:programa_id(nombre)")
         .order("fecha",{ascending:false});
+
+      if (pid) {
+        query = query.eq('programa_id', pid);
+      }
+
+      const { data: a } = await query;
       setList(((a as any[]) || []) as any);
     })();
   },[]);
-
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : "");
-      const pid = params.get('programa_id');
-      setFilterProgramaId(pid);
-    } catch { /* ignore */ }
-  }, []);
 
   const filteredList = list.filter(a => {
     if (filterProgramaId && a.programa_id !== filterProgramaId) return false;
