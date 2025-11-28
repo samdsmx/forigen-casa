@@ -6,7 +6,7 @@ export async function ensureClientSession(): Promise<boolean> {
   try {
     // Get server-truth user to detect mismatches or expired client sessions
     const meRes = await fetch('/api/auth/me', { cache: 'no-store' });
-    if (!meRes.ok) return false;
+    // if (!meRes.ok) return false; // Let's not fail the whole app if this fails
     const me = await meRes.json().catch(() => null);
     const targetHasUser = Boolean(me?.user);
 
