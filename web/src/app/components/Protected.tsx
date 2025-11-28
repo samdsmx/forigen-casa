@@ -26,11 +26,29 @@ export default function Protected({ children }: { children: React.ReactNode }) {
     }, 5000); // 5s timeout fallback
 
     console.log('[Protected] Checking session...');
+
+    // Listener for auth state changes (faster than getSession sometimes)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      console.log(`[Protected] Auth change: ${event}`, !!session);
+
+      if (event === 'SIGNED_IN' && session) {
+        clearTimeout(timeout);
+        setHasSession(true);
+        setChecking(false);
+      } else if (event === 'SIGNED_OUT') {
+        clearTimeout(timeout);
+        setHasSession(false);
+        setChecking(false);
+      }
+    });
+
     supabase.auth
       .getSession()
       .then(({ data }) => {
         if (!mounted) return;
         console.log('[Protected] Session check result:', !!data.session);
+        // Only update if we are still checking (listener hasn't already resolved it)
         setHasSession(Boolean(data.session));
       })
       .catch((err) => {
@@ -47,6 +65,7 @@ export default function Protected({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
       clearTimeout(timeout);
+      subscription.unsubscribe();
     };
   }, []);
 
