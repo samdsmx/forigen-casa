@@ -1,6 +1,7 @@
 import "../styles.css";
 import NavbarWrapper from "./components/NavbarWrapper";
 import SessionHydrator from "./components/SessionHydrator";
+import { UserProvider } from "./context/UserContext";
 import type { Viewport } from "next";
 
 export const metadata = {
@@ -43,11 +44,13 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full bg-gray-50 text-gray-900 antialiased">
-        <div className="min-h-screen flex flex-col">
-          <SessionHydrator />
-          <NavbarWrapper />
-          <main className="flex-1">{children}</main>
-        </div>
+        <UserProvider>
+          <div className="min-h-screen flex flex-col">
+            <SessionHydrator />
+            <NavbarWrapper />
+            <main className="flex-1">{children}</main>
+          </div>
+        </UserProvider>
       </body>
     </html>
   );
