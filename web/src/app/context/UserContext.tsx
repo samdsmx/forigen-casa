@@ -37,12 +37,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       if (appUserError) {
         console.error("[UserContext] Error fetching app_user:", appUserError);
-        // Don't block the UI if app_user is missing, but maybe warn
         return null;
       }
 
       let sedeName = undefined;
-      // Force explicit type casting or optional chaining because TS inference might be strict on generated types
       const userSedeId = (appUserData as any)?.sede_id;
 
       if (userSedeId) {
@@ -68,11 +66,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     setLoading(true);
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // Race promise with a timeout to prevent infinite hanging
+      const sessionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
 
-      if (sessionError) {
-        throw sessionError;
-      }
+      const { data: { session }, error: sessionError } = (await Promise.race([sessionPromise, timeoutPromise])) as any;
+
+      if (sessionError) throw sessionError;
 
       if (session?.user) {
         setUser(session.user);
@@ -100,21 +100,35 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(`[UserContext] Auth event: ${event}`);
 
-      if (event === 'SIGNED_IN' && session?.user) {
-        setUser(session.user);
-        // Only fetch details if we don't have them or if the user changed
-        if (!appUser || user?.id !== session.user.id) {
-          const details = await fetchAppUser(session.user.id);
-          setAppUser(details);
+      // Handle state updates based on event type
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          setUser(session.user);
+          // Refresh app user details if missing or user changed
+          if (!appUser || user?.id !== session.user.id) {
+             const details = await fetchAppUser(session.user.id);
+             setAppUser(details);
+          }
         }
+        // Ensure we stop loading state if we were stuck
         setLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setAppUser(null);
         setLoading(false);
-      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-         // Just update the user object, details likely haven't changed
-         setUser(session.user);
+      } else if (event === 'INITIAL_SESSION') {
+         // Usually handled by refreshUser, but good to be safe
+         if (session?.user) {
+            setUser(session.user);
+            if (!appUser) {
+              const details = await fetchAppUser(session.user.id);
+              setAppUser(details);
+            }
+         } else {
+            setUser(null);
+            setAppUser(null);
+         }
+         setLoading(false);
       }
     });
 
