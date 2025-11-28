@@ -47,13 +47,23 @@ export default function Navbar() {
 
     const load = async () => {
       try {
+        console.log('[Navbar] load start');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
         // First load basic user info fast
-        const resBasic = await fetch('/api/auth/me?basic=true', { cache: 'no-store' });
+        const resBasic = await fetch('/api/auth/me?basic=true', {
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
         if (!active) return;
 
         if (resBasic.ok) {
            const data = await resBasic.json();
            if (data?.user) {
+             console.log('[Navbar] basic info loaded');
              // Set basic info immediately
              setUser({ email: data.user.email });
              setLoading(false); // Stop showing loading spinner
@@ -63,14 +73,17 @@ export default function Navbar() {
              if (active && resFull.ok) {
                 const fullData = await resFull.json();
                 if (fullData?.user) {
+                  console.log('[Navbar] full info loaded');
                   setUser(fullData.user);
                 }
              }
            } else {
+             console.log('[Navbar] no user in basic info');
              setUser(null);
              setLoading(false);
            }
         } else {
+          console.warn('[Navbar] basic fetch failed, using fallback');
           // Fallback: try client getUser
           const { data: { user: authUser } } = await supabase.auth.getUser();
           if (authUser) setUser({ email: authUser.email || undefined });
@@ -79,13 +92,18 @@ export default function Navbar() {
         }
       } catch (e) {
         console.error('[Navbar] init error', e);
-        setUser(null);
+        // If we timeout or fail, ensure we don't hang in loading state
+        // Try fallback one last time quickly
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) setUser({ email: authUser.email || undefined });
+        else setUser(null);
         setLoading(false);
       }
     };
     load();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[Navbar] auth change:', event);
       try {
         if (event === 'SIGNED_IN' && session) {
           const [{ data: roleData }, { data: sedeId }] = await Promise.all([
