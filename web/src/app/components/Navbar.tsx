@@ -48,8 +48,15 @@ export default function Navbar() {
     const load = async () => {
       try {
         console.log('[Navbar] load start');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
         // First load basic user info fast
-        const resBasic = await fetch('/api/auth/me?basic=true', { cache: 'no-store' });
+        const resBasic = await fetch('/api/auth/me?basic=true', {
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
         if (!active) return;
 
         if (resBasic.ok) {
@@ -84,7 +91,11 @@ export default function Navbar() {
         }
       } catch (e) {
         console.error('[Navbar] init error', e);
-        setUser(null);
+        // If we timeout or fail, ensure we don't hang in loading state
+        // Try fallback one last time quickly
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) setUser({ email: authUser.email || undefined });
+        else setUser(null);
         setLoading(false);
       }
     };
