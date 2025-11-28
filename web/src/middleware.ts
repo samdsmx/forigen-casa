@@ -35,7 +35,11 @@ export async function middleware(req: NextRequest) {
   const isAuthPage = pathname.startsWith('/login');
 
   // Check current user session via Supabase cookies
-  const { data: { user } } = await supabase.auth.getUser();
+  // CAUTION: Using getSession() is faster but less secure than getUser() as it doesn't validate the token with the server.
+  // However, we rely on subsequent server/client checks (e.g. Protected component, RLS) for full security.
+  // This switch prevents middleware from blocking/hanging navigation on slow network/Supabase calls.
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user && !isAuthPage) {
     const url = req.nextUrl.clone();

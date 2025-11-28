@@ -3,8 +3,11 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "app/types/supabase";
 
-export async function GET() {
+export async function GET(request: Request) {
   const cookieStore = await cookies();
+  const { searchParams } = new URL(request.url);
+  const basic = searchParams.get('basic') === 'true';
+
   type CookieOp = { type: "set" | "remove"; name: string; value?: string; options?: any };
   const ops: CookieOp[] = [];
 
@@ -29,6 +32,19 @@ export async function GET() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) {
     const res = NextResponse.json({ user: null }, { status: 200 });
+    for (const op of ops) {
+      if (op.type === "set") res.cookies.set({ name: op.name, value: op.value!, ...op.options });
+      else res.cookies.set({ name: op.name, value: "", ...op.options });
+    }
+    return res;
+  }
+
+  if (basic) {
+    const res = NextResponse.json({
+      user: {
+        email: user.email || undefined,
+      }
+    }, { status: 200 });
     for (const op of ops) {
       if (op.type === "set") res.cookies.set({ name: op.name, value: op.value!, ...op.options });
       else res.cookies.set({ name: op.name, value: "", ...op.options });
