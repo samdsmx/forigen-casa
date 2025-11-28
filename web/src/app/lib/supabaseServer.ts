@@ -9,5 +9,9 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_
 }
 
 export const supabaseServer = createClient<Database>(url, serviceKey, {
-  auth: { persistSession: false }
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
 });
