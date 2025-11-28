@@ -37,10 +37,13 @@ export async function GET() {
   }
 
   // Derive role and sede using the authenticated context
-  const [{ data: roleData }, { data: sedeId }] = await Promise.all([
-    supabase.rpc('user_role').catch(() => ({ data: null })),
-    supabase.rpc('user_sede_id').catch(() => ({ data: null }))
-  ] as const);
+  const [roleResult, sedeIdResult] = await Promise.all([
+    supabase.rpc('user_role'),
+    supabase.rpc('user_sede_id')
+  ]);
+
+  const roleData = roleResult.error ? null : roleResult.data;
+  const sedeId = sedeIdResult.error ? null : sedeIdResult.data;
 
   let sedeName: string | undefined;
   if (sedeId) {
