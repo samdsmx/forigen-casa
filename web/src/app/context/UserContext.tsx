@@ -36,6 +36,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (appUserError) {
+        // If row doesn't exist, we just return null (valid for new users)
         console.error("[UserContext] Error fetching app_user:", appUserError);
         return null;
       }
@@ -59,6 +60,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       };
     } catch (err) {
       console.error("[UserContext] Unexpected error fetching app details:", err);
+      // Don't crash auth flow if profile fetch fails
       return null;
     }
   };
@@ -66,27 +68,51 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     setLoading(true);
     try {
-      // Race promise with a timeout to prevent infinite hanging
+      // Use a timeout to prevent indefinite hang, but don't log out on timeout alone
       const sessionPromise = supabase.auth.getSession();
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
 
-      const { data: { session }, error: sessionError } = (await Promise.race([sessionPromise, timeoutPromise])) as any;
+      let sessionRes;
+      try {
+        sessionRes = (await Promise.race([sessionPromise, timeoutPromise])) as any;
+      } catch (e) {
+        // If timeout, assume we might still be logged in locally or just network is slow.
+        // DO NOT set user to null immediately if we already have one.
+        // If we don't have one, we can't do much.
+        console.warn("[UserContext] Session check timed out, preserving state if possible.");
+        setError("La conexión es lenta. Si experimentas problemas, recarga la página.");
+        setLoading(false);
+        return;
+      }
 
-      if (sessionError) throw sessionError;
+      const { data: { session }, error: sessionError } = sessionRes;
+
+      if (sessionError) {
+        throw sessionError;
+      }
 
       if (session?.user) {
         setUser(session.user);
-        const details = await fetchAppUser(session.user.id);
-        setAppUser(details);
+        // Only fetch details if needed
+        if (!appUser || user?.id !== session.user.id) {
+            const details = await fetchAppUser(session.user.id);
+            setAppUser(details);
+        }
       } else {
+        // Explicitly no session from Supabase -> Logout
         setUser(null);
         setAppUser(null);
       }
     } catch (err: any) {
       console.error("[UserContext] Error refreshing user:", err);
       setError(err.message || "Error al cargar usuario");
-      setUser(null);
-      setAppUser(null);
+      // Only clear user if we are sure it's an Auth error, not network
+      // But for safety, if we can't verify session, we usually logout.
+      // However, to fix "app ya no funciona", we will be lenient if user was already set.
+      if (!user) {
+         setUser(null);
+         setAppUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -101,7 +127,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       console.log(`[UserContext] Auth event: ${event}`);
 
       // Handle state updates based on event type
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
         if (session?.user) {
           setUser(session.user);
           // Refresh app user details if missing or user changed
@@ -109,26 +135,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
              const details = await fetchAppUser(session.user.id);
              setAppUser(details);
           }
+        } else if (event === 'SIGNED_IN') {
+             // Signed in but no session user? Rare.
         }
-        // Ensure we stop loading state if we were stuck
         setLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setAppUser(null);
         setLoading(false);
-      } else if (event === 'INITIAL_SESSION') {
-         // Usually handled by refreshUser, but good to be safe
-         if (session?.user) {
-            setUser(session.user);
-            if (!appUser) {
-              const details = await fetchAppUser(session.user.id);
-              setAppUser(details);
-            }
-         } else {
-            setUser(null);
-            setAppUser(null);
-         }
-         setLoading(false);
       }
     });
 
