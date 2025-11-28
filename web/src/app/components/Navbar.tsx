@@ -129,6 +129,9 @@ export default function Navbar() {
 
   const signOut = async () => {
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+      }
       router.push('/auth/signout');
     } catch {
       if (typeof window !== 'undefined') window.location.href = '/auth/signout';
