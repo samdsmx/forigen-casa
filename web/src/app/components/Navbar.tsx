@@ -50,7 +50,6 @@ export default function Navbar() {
         console.log('[Navbar] load start');
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-
         // First load basic user info fast
         const resBasic = await fetch('/api/auth/me?basic=true', {
           cache: 'no-store',
