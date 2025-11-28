@@ -2,10 +2,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "./lib/supabaseClient";
-import type { Tables } from "app/types/supabase";
 import Protected from "./components/Protected";
 import Link from "next/link";
-import { useRef } from "react";
+import { useAuth } from "./context/UserContext";
 
 interface DashboardStats {
   programas: number;
@@ -24,6 +23,8 @@ interface RecentActivity {
 }
 
 export default function Dashboard() {
+  const { user, appUser, loading: authLoading } = useAuth();
+
   const [stats, setStats] = useState<DashboardStats>({
     programas: 0,
     actividades: 0,
@@ -31,169 +32,89 @@ export default function Dashboard() {
     asistencia_total: 0
   });
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadingData, setLoadingData] = useState(true);
+  const [dataError, setDataError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [sessionMissing, setSessionMissing] = useState(false);
-  const [build, setBuild] = useState<{ short: string | null; branch: string | null; message: string | null; buildTime: string | null } | null>(null);
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-  const buildRef = useRef<string | null>(null);
-  const router = useRouter();
 
-  const handleLoginRedirect = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
+  // If auth is loading, we wait. If no user, Protected will handle it.
+  // We only fetch data if we have a user.
 
-  // Poll server build version and detect updates
   useEffect(() => {
+    if (authLoading || !user) return;
+
     let active = true;
-    let timer: any;
-    const loadVersion = async () => {
+
+    const loadDashboardData = async () => {
+      setLoadingData(true);
+      setDataError(null);
+
       try {
-        const res = await fetch('/api/version', { cache: 'no-store' });
+        // Cargar estadísticas
+        const [programasRes, actividadesRes, beneficiariosRes, asistenciaRes] = await Promise.all([
+          supabase.from("programa").select("id", { count: "exact", head: true }),
+          supabase.from("actividad").select("id", { count: "exact", head: true }),
+          supabase.from("beneficiario").select("id", { count: "exact", head: true }),
+          supabase.from("asistencia").select("id", { count: "exact", head: true })
+        ]);
+
         if (!active) return;
-        if (res.ok) {
-          const data = await res.json();
-          const short = data?.short || null;
-          const branch = data?.branch || null;
-          const message = data?.message || null;
-          const buildTime = data?.buildTime || null;
-          setBuild({ short, branch, message, buildTime });
-          if (buildRef.current && short && short !== buildRef.current) {
-            setUpdateAvailable(true);
-          }
-          if (!buildRef.current) buildRef.current = short;
+
+        setStats({
+          programas: programasRes.count || 0,
+          actividades: actividadesRes.count || 0,
+          beneficiarios: beneficiariosRes.count || 0,
+          asistencia_total: asistenciaRes.count || 0
+        });
+
+        // Cargar actividades recientes
+        const { data: programas } = await supabase
+          .from("programa")
+          .select("id, nombre, created_at")
+          .order("created_at", { ascending: false })
+          .limit(3);
+
+        const { data: actividades } = await supabase
+          .from("actividad")
+          .select("id, fecha, hora_inicio, created_at, programa:programa_id(nombre)")
+          .order("created_at", { ascending: false })
+          .limit(3);
+
+        if (!active) return;
+
+        const activities: RecentActivity[] = [
+          ...(((programas as any[]) || [])).map(p => ({
+            id: p.id,
+            type: 'programa' as const,
+            title: `Nuevo proyecto: ${p.nombre}`,
+            description: 'Proyecto creado exitosamente',
+            date: p.created_at ?? '',
+            icon: '📋'
+          })),
+          ...(((actividades as any[]) || [])).map(a => ({
+            id: a.id,
+            type: 'actividad' as const,
+            title: `Nueva actividad programada`,
+            description: `${(Array.isArray(a.programa) ? (a.programa as any[])[0]?.nombre : (a.programa as any)?.nombre) ?? ''} - ${a.fecha} ${a.hora_inicio}`,
+            date: a.created_at ?? '',
+            icon: '🎯'
+          }))
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+
+        setRecentActivities(activities);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        if (active) {
+          setDataError(error instanceof Error ? error.message : 'Error al cargar datos');
         }
-      } catch {}
+      } finally {
+        if (active) setLoadingData(false);
+      }
     };
-    loadVersion();
-    timer = setInterval(loadVersion, 60000);
-    return () => { active = false; if (timer) clearInterval(timer); };
-  }, []);
 
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
-        setSessionMissing(false);
-        setAttempt((a) => a + 1);
-      }
-      if (event === "SIGNED_OUT") {
-        setSessionMissing(true);
-      }
-    });
+    loadDashboardData();
 
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    let timeout: any;
-    (async () => {
-      setLoading(true);
-      setLoadError(null);
-      await loadDashboardData();
-    })();
-    timeout = setTimeout(() => {
-      if (loading) {
-        setLoadError('La carga tomó demasiado tiempo.');
-        setLoading(false);
-      }
-    }, 10000);
-    return () => clearTimeout(timeout);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attempt]);
-
-  const loadDashboardData = async () => {
-    try {
-      // Validar sesión primero para evitar AuthSessionMissingError
-      const { data: sessionRes } = await supabase.auth.getSession();
-      if (!sessionRes.session) {
-        setSessionMissing(true);
-        setLoadError("Tu sesión ha expirado. Por favor vuelve a iniciar sesión.");
-        setLoading(false);
-        return;
-      }
-
-      // Obtener rol del usuario
-      const { data: { user }, error: userErr } = await supabase.auth.getUser();
-      if (userErr && (userErr as any).name !== 'AuthSessionMissingError') {
-        console.error('[Dashboard] getUser error:', userErr);
-      }
-      if (user) {
-        const { data: appUser } = await supabase
-          .from("app_user")
-          .select("role, sede_id")
-          .eq("auth_user_id", user.id)
-          .single();
-        const row = appUser as (Pick<Tables<'app_user'>, 'role' | 'sede_id'> | null);
-        setUserRole(row?.role ?? null);
-
-        if (!row || !row.sede_id) {
-          const message = "No se encontró tu sede o rol. Contacta al admin para asignarte sede/rol.";
-          console.error('[Dashboard] Usuario sin sede o rol en app_user', { userId: user.id, appUser: row });
-          setLoadError(message);
-          return;
-        }
-      }
-
-      // Cargar estadísticas
-      const [programasRes, actividadesRes, beneficiariosRes, asistenciaRes] = await Promise.all([
-        supabase.from("programa").select("id", { count: "exact", head: true }),
-        supabase.from("actividad").select("id", { count: "exact", head: true }),
-        supabase.from("beneficiario").select("id", { count: "exact", head: true }),
-        supabase.from("asistencia").select("id", { count: "exact", head: true })
-      ]);
-
-      setStats({
-        programas: programasRes.count || 0,
-        actividades: actividadesRes.count || 0,
-        beneficiarios: beneficiariosRes.count || 0,
-        asistencia_total: asistenciaRes.count || 0
-      });
-
-      // Cargar actividades recientes
-      const { data: programas } = await supabase
-        .from("programa")
-        .select("id, nombre, created_at")
-        .order("created_at", { ascending: false })
-        .limit(3);
-
-      const { data: actividades } = await supabase
-        .from("actividad")
-        .select("id, fecha, hora_inicio, created_at, programa:programa_id(nombre)")
-        .order("created_at", { ascending: false })
-        .limit(3);
-
-      const activities: RecentActivity[] = [
-        ...(((programas as any[]) || [])).map(p => ({
-          id: p.id,
-          type: 'programa' as const,
-          title: `Nuevo proyecto: ${p.nombre}`,
-          description: 'Proyecto creado exitosamente',
-          date: p.created_at ?? '',
-          icon: '📋'
-        })),
-        ...(((actividades as any[]) || [])).map(a => ({
-          id: a.id,
-          type: 'actividad' as const,
-          title: `Nueva actividad programada`,
-          description: `${(Array.isArray(a.programa) ? (a.programa as any[])[0]?.nombre : (a.programa as any)?.nombre) ?? ''} - ${a.fecha} ${a.hora_inicio}`,
-          date: a.created_at ?? '',
-          icon: '🎯'
-        }))
-      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-
-      setRecentActivities(activities);
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      setLoadError(error instanceof Error ? error.message : 'Error al cargar');
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => { active = false; };
+  }, [user, attempt, authLoading]);
 
   const StatCard = ({ title, value, icon, color, trend }: {
     title: string;
@@ -227,32 +148,57 @@ export default function Dashboard() {
     </div>
   );
 
-  if (sessionMissing) {
+  // If global auth is loading, Protected handles it or we show spinner locally
+  if (authLoading) {
     return (
       <Protected>
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="card shadow-lg">
-            <div className="card-body text-center space-y-4">
-              <div className="mx-auto w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-red-600 text-2xl">⚠️</div>
-              <h2 className="text-2xl font-semibold text-gray-900">Sesión no disponible</h2>
-              <p className="text-gray-600">{loadError || "Tu sesión expiró o fue cerrada. Vuelve a iniciar sesión para continuar."}</p>
-              <div className="pt-2">
-                <button className="btn btn-primary" onClick={handleLoginRedirect}>
-                  Volver a iniciar sesión
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+         <div className="min-h-screen flex items-center justify-center">
+           <div className="loading loading-spinner text-primary" />
+         </div>
       </Protected>
     );
   }
 
-  if (loading) {
-    return (
-      <Protected>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  // Once auth is ready, we either show Protected's error (if no user) or the dashboard
+  // We wrap in Protected to ensure we only render if logged in
+  return (
+    <Protected>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Header */}
+        <div className="fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+              <p className="text-gray-600">
+                Bienvenido al sistema de gestión de Casa Origen
+                {appUser?.role && (
+                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
+                    {appUser.role === 'admin' && 'Administrador'}
+                    {appUser.role === 'supervisor_central' && 'Supervisor'}
+                    {appUser.role === 'coordinador_sede' && 'Coordinador'}
+                    {appUser.role === 'facilitador' && 'Facilitador'}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {dataError && (
+          <div className="alert alert-error flex items-center justify-between">
+            <div>
+              <span className="font-semibold">No pudimos cargar algunos datos del dashboard.</span>
+              <span className="ml-2">{dataError}</span>
+            </div>
+            <button className="btn btn-secondary btn-sm" onClick={() => setAttempt(a => a + 1)}>
+              Reintentar
+            </button>
+          </div>
+        )}
+
+        {loadingData ? (
+           /* Loading skeleton for dashboard data */
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="card">
                 <div className="card-body">
@@ -264,95 +210,48 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-          {loadError && (
-            <div className="mt-6 alert alert-error flex items-center justify-between">
-              <span>{loadError}</span>
-              <button className="btn btn-secondary btn-sm" onClick={() => setAttempt(a => a + 1)}>
-                Reintentar
-              </button>
-            </div>
-          )}
-        </div>
-      </Protected>
-    );
-  }
+        ) : (
+          /* Stats Grid */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 slide-up">
+            <Link href={{ pathname: "/proyectos", query: { estado: "activo" } }} className="block">
+            <StatCard
+              title="Proyectos Activos"
+              value={stats.programas}
+              icon="📋"
+              color="bg-gradient-to-br from-brand-100 to-brand-200"
+              trend="+12% vs mes anterior"
+            />
+            </Link>
 
-  return (
-    <Protected>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Header */}
-        <div className="fade-in">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-              <p className="text-gray-600">
-                Bienvenido al sistema de gestión de Casa Origen
-                {userRole && (
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
-                    {userRole === 'admin' && 'Administrador'}
-                    {userRole === 'supervisor_central' && 'Supervisor'}
-                    {userRole === 'coordinador_sede' && 'Coordinador'}
-                    {userRole === 'facilitador' && 'Facilitador'}
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {loadError && (
-          <div className="alert alert-error flex items-center justify-between">
-            <div>
-              <span className="font-semibold">No pudimos cargar el dashboard.</span>
-              <span className="ml-2">{loadError}</span>
-            </div>
-            <button className="btn btn-secondary btn-sm" onClick={() => setAttempt(a => a + 1)}>
-              Reintentar
-            </button>
+            <Link href="/actividades" className="block">
+            <StatCard
+              title="Actividades"
+              value={stats.actividades}
+              icon="🎯"
+              color="bg-gradient-to-br from-green-100 to-green-200"
+              trend="+8% vs mes anterior"
+            />
+            </Link>
+            <Link href="/beneficiarios" className="block">
+            <StatCard
+              title="Beneficiarios"
+              value={stats.beneficiarios}
+              icon="👥"
+              color="bg-gradient-to-br from-purple-100 to-purple-200"
+              trend="+15% vs mes anterior"
+            />
+            </Link>
+            <Link href="/asistencias" className="block">
+            <StatCard
+              title="Asistencias Registradas"
+              value={stats.asistencia_total}
+              icon="✅"
+              color="bg-gradient-to-br from-orange-100 to-orange-200"
+              trend="+25% vs mes anterior"
+            />
+            </Link>
           </div>
         )}
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 slide-up">
-
-          <Link href={{ pathname: "/proyectos", query: { estado: "activo" } }} className="block">
-          <StatCard
-            title="Proyectos Activos"
-            value={stats.programas}
-            icon="📋"
-            color="bg-gradient-to-br from-brand-100 to-brand-200"
-            trend="+12% vs mes anterior"
-          />
-          </Link>
-          
-          <Link href="/actividades" className="block">
-          <StatCard
-            title="Actividades"
-            value={stats.actividades}
-            icon="🎯"
-            color="bg-gradient-to-br from-green-100 to-green-200"
-            trend="+8% vs mes anterior"
-          />
-          </Link>
-          <Link href="/beneficiarios" className="block">
-          <StatCard
-            title="Beneficiarios"
-            value={stats.beneficiarios}
-            icon="👥"
-            color="bg-gradient-to-br from-purple-100 to-purple-200"
-            trend="+15% vs mes anterior"
-          />
-          </Link>
-          <Link href="/asistencias" className="block">
-          <StatCard
-            title="Asistencias Registradas"
-            value={stats.asistencia_total}
-            icon="✅"
-            color="bg-gradient-to-br from-orange-100 to-orange-200"
-            trend="+25% vs mes anterior"
-          />
-          </Link>
-        </div>
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -364,9 +263,15 @@ export default function Dashboard() {
                 <p className="text-sm text-gray-500">Últimos movimientos en el sistema</p>
               </div>
               <div className="card-body">
-                {recentActivities.length > 0 ? (
+                {loadingData ? (
+                  <div className="space-y-4 animate-pulse">
+                     <div className="h-12 bg-gray-100 rounded"></div>
+                     <div className="h-12 bg-gray-100 rounded"></div>
+                     <div className="h-12 bg-gray-100 rounded"></div>
+                  </div>
+                ) : recentActivities.length > 0 ? (
                   <div className="space-y-4">
-                    {recentActivities.map((activity, index) => (
+                    {recentActivities.map((activity) => (
                       <div key={activity.id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                         <div className="flex-shrink-0">
                           <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
@@ -447,7 +352,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* System Status */}
+            {/* System Status - Simplified */}
             <div className="card">
               <div className="card-header">
                 <h3 className="text-lg font-semibold text-gray-900">Estado del Sistema</h3>
@@ -461,40 +366,6 @@ export default function Dashboard() {
                       Activo
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Último respaldo</span>
-                    <span className="text-xs text-gray-500">Hace 2 horas</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Usuarios conectados</span>
-                    <span className="text-xs text-gray-500">5 activos</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Última actualización</span>
-                    <span
-                      className="text-xs text-gray-500"
-                      title={build?.short ? `commit ${build.short}${build?.branch ? ` [${build.branch}]` : ''}${build?.message ? ` — ${build.message}` : ''}` : ''}
-                    >
-                      {build?.buildTime
-                        ? new Date(build.buildTime).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
-                        : 'cargando...'}
-                    </span>
-                  </div>
-                  {updateAvailable && (
-                    <div className="flex items-center justify-between p-2 rounded-md bg-yellow-50 border border-yellow-200">
-                      <span className="text-xs text-yellow-800">Hay una actualización disponible</span>
-                      <button
-                        onClick={() => {
-                          const url = new URL(window.location.href);
-                          url.searchParams.set('v', Date.now().toString());
-                          window.location.replace(url.toString());
-                        }}
-                        className="text-xs font-medium text-yellow-900 underline hover:opacity-80"
-                      >
-                        Actualizar
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -504,5 +375,3 @@ export default function Dashboard() {
     </Protected>
   );
 }
-
-
