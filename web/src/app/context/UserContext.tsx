@@ -37,6 +37,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       if (appUserError) {
         // If row doesn't exist, we just return null (valid for new users)
+        console.error("[UserContext] Error fetching app_user:", appUserError);
         return null;
       }
 
