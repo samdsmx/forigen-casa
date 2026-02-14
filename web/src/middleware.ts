@@ -14,7 +14,6 @@ export async function middleware(req: NextRequest) {
           return req.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: any) {
-          // Ensure auth cookies are set for the entire site and survive redirects.
           res.cookies.set({
             name,
             value,
@@ -34,45 +33,27 @@ export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const isAuthPage = pathname.startsWith('/login');
 
-  // Always allow access to login page to avoid redirect loops
+  // Always allow access to login page
   if (isAuthPage) {
     return res;
   }
 
-  try {
-    // Add timeout to prevent middleware from hanging
-    const sessionPromise = supabase.auth.getSession();
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Session check timeout')), 5000)
-    );
+  // Simple session check - let Supabase handle its own timeouts
+  const { data: { session } } = await supabase.auth.getSession();
 
-    const { data: { session } } = await Promise.race([
-      sessionPromise, 
-      timeoutPromise
-    ]) as any;
-
-    const user = session?.user;
-
-    if (!user) {
-      const url = req.nextUrl.clone();
-      url.pathname = '/login';
-      url.searchParams.set('redirectedFrom', pathname + req.nextUrl.search);
-      return NextResponse.redirect(url);
-    }
-  } catch (error) {
-    // On timeout or error, redirect to login for safety
-    console.error('[Middleware] Session check failed:', error);
+  if (!session?.user) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('redirectedFrom', pathname + req.nextUrl.search);
     return NextResponse.redirect(url);
   }
 
-  // Help avoid browsers serving stale HTML after deploys
+  // Prevent stale HTML caching
   const accept = req.headers.get('accept') || '';
   if (accept.includes('text/html')) {
     res.headers.set('Cache-Control', 'no-store');
   }
+  
   return res;
 }
 

@@ -28,84 +28,44 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const fetchAppUser = async (userId: string) => {
     try {
-      // Increase timeout for serverless environment (Vercel can be slow on cold starts)
-      const timeoutMs = 15000; // 15 seconds - more reasonable for serverless
-      
-      const fetchWithTimeout = async () => {
-        // Try RPCs first (faster when they work)
-        try {
-          const rolePromise = supabase.rpc('user_role');
-          const sedeIdPromise = supabase.rpc('user_sede_id');
-          
-          const timeout = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('RPC timeout')), timeoutMs)
-          );
+      // Simple direct query - no RPCs, no complex timeouts
+      // Let Supabase handle its own timeouts
+      const { data: appUserData, error: appUserError } = await supabase
+        .from("app_user")
+        .select("role, sede_id")
+        .eq("auth_user_id", userId)
+        .maybeSingle();
 
-          const [roleResult, sedeIdResult] = await Promise.race([
-            Promise.all([rolePromise, sedeIdPromise]),
-            timeout
-          ]) as any;
+      if (appUserError) {
+        console.error("[UserContext] Error fetching app_user:", appUserError);
+        return null;
+      }
 
-          return {
-            role: roleResult?.data || null,
-            sedeId: sedeIdResult?.data || null,
-            source: 'rpc'
-          };
-        } catch (rpcError) {
-          console.warn('[UserContext] RPC failed, falling back to direct query:', rpcError);
-          
-          // Fallback to direct query if RPCs fail
-          const { data: appUserData, error: queryError } = await supabase
-            .from("app_user")
-            .select("role, sede_id")
-            .eq("auth_user_id", userId)
-            .maybeSingle(); // Use maybeSingle to avoid errors if not found
+      if (!appUserData) {
+        console.warn("[UserContext] No app_user record found for user");
+        return null;
+      }
 
-          if (queryError) {
-            console.error('[UserContext] Direct query also failed:', queryError);
-            return { role: null, sedeId: null, source: 'error' };
-          }
-
-          return {
-            role: (appUserData as any)?.role || null,
-            sedeId: (appUserData as any)?.sede_id || null,
-            source: 'query'
-          };
-        }
-      };
-
-      const { role, sedeId, source } = await fetchWithTimeout();
-      console.log(`[UserContext] Fetched app_user via ${source}:`, { role, sedeId });
-
-      // Fetch sede name if we have a sede_id (with its own timeout)
+      // Fetch sede name if exists
       let sedeName = undefined;
+      const sedeId = (appUserData as any).sede_id;
       if (sedeId) {
-        try {
-          const sedePromise = supabase
-            .from("sede")
-            .select("nombre")
-            .eq("id", sedeId as string)
-            .maybeSingle();
-          
-          const timeout = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Sede fetch timeout')), 5000)
-          );
-
-          const { data: sedeData } = await Promise.race([sedePromise, timeout]) as any;
-          sedeName = sedeData?.nombre;
-        } catch (err) {
-          console.warn("[UserContext] Sede name fetch failed, continuing without it");
-        }
+        const { data: sedeData } = await supabase
+          .from("sede")
+          .select("nombre")
+          .eq("id", sedeId)
+          .maybeSingle();
+        
+        sedeName = (sedeData as any)?.nombre;
       }
 
       return {
-        role: role as string | undefined,
+        role: (appUserData as any).role as string | undefined,
         sede_id: sedeId as string | undefined,
         sede_nombre: sedeName,
       };
     } catch (err) {
-      console.error("[UserContext] Unexpected error fetching app details:", err);
-      // Don't crash auth flow if profile fetch fails
+      console.error("[UserContext] Error fetching app details:", err);
       return null;
     }
   };
@@ -115,26 +75,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      // Use a timeout to prevent indefinite hang
-      const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout")), 10000)
-      );
-
-      let sessionRes;
-      try {
-        sessionRes = (await Promise.race([sessionPromise, timeoutPromise])) as any;
-      } catch (e) {
-        // If timeout, log out to avoid stuck state
-        console.warn("[UserContext] Session check timed out. Logging out for safety.");
-        setError("La conexión tardó demasiado. Por favor, inicia sesión de nuevo.");
-        setUser(null);
-        setAppUser(null);
-        setLoading(false);
-        return;
-      }
-
-      const { data: { session }, error: sessionError } = sessionRes;
+      // Simple session check - let Supabase handle timeouts
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
       if (sessionError) {
         throw sessionError;
@@ -146,18 +88,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const details = await fetchAppUser(session.user.id);
         setAppUser(details);
       } else {
-        // Explicitly no session from Supabase -> Logout
+        // No session
         setUser(null);
         setAppUser(null);
       }
     } catch (err: any) {
       console.error("[UserContext] Error refreshing user:", err);
       setError(err.message || "Error al cargar usuario");
-      // Clear user on error
       setUser(null);
       setAppUser(null);
     } finally {
-      // Always ensure loading is set to false
       setLoading(false);
     }
   };

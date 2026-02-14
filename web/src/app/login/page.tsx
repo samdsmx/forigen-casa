@@ -4,7 +4,6 @@ import { supabase } from "../lib/supabaseClient";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Field } from "../components/Forms";
 import Image from "next/image";
-import { cleanupSession } from "../lib/cleanupSession";
 
 function LoginPageInner() {
   const [email, setEmail] = useState("");
@@ -15,23 +14,16 @@ function LoginPageInner() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams?.get('redirectedFrom') || '/';
 
-  // Limpiar sesión corrupta al cargar la página de login
+  // Simple session check on mount
   useEffect(() => {
-    const initLogin = async () => {
-      // Check if there's a valid session
+    const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (session) {
-        // Valid session exists, redirect to app
         router.replace(redirectTo);
-      } else {
-        // No valid session - ensure everything is cleaned up
-        await cleanupSession();
-        await supabase.auth.signOut();
       }
     };
     
-    initLogin();
+    checkSession();
   }, [router, redirectTo]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -40,13 +32,6 @@ function LoginPageInner() {
     setLoading(true);
 
     try {
-      // Clean up any stale data before attempting login
-      await cleanupSession();
-      await supabase.auth.signOut();
-      
-      // Small delay to ensure cleanup completes
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email: email.trim(), 
         password 
@@ -59,8 +44,7 @@ function LoginPageInner() {
             : error.message
         );
       } else if (data.session) {
-        // Small delay before redirect to ensure session is established
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Use window.location for clean navigation
         window.location.href = redirectTo;
       }
     } catch (err) {
