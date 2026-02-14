@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { supabase } from "../lib/supabaseClient";
 import type { User } from "@supabase/supabase-js";
 
@@ -25,11 +25,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Prevent concurrent fetchAppUser calls
+  const fetchingRef = useRef(false);
 
-  const fetchAppUser = async (userId: string) => {
+  const fetchAppUser = async (userId: string): Promise<AppUser | null> => {
+    // Skip if already fetching
+    if (fetchingRef.current) return appUser;
+    fetchingRef.current = true;
+
     try {
-      // Simple direct query - no RPCs, no complex timeouts
-      // Let Supabase handle its own timeouts
       const { data: appUserData, error: appUserError } = await supabase
         .from("app_user")
         .select("role, sede_id")
@@ -41,12 +45,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
-      if (!appUserData) {
-        console.warn("[UserContext] No app_user record found for user");
-        return null;
-      }
+      if (!appUserData) return null;
 
-      // Fetch sede name if exists
       let sedeName = undefined;
       const sedeId = (appUserData as any).sede_id;
       if (sedeId) {
@@ -55,7 +55,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
           .select("nombre")
           .eq("id", sedeId)
           .maybeSingle();
-        
         sedeName = (sedeData as any)?.nombre;
       }
 
@@ -67,6 +66,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("[UserContext] Error fetching app details:", err);
       return null;
+    } finally {
+      fetchingRef.current = false;
     }
   };
 
@@ -75,20 +76,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      // Simple session check - let Supabase handle timeouts
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-      if (sessionError) {
-        throw sessionError;
-      }
+      if (sessionError) throw sessionError;
 
       if (session?.user) {
         setUser(session.user);
-        // Fetch app user details
         const details = await fetchAppUser(session.user.id);
         setAppUser(details);
       } else {
-        // No session
         setUser(null);
         setAppUser(null);
       }
@@ -103,31 +99,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Initial load
-    refreshUser();
-
-    // Listen for changes
+    // Listen for auth changes FIRST, then do initial load
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(`[UserContext] Auth event: ${event}`);
 
-      // Handle state updates based on event type
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
-        if (session?.user) {
-          setUser(session.user);
-          // Always refresh app user details on auth events
-          const details = await fetchAppUser(session.user.id);
-          setAppUser(details);
-        }
-        setLoading(false);
-      } else if (event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT') {
         setUser(null);
         setAppUser(null);
         setLoading(false);
-      } else {
-        // For any other event, ensure loading is false
+        return;
+      }
+
+      // For all other events: just update user from the session
+      // Don't fetch app_user here - let refreshUser handle it
+      if (session?.user) {
+        setUser(session.user);
+      }
+
+      // Only fetch app details on SIGNED_IN (actual login, not initial)
+      if (event === 'SIGNED_IN' && session?.user) {
+        const details = await fetchAppUser(session.user.id);
+        setAppUser(details);
         setLoading(false);
       }
     });
+
+    // Initial load
+    refreshUser();
 
     return () => {
       subscription.unsubscribe();
