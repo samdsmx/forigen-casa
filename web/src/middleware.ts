@@ -10,10 +10,10 @@ export async function middleware(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name) {
+        get(name: string) {
           return req.cookies.get(name)?.value;
         },
-        set(name, value, options) {
+        set(name: string, value: string, options: any) {
           // Ensure auth cookies are set for the entire site and survive redirects.
           res.cookies.set({
             name,
@@ -24,7 +24,7 @@ export async function middleware(req: NextRequest) {
             secure: true,
           });
         },
-        remove(name, options) {
+        remove(name: string, options: any) {
           res.cookies.set({ name, value: '', path: '/', maxAge: 0, ...options });
         },
       },
