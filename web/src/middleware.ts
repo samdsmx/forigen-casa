@@ -34,23 +34,37 @@ export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const isAuthPage = pathname.startsWith('/login');
 
-  // Check current user session via Supabase cookies
-  // CAUTION: Using getSession() is faster but less secure than getUser() as it doesn't validate the token with the server.
-  // However, we rely on subsequent server/client checks (e.g. Protected component, RLS) for full security.
-  // This switch prevents middleware from blocking/hanging navigation on slow network/Supabase calls.
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user;
+  // Always allow access to login page to avoid redirect loops
+  if (isAuthPage) {
+    return res;
+  }
 
-  if (!user && !isAuthPage) {
+  try {
+    // Add timeout to prevent middleware from hanging
+    const sessionPromise = supabase.auth.getSession();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Session check timeout')), 5000)
+    );
+
+    const { data: { session } } = await Promise.race([
+      sessionPromise, 
+      timeoutPromise
+    ]) as any;
+
+    const user = session?.user;
+
+    if (!user) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      url.searchParams.set('redirectedFrom', pathname + req.nextUrl.search);
+      return NextResponse.redirect(url);
+    }
+  } catch (error) {
+    // On timeout or error, redirect to login for safety
+    console.error('[Middleware] Session check failed:', error);
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('redirectedFrom', pathname + req.nextUrl.search);
-    return NextResponse.redirect(url);
-  }
-
-  if (user && isAuthPage) {
-    const url = req.nextUrl.clone();
-    url.pathname = '/';
     return NextResponse.redirect(url);
   }
 

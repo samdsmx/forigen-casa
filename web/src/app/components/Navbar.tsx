@@ -18,13 +18,22 @@ export default function Navbar() {
 
   const signOut = async () => {
     try {
+      // Clear local storage first
       if (typeof window !== 'undefined') {
         localStorage.clear();
       }
+      
+      // Attempt to sign out
       await supabase.auth.signOut();
-      router.push('/login');
-    } catch {
-      if (typeof window !== 'undefined') window.location.href = '/login';
+      
+      // Use window.location for reliable redirect
+      window.location.href = '/login';
+    } catch (error) {
+      console.error("Signout error:", error);
+      // Force redirect even if signout fails
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
   };
 

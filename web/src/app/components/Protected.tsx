@@ -29,8 +29,16 @@ export default function Protected({ children }: { children: React.ReactNode }) {
   }, [loading]);
 
   const handleLoginRedirect = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
+    try {
+      // Clear any stale session data
+      await supabase.auth.signOut();
+    } catch (error) {
+      // Ignore errors during signout - session might already be invalid
+      console.log("Signout error (ignoring):", error);
+    } finally {
+      // Force navigation to login using window.location to bypass any React Router issues
+      window.location.href = "/login";
+    }
   };
 
   // If timeout is reached and still loading, show error
