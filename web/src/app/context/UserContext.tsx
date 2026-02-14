@@ -28,49 +28,73 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const fetchAppUser = async (userId: string) => {
     try {
-      // Use RPC functions which are faster and bypass some RLS checks
-      // Also add manual timeout to prevent indefinite hangs
-      const timeoutMs = 5000;
+      // Increase timeout for serverless environment (Vercel can be slow on cold starts)
+      const timeoutMs = 15000; // 15 seconds - more reasonable for serverless
       
       const fetchWithTimeout = async () => {
-        const rolePromise = supabase.rpc('user_role');
-        const sedeIdPromise = supabase.rpc('user_sede_id');
-        
-        const timeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Fetch timeout')), timeoutMs)
-        );
+        // Try RPCs first (faster when they work)
+        try {
+          const rolePromise = supabase.rpc('user_role');
+          const sedeIdPromise = supabase.rpc('user_sede_id');
+          
+          const timeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('RPC timeout')), timeoutMs)
+          );
 
-        const [roleResult, sedeIdResult] = await Promise.race([
-          Promise.all([rolePromise, sedeIdPromise]),
-          timeout
-        ]) as any;
+          const [roleResult, sedeIdResult] = await Promise.race([
+            Promise.all([rolePromise, sedeIdPromise]),
+            timeout
+          ]) as any;
 
-        return { roleResult, sedeIdResult };
+          return {
+            role: roleResult?.data || null,
+            sedeId: sedeIdResult?.data || null,
+            source: 'rpc'
+          };
+        } catch (rpcError) {
+          console.warn('[UserContext] RPC failed, falling back to direct query:', rpcError);
+          
+          // Fallback to direct query if RPCs fail
+          const { data: appUserData, error: queryError } = await supabase
+            .from("app_user")
+            .select("role, sede_id")
+            .eq("auth_user_id", userId)
+            .maybeSingle(); // Use maybeSingle to avoid errors if not found
+
+          if (queryError) {
+            console.error('[UserContext] Direct query also failed:', queryError);
+            return { role: null, sedeId: null, source: 'error' };
+          }
+
+          return {
+            role: (appUserData as any)?.role || null,
+            sedeId: (appUserData as any)?.sede_id || null,
+            source: 'query'
+          };
+        }
       };
 
-      const { roleResult, sedeIdResult } = await fetchWithTimeout();
+      const { role, sedeId, source } = await fetchWithTimeout();
+      console.log(`[UserContext] Fetched app_user via ${source}:`, { role, sedeId });
 
-      const role = roleResult?.data || null;
-      const sedeId = sedeIdResult?.data || null;
-
-      // Fetch sede name if we have a sede_id
+      // Fetch sede name if we have a sede_id (with its own timeout)
       let sedeName = undefined;
       if (sedeId) {
-        const sedePromise = supabase
-          .from("sede")
-          .select("nombre")
-          .eq("id", sedeId as string)
-          .maybeSingle();
-        
-        const timeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Sede fetch timeout')), 3000)
-        );
-
         try {
+          const sedePromise = supabase
+            .from("sede")
+            .select("nombre")
+            .eq("id", sedeId as string)
+            .maybeSingle();
+          
+          const timeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Sede fetch timeout')), 5000)
+          );
+
           const { data: sedeData } = await Promise.race([sedePromise, timeout]) as any;
           sedeName = sedeData?.nombre;
         } catch (err) {
-          console.warn("[UserContext] Sede name fetch timeout, continuing without it");
+          console.warn("[UserContext] Sede name fetch failed, continuing without it");
         }
       }
 
@@ -82,7 +106,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("[UserContext] Unexpected error fetching app details:", err);
       // Don't crash auth flow if profile fetch fails
-      // Return minimal viable data
       return null;
     }
   };
