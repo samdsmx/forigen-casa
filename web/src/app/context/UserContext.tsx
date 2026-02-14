@@ -67,20 +67,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      // Use a timeout to prevent indefinite hang, but don't log out on timeout alone
+      // Use a timeout to prevent indefinite hang
       const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout")), 10000)
+      );
 
       let sessionRes;
       try {
         sessionRes = (await Promise.race([sessionPromise, timeoutPromise])) as any;
       } catch (e) {
-        // If timeout, assume we might still be logged in locally or just network is slow.
-        // DO NOT set user to null immediately if we already have one.
-        // If we don't have one, we can't do much.
-        console.warn("[UserContext] Session check timed out, preserving state if possible.");
-        setError("La conexión es lenta. Si experimentas problemas, recarga la página.");
+        // If timeout, log out to avoid stuck state
+        console.warn("[UserContext] Session check timed out. Logging out for safety.");
+        setError("La conexión tardó demasiado. Por favor, inicia sesión de nuevo.");
+        setUser(null);
+        setAppUser(null);
         setLoading(false);
         return;
       }
@@ -93,11 +97,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       if (session?.user) {
         setUser(session.user);
-        // Only fetch details if needed
-        if (!appUser || user?.id !== session.user.id) {
-            const details = await fetchAppUser(session.user.id);
-            setAppUser(details);
-        }
+        // Fetch app user details
+        const details = await fetchAppUser(session.user.id);
+        setAppUser(details);
       } else {
         // Explicitly no session from Supabase -> Logout
         setUser(null);
@@ -106,14 +108,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } catch (err: any) {
       console.error("[UserContext] Error refreshing user:", err);
       setError(err.message || "Error al cargar usuario");
-      // Only clear user if we are sure it's an Auth error, not network
-      // But for safety, if we can't verify session, we usually logout.
-      // However, to fix "app ya no funciona", we will be lenient if user was already set.
-      if (!user) {
-         setUser(null);
-         setAppUser(null);
-      }
+      // Clear user on error
+      setUser(null);
+      setAppUser(null);
     } finally {
+      // Always ensure loading is set to false
       setLoading(false);
     }
   };
@@ -130,18 +129,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
         if (session?.user) {
           setUser(session.user);
-          // Refresh app user details if missing or user changed
-          if (!appUser || user?.id !== session.user.id) {
-             const details = await fetchAppUser(session.user.id);
-             setAppUser(details);
-          }
-        } else if (event === 'SIGNED_IN') {
-             // Signed in but no session user? Rare.
+          // Always refresh app user details on auth events
+          const details = await fetchAppUser(session.user.id);
+          setAppUser(details);
         }
         setLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setAppUser(null);
+        setLoading(false);
+      } else {
+        // For any other event, ensure loading is false
         setLoading(false);
       }
     });
@@ -149,7 +147,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -6,21 +6,58 @@ import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/UserContext";
 
 export default function Protected({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, error } = useAuth();
   const router = useRouter();
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
-      // Small delay to prevent flash if user is being restored
       setIsRedirecting(true);
     }
   }, [loading, user]);
+
+  // Safety timeout: if loading takes more than 15 seconds, show error
+  useEffect(() => {
+    if (!loading) return;
+    
+    const timer = setTimeout(() => {
+      setTimeoutReached(true);
+    }, 15000);
+
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const handleLoginRedirect = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
+
+  // If timeout is reached and still loading, show error
+  if (loading && timeoutReached) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="card max-w-lg w-full shadow-lg">
+          <div className="card-body text-center space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600 text-2xl">⚠️</div>
+            <h2 className="text-2xl font-semibold text-gray-900">Carga lenta detectada</h2>
+            <p className="text-gray-600">
+              La aplicación está tardando más de lo esperado. Esto puede deberse a una conexión lenta o problemas temporales.
+            </p>
+            {error && <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded">{error}</p>}
+            <div className="pt-2 space-x-3">
+              <button className="btn btn-primary" onClick={() => window.location.reload()}>
+                Recargar página
+              </button>
+              <button className="btn btn-secondary" onClick={handleLoginRedirect}>
+                Ir a login
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
