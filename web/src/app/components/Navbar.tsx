@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "../context/UserContext";
 import { supabase } from "../lib/supabaseClient";
+import { cleanupSession } from "../lib/cleanupSession";
 
 export default function Navbar() {
   const { user, appUser, loading } = useAuth();
@@ -18,12 +19,10 @@ export default function Navbar() {
 
   const signOut = async () => {
     try {
-      // Clear local storage first
-      if (typeof window !== 'undefined') {
-        localStorage.clear();
-      }
+      // Aggressive cleanup first
+      await cleanupSession();
       
-      // Attempt to sign out
+      // Then attempt signOut
       await supabase.auth.signOut();
       
       // Use window.location for reliable redirect

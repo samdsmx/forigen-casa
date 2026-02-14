@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/UserContext";
+import { cleanupSession } from "../lib/cleanupSession";
 
 export default function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading, error } = useAuth();
@@ -30,13 +31,25 @@ export default function Protected({ children }: { children: React.ReactNode }) {
 
   const handleLoginRedirect = async () => {
     try {
-      // Clear any stale session data
+      // Aggressive cleanup of all session data
+      await cleanupSession();
       await supabase.auth.signOut();
     } catch (error) {
-      // Ignore errors during signout - session might already be invalid
-      console.log("Signout error (ignoring):", error);
+      console.log("Cleanup error (ignoring):", error);
     } finally {
-      // Force navigation to login using window.location to bypass any React Router issues
+      // Force navigation to login
+      window.location.href = "/login";
+    }
+  };
+
+  const handleForceCleanup = async () => {
+    try {
+      await cleanupSession();
+      await supabase.auth.signOut();
+      alert("Sesión limpiada completamente. Redirigiendo...");
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Force cleanup error:", error);
       window.location.href = "/login";
     }
   };
@@ -53,12 +66,21 @@ export default function Protected({ children }: { children: React.ReactNode }) {
               La aplicación está tardando más de lo esperado. Esto puede deberse a una conexión lenta o problemas temporales.
             </p>
             {error && <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded">{error}</p>}
-            <div className="pt-2 space-x-3">
-              <button className="btn btn-primary" onClick={() => window.location.reload()}>
-                Recargar página
-              </button>
-              <button className="btn btn-secondary" onClick={handleLoginRedirect}>
-                Ir a login
+            <div className="pt-2 space-y-2">
+              <div className="flex gap-3 justify-center">
+                <button className="btn btn-primary" onClick={() => window.location.reload()}>
+                  Recargar página
+                </button>
+                <button className="btn btn-secondary" onClick={handleLoginRedirect}>
+                  Ir a login
+                </button>
+              </div>
+              <button 
+                className="btn btn-sm btn-outline text-xs w-full" 
+                onClick={handleForceCleanup}
+                title="Limpia completamente todos los datos de sesión"
+              >
+                🧹 Limpiar sesión y reintentar
               </button>
             </div>
           </div>
