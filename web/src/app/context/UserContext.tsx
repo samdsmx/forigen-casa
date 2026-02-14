@@ -28,39 +28,61 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const fetchAppUser = async (userId: string) => {
     try {
-      // Fetch role and sede_id from app_user
-      const { data: appUserData, error: appUserError } = await supabase
-        .from("app_user")
-        .select("role, sede_id")
-        .eq("auth_user_id", userId)
-        .single();
+      // Use RPC functions which are faster and bypass some RLS checks
+      // Also add manual timeout to prevent indefinite hangs
+      const timeoutMs = 5000;
+      
+      const fetchWithTimeout = async () => {
+        const rolePromise = supabase.rpc('user_role');
+        const sedeIdPromise = supabase.rpc('user_sede_id');
+        
+        const timeout = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Fetch timeout')), timeoutMs)
+        );
 
-      if (appUserError) {
-        // If row doesn't exist, we just return null (valid for new users)
-        console.error("[UserContext] Error fetching app_user:", appUserError);
-        return null;
-      }
+        const [roleResult, sedeIdResult] = await Promise.race([
+          Promise.all([rolePromise, sedeIdPromise]),
+          timeout
+        ]) as any;
 
+        return { roleResult, sedeIdResult };
+      };
+
+      const { roleResult, sedeIdResult } = await fetchWithTimeout();
+
+      const role = roleResult?.data || null;
+      const sedeId = sedeIdResult?.data || null;
+
+      // Fetch sede name if we have a sede_id
       let sedeName = undefined;
-      const userSedeId = (appUserData as any)?.sede_id;
-
-      if (userSedeId) {
-        const { data: sedeData } = await supabase
+      if (sedeId) {
+        const sedePromise = supabase
           .from("sede")
           .select("nombre")
-          .eq("id", userSedeId)
-          .single();
-        sedeName = (sedeData as any)?.nombre;
+          .eq("id", sedeId as string)
+          .maybeSingle();
+        
+        const timeout = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Sede fetch timeout')), 3000)
+        );
+
+        try {
+          const { data: sedeData } = await Promise.race([sedePromise, timeout]) as any;
+          sedeName = sedeData?.nombre;
+        } catch (err) {
+          console.warn("[UserContext] Sede name fetch timeout, continuing without it");
+        }
       }
 
       return {
-        role: (appUserData as any)?.role,
-        sede_id: userSedeId,
+        role: role as string | undefined,
+        sede_id: sedeId as string | undefined,
         sede_nombre: sedeName,
       };
     } catch (err) {
       console.error("[UserContext] Unexpected error fetching app details:", err);
       // Don't crash auth flow if profile fetch fails
+      // Return minimal viable data
       return null;
     }
   };
