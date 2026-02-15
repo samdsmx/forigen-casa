@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "../lib/supabaseClient";
 import type { User } from "@supabase/supabase-js";
 
@@ -20,116 +20,77 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+async function loadAppUser(userId: string): Promise<AppUser | null> {
+  try {
+    const { data, error } = await supabase
+      .from("app_user")
+      .select("role, sede_id")
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    const role = (data as any).role as string | undefined;
+    const sede_id = (data as any).sede_id as string | undefined;
+    let sede_nombre: string | undefined;
+
+    if (sede_id) {
+      const { data: sedeData } = await supabase
+        .from("sede")
+        .select("nombre")
+        .eq("id", sede_id)
+        .maybeSingle();
+      sede_nombre = (sedeData as any)?.nombre;
+    }
+
+    return { role, sede_id, sede_nombre };
+  } catch {
+    return null;
+  }
+}
+
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Prevent concurrent fetchAppUser calls
-  const fetchingRef = useRef(false);
 
-  const fetchAppUser = async (userId: string): Promise<AppUser | null> => {
-    // Skip if already fetching
-    if (fetchingRef.current) return appUser;
-    fetchingRef.current = true;
-
-    try {
-      const { data: appUserData, error: appUserError } = await supabase
-        .from("app_user")
-        .select("role, sede_id")
-        .eq("auth_user_id", userId)
-        .maybeSingle();
-
-      if (appUserError) {
-        console.error("[UserContext] Error fetching app_user:", appUserError);
-        return null;
-      }
-
-      if (!appUserData) return null;
-
-      let sedeName = undefined;
-      const sedeId = (appUserData as any).sede_id;
-      if (sedeId) {
-        const { data: sedeData } = await supabase
-          .from("sede")
-          .select("nombre")
-          .eq("id", sedeId)
-          .maybeSingle();
-        sedeName = (sedeData as any)?.nombre;
-      }
-
-      return {
-        role: (appUserData as any).role as string | undefined,
-        sede_id: sedeId as string | undefined,
-        sede_nombre: sedeName,
-      };
-    } catch (err) {
-      console.error("[UserContext] Error fetching app details:", err);
-      return null;
-    } finally {
-      fetchingRef.current = false;
+  // Single function to sync state from a session
+  const syncSession = async (session: any) => {
+    if (session?.user) {
+      setUser(session.user);
+      const details = await loadAppUser(session.user.id);
+      setAppUser(details);
+    } else {
+      setUser(null);
+      setAppUser(null);
     }
+    setLoading(false);
   };
 
   const refreshUser = async () => {
     setLoading(true);
-    setError(null);
-    
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) throw sessionError;
-
-      if (session?.user) {
-        setUser(session.user);
-        const details = await fetchAppUser(session.user.id);
-        setAppUser(details);
-      } else {
-        setUser(null);
-        setAppUser(null);
-      }
-    } catch (err: any) {
-      console.error("[UserContext] Error refreshing user:", err);
-      setError(err.message || "Error al cargar usuario");
-      setUser(null);
-      setAppUser(null);
-    } finally {
-      setLoading(false);
-    }
+    const { data: { session } } = await supabase.auth.getSession();
+    await syncSession(session);
   };
 
   useEffect(() => {
-    // Listen for auth changes FIRST, then do initial load
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`[UserContext] Auth event: ${event}`);
-
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setAppUser(null);
-        setLoading(false);
-        return;
+    // 1. Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        console.log(`[UserContext] Auth event: ${_event}`);
+        // Use setTimeout to avoid blocking Supabase's internal callback chain
+        // This ensures getSession/setSession have finished before we query the DB
+        setTimeout(() => syncSession(session), 0);
       }
+    );
 
-      // For all other events: just update user from the session
-      // Don't fetch app_user here - let refreshUser handle it
-      if (session?.user) {
-        setUser(session.user);
-      }
-
-      // Only fetch app details on SIGNED_IN (actual login, not initial)
-      if (event === 'SIGNED_IN' && session?.user) {
-        const details = await fetchAppUser(session.user.id);
-        setAppUser(details);
-        setLoading(false);
-      }
+    // 2. Initial session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      syncSession(session);
     });
 
-    // Initial load
-    refreshUser();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => { subscription.unsubscribe(); };
   }, []);
 
   return (
