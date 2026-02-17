@@ -486,7 +486,7 @@ export default function ProyectosPage() {
             {filteredProgramas.map((programa, index) => (
               <div
                 key={programa.id}
-                className="card hover:shadow-lg transition-all duration-200 animate-fade-in h-full flex flex-col"
+                className="card transition-all duration-200 animate-fade-in h-full flex flex-col"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="card-body flex flex-col h-full">

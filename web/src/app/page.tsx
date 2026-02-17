@@ -123,7 +123,7 @@ export default function Dashboard() {
     color: string;
     trend?: string;
   }) => (
-    <div className="card hover:shadow-lg transition-all duration-200">
+    <div className="card transition-all duration-200">
       <div className="card-body">
         <div className="flex items-center justify-between">
           <div>
