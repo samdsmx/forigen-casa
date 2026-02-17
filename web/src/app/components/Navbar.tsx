@@ -167,6 +167,14 @@ export default function Navbar() {
                             <span>🗂️</span>
                             Catálogos
                           </Link>
+                          <Link
+                            href="/benefactores"
+                            className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <span>🏛️</span>
+                            Benefactores
+                          </Link>
                           {appUser?.role === 'admin' && (
                             <Link
                               href="/usuarios"
