@@ -12,6 +12,7 @@ type Tipo = Tables<'actividad_tipo'>;
 type Subtipo = Tables<'actividad_subtipo'>;
 
 interface BenefactorTipo { id: string; nombre: string; created_at: string | null; }
+interface Componente { id: string; nombre: string; created_at: string | null; }
 
 export default function CatalogosPage() {
   // Data lists
@@ -19,6 +20,7 @@ export default function CatalogosPage() {
   const [tipos, setTipos] = useState<Tipo[]>([]);
   const [subtipos, setSubtipos] = useState<(Subtipo & { tipo?: Pick<Tipo, 'nombre'> })[]>([]);
   const [benefactorTipos, setBenefactorTipos] = useState<BenefactorTipo[]>([]);
+  const [componentes, setComponentes] = useState<Componente[]>([]);
   // UI
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,31 +32,36 @@ export default function CatalogosPage() {
   const [tipoForm, setTipoForm] = useState<Pick<Tipo, 'nombre'>>({ nombre: "" });
   const [subtipoForm, setSubtipoForm] = useState<{ nombre: string; tipo_id: string }>({ nombre: "", tipo_id: "" });
   const [bTipoForm, setBTipoForm] = useState<{ nombre: string }>({ nombre: "" });
+  const [componenteForm, setComponenteForm] = useState<{ nombre: string }>({ nombre: "" });
 
   const [editTema, setEditTema] = useState<Record<string, Pick<Tema, 'nombre'>>>({});
   const [editTipo, setEditTipo] = useState<Record<string, Pick<Tipo, 'nombre'>>>({});
   const [editSubtipo, setEditSubtipo] = useState<Record<string, { nombre: string; tipo_id: string }>>({});
   const [editBTipo, setEditBTipo] = useState<Record<string, { nombre: string }>>({});
+  const [editComponente, setEditComponente] = useState<Record<string, { nombre: string }>>({});
 
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
       await ensureClientSession();
-      const [tms, tps, sbt, bts] = await Promise.all([
+      const [tms, tps, sbt, bts, cmps] = await Promise.all([
         supabase.from("tema").select("id,nombre,created_at").order("nombre", { ascending: true }),
         supabase.from("actividad_tipo").select("id,nombre,created_at").order("nombre", { ascending: true }),
         supabase.from("actividad_subtipo").select("id,nombre,tipo:tipo_id(id,nombre)").order("nombre", { ascending: true }),
         (supabase as any).from("benefactor_tipo").select("id,nombre,created_at").order("nombre", { ascending: true }),
+        (supabase as any).from("componente").select("id,nombre,created_at").order("nombre", { ascending: true }),
       ]);
       if (tms.error) throw tms.error;
       if (tps.error) throw tps.error;
       if (sbt.error) throw sbt.error;
       if (bts.error) throw bts.error;
+      if (cmps.error) throw cmps.error;
       setTemas((tms.data as Tema[]) || []);
       setTipos((tps.data as Tipo[]) || []);
       setSubtipos(((sbt.data as any[]) || []).map(x => ({ id: x.id, nombre: x.nombre, tipo_id: x.tipo?.id, created_at: null as any, tipo: x.tipo })) as any);
       setBenefactorTipos((bts.data as BenefactorTipo[]) || []);
+      setComponentes((cmps.data as Componente[]) || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudieron cargar los catálogos");
     } finally {
@@ -212,6 +219,41 @@ export default function CatalogosPage() {
     finally { setSaving(null); }
   };
 
+  // --- Componentes CRUD ---
+  const createComponente = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!componenteForm.nombre.trim()) return setError("Ingresa el nombre del componente");
+    setSaving("componente:new"); setError(null);
+    try {
+      const { error } = await (supabase as any).from("componente").insert({ nombre: componenteForm.nombre.trim() });
+      if (error) throw error;
+      setComponenteForm({ nombre: "" });
+      await load(); ok("Componente creado");
+    } catch (e) { setError(e instanceof Error ? e.message : "Error al crear componente"); }
+    finally { setSaving(null); }
+  };
+
+  const updateComponente = async (id: string) => {
+    const form = editComponente[id]; if (!form) return;
+    if (!form.nombre.trim()) return setError("Nombre requerido");
+    setSaving(`componente:${id}`); setError(null);
+    try {
+      const { error } = await (supabase as any).from("componente").update({ nombre: form.nombre.trim() }).eq("id", id);
+      if (error) throw error;
+      await load(); ok("Componente actualizado");
+      setEditComponente(prev => { const p = { ...prev }; delete p[id]; return p; });
+    } catch (e) { setError(e instanceof Error ? e.message : "Error al actualizar"); }
+    finally { setSaving(null); }
+  };
+
+  const deleteComponente = async (id: string) => {
+    if (!confirm("¿Eliminar componente?")) return;
+    setSaving(`componente:${id}`);
+    try { const { error } = await (supabase as any).from("componente").delete().eq("id", id); if (error) throw error; await load(); ok("Componente eliminado"); }
+    catch (e) { setError(e instanceof Error ? e.message : "No se pudo eliminar (puede estar en uso)"); }
+    finally { setSaving(null); }
+  };
+
   return (
     <Protected>
       <Role allow={["admin","supervisor_central"]}>
@@ -219,7 +261,7 @@ export default function CatalogosPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Catálogos</h1>
-              <p className="text-gray-600">Gestiona Temas, Tipos de actividad, Subtipos y Tipos de benefactor</p>
+              <p className="text-gray-600">Gestiona Temas, Tipos de actividad, Subtipos, Tipos de benefactor y Componentes</p>
             </div>
           </div>
 
@@ -431,6 +473,57 @@ export default function CatalogosPage() {
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditBTipo(p => ({ ...p, [t.id]: { nombre: t.nombre } }))}>Editar</button>
                                 <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteBTipo(t.id)} disabled={saving === `btipo:${t.id}`}>{saving === `btipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* Componentes */}
+          <div className="card p-5 md:p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Componentes</h2>
+            </div>
+            <form onSubmit={createComponente} className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-end">
+              <Field label="Nombre" value={componenteForm.nombre} onChange={e => setComponenteForm({ nombre: e.target.value })} required />
+              <div className="sm:col-span-2 flex justify-end">
+                <button type="submit" className="btn btn-primary btn-md" disabled={saving === "componente:new"}>{saving === "componente:new" ? "Agregando..." : "Agregar componente"}</button>
+              </div>
+            </form>
+            <div className="overflow-x-auto">
+              {loading ? <div className="p-2">Cargando...</div> : (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {componentes.map(c => (
+                      <tr key={c.id}>
+                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
+                          {editComponente[c.id] ? (
+                            <Field label="" value={editComponente[c.id].nombre} onChange={e => setEditComponente(prev => ({ ...prev, [c.id]: { nombre: e.target.value } }))} />
+                          ) : c.nombre}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center justify-end gap-2">
+                            {editComponente[c.id] ? (
+                              <>
+                                <button className="btn btn-primary btn-sm" type="button" onClick={() => updateComponente(c.id)} disabled={saving === `componente:${c.id}`}>{saving === `componente:${c.id}` ? "Guardando..." : "Guardar"}</button>
+                                <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditComponente(p => { const n = { ...p }; delete n[c.id]; return n; })}>Cancelar</button>
+                              </>
+                            ) : (
+                              <>
+                                <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditComponente(p => ({ ...p, [c.id]: { nombre: c.nombre } }))}>Editar</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteComponente(c.id)} disabled={saving === `componente:${c.id}`}>{saving === `componente:${c.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>

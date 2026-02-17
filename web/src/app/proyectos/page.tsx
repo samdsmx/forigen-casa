@@ -32,6 +32,10 @@ interface Programa {
     id: string;
     nombre: string;
   } | null;
+  componente: {
+    id: string;
+    nombre: string;
+  } | null;
   _count?: {
     actividades: number;
   };
@@ -45,6 +49,7 @@ interface FormData {
   tema_id: string;
   poblacion_grupo_id: string;
   benefactor_id: string;
+  componente_id: string;
   fecha_inicio: string;
   fecha_fin: string;
   metas_clave: string;
@@ -58,6 +63,7 @@ export default function ProyectosPage() {
   const [temas, setTemas] = useState<{ value: string; label: string }[]>([]);
   const [poblacionGrupos, setPoblacionGrupos] = useState<{ value: string; label: string }[]>([]);
   const [benefactores, setBenefactores] = useState<{ value: string; label: string }[]>([]);
+  const [componentes, setComponentes] = useState<{ value: string; label: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -75,6 +81,7 @@ export default function ProyectosPage() {
     tema_id: "",
     poblacion_grupo_id: "",
     benefactor_id: "",
+    componente_id: "",
     fecha_inicio: "",
     fecha_fin: "",
     metas_clave: "",
@@ -120,11 +127,12 @@ export default function ProyectosPage() {
       setLoadError(null);
 
       // Load dropdowns data
-      const [sedesRes, temasRes, poblacionRes, benefactoresRes] = await Promise.all([
+      const [sedesRes, temasRes, poblacionRes, benefactoresRes, componentesRes] = await Promise.all([
         supabase.from("sede").select("id, nombre, slug"),
         supabase.from("tema").select("id, nombre"),
         supabase.from("poblacion_grupo").select("id, nombre"),
-        (supabase as any).from("benefactor").select("id, nombre")
+        (supabase as any).from("benefactor").select("id, nombre"),
+        (supabase as any).from("componente").select("id, nombre")
       ]);
 
       if (sedesRes.data) {
@@ -142,6 +150,9 @@ export default function ProyectosPage() {
       if (benefactoresRes.data) {
         setBenefactores((benefactoresRes.data as any[]).map((b: any) => ({ value: b.id, label: b.nombre })));
       }
+      if (componentesRes.data) {
+        setComponentes((componentesRes.data as any[]).map((c: any) => ({ value: c.id, label: c.nombre })));
+      }
 
       // Load programas with relations
       const { data, error } = await (supabase as any)
@@ -151,7 +162,8 @@ export default function ProyectosPage() {
           sede:sede_id(id, nombre, slug),
           tema:tema_id(id, nombre),
           poblacion_grupo:poblacion_grupo_id(id, nombre),
-          benefactor:benefactor_id(id, nombre)
+          benefactor:benefactor_id(id, nombre),
+          componente:componente_id(id, nombre)
         `)
         .order("created_at", { ascending: false });
 
@@ -199,6 +211,7 @@ export default function ProyectosPage() {
         tema_id: formData.tema_id || null,
         poblacion_grupo_id: formData.poblacion_grupo_id || null,
         benefactor_id: formData.benefactor_id || null,
+        componente_id: formData.componente_id || null,
         fecha_inicio: formData.fecha_inicio || null,
         fecha_fin: formData.fecha_fin || null,
         metas_clave: formData.metas_clave.trim() || null,
@@ -224,6 +237,7 @@ export default function ProyectosPage() {
         tema_id: "",
         poblacion_grupo_id: "",
         benefactor_id: "",
+        componente_id: "",
         fecha_inicio: "",
         fecha_fin: "",
         metas_clave: "",
@@ -379,6 +393,14 @@ export default function ProyectosPage() {
                     onChange={(e) => setFormData({ ...formData, benefactor_id: e.target.value })}
                     options={benefactores}
                     placeholder="Seleccione un benefactor..."
+                  />
+
+                  <Select
+                    label="Componente"
+                    value={formData.componente_id}
+                    onChange={(e) => setFormData({ ...formData, componente_id: e.target.value })}
+                    options={componentes}
+                    placeholder="Seleccione un componente..."
                   />
 
                   <Field
@@ -550,6 +572,15 @@ export default function ProyectosPage() {
                       </div>
                     )}
 
+                    {(programa as any).componente && (
+                      <div className="flex items-center text-xs text-gray-500">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                        {(programa as any).componente.nombre}
+                      </div>
+                    )}
+
                     {programa.fecha_inicio && programa.fecha_fin && (
                       <div className="flex items-center text-xs text-gray-500">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -570,6 +601,7 @@ export default function ProyectosPage() {
                           tema_id: programa.tema?.id ?? "",
                           poblacion_grupo_id: programa.poblacion_grupo?.id ?? "",
                           benefactor_id: (programa as any).benefactor?.id ?? "",
+                          componente_id: (programa as any).componente?.id ?? "",
                           fecha_inicio: (programa.fecha_inicio as any) || "",
                           fecha_fin: (programa.fecha_fin as any) || "",
                           metas_clave: programa.metas_clave ?? "",
@@ -590,6 +622,7 @@ export default function ProyectosPage() {
                           tema_id: programa.tema?.id ?? "",
                           poblacion_grupo_id: programa.poblacion_grupo?.id ?? "",
                           benefactor_id: (programa as any).benefactor?.id ?? "",
+                          componente_id: (programa as any).componente?.id ?? "",
                           fecha_inicio: "",
                           fecha_fin: "",
                           metas_clave: programa.metas_clave ?? "",
