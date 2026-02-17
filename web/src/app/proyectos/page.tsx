@@ -582,6 +582,26 @@ export default function ProyectosPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                       </button>
+                      <button className="btn btn-secondary btn-sm" title="Clonar proyecto" onClick={() => {
+                        setFormData({
+                          nombre: programa.nombre + " (copia)",
+                          objetivo: programa.objetivo ?? "",
+                          sede_id: programa.sede?.id ?? "",
+                          tema_id: programa.tema?.id ?? "",
+                          poblacion_grupo_id: programa.poblacion_grupo?.id ?? "",
+                          benefactor_id: (programa as any).benefactor?.id ?? "",
+                          fecha_inicio: "",
+                          fecha_fin: "",
+                          metas_clave: programa.metas_clave ?? "",
+                          estado: "activo"
+                        });
+                        setEditingId(null);
+                        setShowForm(true);
+                      }}>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
                       <Link className="btn btn-secondary btn-sm" title="Ver actividades" href={`/actividades?programa_id=${programa.id}`}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
