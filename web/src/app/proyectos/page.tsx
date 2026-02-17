@@ -186,6 +186,8 @@ export default function ProyectosPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const msg = editingId ? "¿Guardar los cambios en este proyecto?" : "¿Crear este nuevo proyecto?";
+    if (!confirm(msg)) return;
     setCreating(true);
     setError(null);
 
@@ -312,7 +314,7 @@ export default function ProyectosPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 )}
-                {showForm ? 'Cancelar' : 'Nuevo Proyecto'}
+                {showForm ? 'Cancelar' : editingId ? 'Editando...' : 'Nuevo Proyecto'}
               </button>
             </div>
           </Role>
@@ -334,8 +336,8 @@ export default function ProyectosPage() {
         {showForm && (
           <div className="animate-fade-in-down">
             <FormCard
-              title="Crear Nuevo Proyecto"
-              description="Complete la información del programa que desea crear"
+              title={editingId ? "Editar Proyecto" : "Crear Nuevo Proyecto"}
+              description={editingId ? "Modifique los datos del proyecto" : "Complete la información del programa que desea crear"}
             >
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -442,7 +444,7 @@ export default function ProyectosPage() {
                         <div className="loading-spinner"></div>
                       </div>
                     )}
-                    {creating ? "Creando..." : "Crear Proyecto"}
+                    {creating ? (editingId ? "Guardando..." : "Creando...") : (editingId ? "Guardar Cambios" : "Crear Proyecto")}
                   </button>
                 </div>
               </form>
@@ -450,7 +452,9 @@ export default function ProyectosPage() {
           </div>
         )}
 
-        {/* Filters and Search */}
+        {/* Filters, Search and Grid - hidden when form is open */}
+        {!showForm && (
+          <>
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <SearchInput
@@ -653,6 +657,9 @@ export default function ProyectosPage() {
               </div>
             </div>
           </div>
+        )}
+
+          </>
         )}
       </div>
     </Protected>
