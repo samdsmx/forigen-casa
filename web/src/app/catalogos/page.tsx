@@ -11,11 +11,14 @@ type Tema = Tables<'tema'>;
 type Tipo = Tables<'actividad_tipo'>;
 type Subtipo = Tables<'actividad_subtipo'>;
 
+interface BenefactorTipo { id: string; nombre: string; created_at: string | null; }
+
 export default function CatalogosPage() {
   // Data lists
   const [temas, setTemas] = useState<Tema[]>([]);
   const [tipos, setTipos] = useState<Tipo[]>([]);
   const [subtipos, setSubtipos] = useState<(Subtipo & { tipo?: Pick<Tipo, 'nombre'> })[]>([]);
+  const [benefactorTipos, setBenefactorTipos] = useState<BenefactorTipo[]>([]);
   // UI
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,27 +29,32 @@ export default function CatalogosPage() {
   const [temaForm, setTemaForm] = useState<Pick<Tema, 'nombre'>>({ nombre: "" });
   const [tipoForm, setTipoForm] = useState<Pick<Tipo, 'nombre'>>({ nombre: "" });
   const [subtipoForm, setSubtipoForm] = useState<{ nombre: string; tipo_id: string }>({ nombre: "", tipo_id: "" });
+  const [bTipoForm, setBTipoForm] = useState<{ nombre: string }>({ nombre: "" });
 
   const [editTema, setEditTema] = useState<Record<string, Pick<Tema, 'nombre'>>>({});
   const [editTipo, setEditTipo] = useState<Record<string, Pick<Tipo, 'nombre'>>>({});
   const [editSubtipo, setEditSubtipo] = useState<Record<string, { nombre: string; tipo_id: string }>>({});
+  const [editBTipo, setEditBTipo] = useState<Record<string, { nombre: string }>>({});
 
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
       await ensureClientSession();
-      const [tms, tps, sbt] = await Promise.all([
+      const [tms, tps, sbt, bts] = await Promise.all([
         supabase.from("tema").select("id,nombre,created_at").order("nombre", { ascending: true }),
         supabase.from("actividad_tipo").select("id,nombre,created_at").order("nombre", { ascending: true }),
         supabase.from("actividad_subtipo").select("id,nombre,tipo:tipo_id(id,nombre)").order("nombre", { ascending: true }),
+        (supabase as any).from("benefactor_tipo").select("id,nombre,created_at").order("nombre", { ascending: true }),
       ]);
       if (tms.error) throw tms.error;
       if (tps.error) throw tps.error;
       if (sbt.error) throw sbt.error;
+      if (bts.error) throw bts.error;
       setTemas((tms.data as Tema[]) || []);
       setTipos((tps.data as Tipo[]) || []);
       setSubtipos(((sbt.data as any[]) || []).map(x => ({ id: x.id, nombre: x.nombre, tipo_id: x.tipo?.id, created_at: null as any, tipo: x.tipo })) as any);
+      setBenefactorTipos((bts.data as BenefactorTipo[]) || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudieron cargar los catálogos");
     } finally {
@@ -169,6 +177,41 @@ export default function CatalogosPage() {
     finally { setSaving(null); }
   };
 
+  // --- Tipos de Benefactor CRUD ---
+  const createBTipo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bTipoForm.nombre.trim()) return setError("Ingresa el nombre del tipo de benefactor");
+    setSaving("btipo:new"); setError(null);
+    try {
+      const { error } = await (supabase as any).from("benefactor_tipo").insert({ nombre: bTipoForm.nombre.trim() });
+      if (error) throw error;
+      setBTipoForm({ nombre: "" });
+      await load(); ok("Tipo de benefactor creado");
+    } catch (e) { setError(e instanceof Error ? e.message : "Error al crear tipo de benefactor"); }
+    finally { setSaving(null); }
+  };
+
+  const updateBTipo = async (id: string) => {
+    const form = editBTipo[id]; if (!form) return;
+    if (!form.nombre.trim()) return setError("Nombre requerido");
+    setSaving(`btipo:${id}`); setError(null);
+    try {
+      const { error } = await (supabase as any).from("benefactor_tipo").update({ nombre: form.nombre.trim() }).eq("id", id);
+      if (error) throw error;
+      await load(); ok("Tipo de benefactor actualizado");
+      setEditBTipo(prev => { const p = { ...prev }; delete p[id]; return p; });
+    } catch (e) { setError(e instanceof Error ? e.message : "Error al actualizar"); }
+    finally { setSaving(null); }
+  };
+
+  const deleteBTipo = async (id: string) => {
+    if (!confirm("¿Eliminar tipo de benefactor?")) return;
+    setSaving(`btipo:${id}`);
+    try { const { error } = await (supabase as any).from("benefactor_tipo").delete().eq("id", id); if (error) throw error; await load(); ok("Tipo de benefactor eliminado"); }
+    catch (e) { setError(e instanceof Error ? e.message : "No se pudo eliminar (puede estar en uso)"); }
+    finally { setSaving(null); }
+  };
+
   return (
     <Protected>
       <Role allow={["admin","supervisor_central"]}>
@@ -176,7 +219,7 @@ export default function CatalogosPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Catálogos</h1>
-              <p className="text-gray-600">Gestiona Temas, Tipos de actividad y Subtipos</p>
+              <p className="text-gray-600">Gestiona Temas, Tipos de actividad, Subtipos y Tipos de benefactor</p>
             </div>
           </div>
 
@@ -337,6 +380,57 @@ export default function CatalogosPage() {
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditSubtipo(p => ({ ...p, [s.id]: { nombre: s.nombre, tipo_id: (s as any).tipo_id || (s as any).tipo?.id || "" } }))}>Editar</button>
                                 <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteSubtipo(s.id)} disabled={saving === `subtipo:${s.id}`}>{saving === `subtipo:${s.id}` ? "Eliminando..." : "Eliminar"}</button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* Tipos de Benefactor */}
+          <div className="card p-5 md:p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Tipos de Benefactor</h2>
+            </div>
+            <form onSubmit={createBTipo} className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-end">
+              <Field label="Nombre" value={bTipoForm.nombre} onChange={e => setBTipoForm({ nombre: e.target.value })} required />
+              <div className="sm:col-span-2 flex justify-end">
+                <button type="submit" className="btn btn-primary btn-md" disabled={saving === "btipo:new"}>{saving === "btipo:new" ? "Agregando..." : "Agregar tipo"}</button>
+              </div>
+            </form>
+            <div className="overflow-x-auto">
+              {loading ? <div className="p-2">Cargando...</div> : (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {benefactorTipos.map(t => (
+                      <tr key={t.id}>
+                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
+                          {editBTipo[t.id] ? (
+                            <Field label="" value={editBTipo[t.id].nombre} onChange={e => setEditBTipo(prev => ({ ...prev, [t.id]: { nombre: e.target.value } }))} />
+                          ) : t.nombre}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center justify-end gap-2">
+                            {editBTipo[t.id] ? (
+                              <>
+                                <button className="btn btn-primary btn-sm" type="button" onClick={() => updateBTipo(t.id)} disabled={saving === `btipo:${t.id}`}>{saving === `btipo:${t.id}` ? "Guardando..." : "Guardar"}</button>
+                                <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditBTipo(p => { const c = { ...p }; delete c[t.id]; return c; })}>Cancelar</button>
+                              </>
+                            ) : (
+                              <>
+                                <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditBTipo(p => ({ ...p, [t.id]: { nombre: t.nombre } }))}>Editar</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteBTipo(t.id)} disabled={saving === `btipo:${t.id}`}>{saving === `btipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>

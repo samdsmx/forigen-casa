@@ -17,9 +17,7 @@ export default function BenefactoresPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
 
-  const [bTipoForm, setBTipoForm] = useState<{ nombre: string }>({ nombre: "" });
   const [benefactorForm, setBenefactorForm] = useState<{ nombre: string; tipo_id: string }>({ nombre: "", tipo_id: "" });
-  const [editBTipo, setEditBTipo] = useState<Record<string, { nombre: string }>>({});
   const [editBenefactor, setEditBenefactor] = useState<Record<string, { nombre: string; tipo_id: string }>>({});
 
   const load = async () => {
@@ -45,41 +43,6 @@ export default function BenefactoresPage() {
   useEffect(() => { load(); }, []);
 
   const ok = (msg: string) => { setNotice(msg); setTimeout(() => setNotice(null), 2000); };
-
-  // --- Tipos de Benefactor CRUD ---
-  const createBTipo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bTipoForm.nombre.trim()) return setError("Ingresa el nombre del tipo de benefactor");
-    setSaving("btipo:new"); setError(null);
-    try {
-      const { error } = await (supabase as any).from("benefactor_tipo").insert({ nombre: bTipoForm.nombre.trim() });
-      if (error) throw error;
-      setBTipoForm({ nombre: "" });
-      await load(); ok("Tipo de benefactor creado");
-    } catch (e) { setError(e instanceof Error ? e.message : "Error al crear tipo de benefactor"); }
-    finally { setSaving(null); }
-  };
-
-  const updateBTipo = async (id: string) => {
-    const form = editBTipo[id]; if (!form) return;
-    if (!form.nombre.trim()) return setError("Nombre requerido");
-    setSaving(`btipo:${id}`); setError(null);
-    try {
-      const { error } = await (supabase as any).from("benefactor_tipo").update({ nombre: form.nombre.trim() }).eq("id", id);
-      if (error) throw error;
-      await load(); ok("Tipo de benefactor actualizado");
-      setEditBTipo(prev => { const p = { ...prev }; delete p[id]; return p; });
-    } catch (e) { setError(e instanceof Error ? e.message : "Error al actualizar"); }
-    finally { setSaving(null); }
-  };
-
-  const deleteBTipo = async (id: string) => {
-    if (!confirm("Eliminar tipo de benefactor?")) return;
-    setSaving(`btipo:${id}`);
-    try { const { error } = await (supabase as any).from("benefactor_tipo").delete().eq("id", id); if (error) throw error; await load(); ok("Tipo de benefactor eliminado"); }
-    catch (e) { setError(e instanceof Error ? e.message : "No se pudo eliminar (puede estar en uso)"); }
-    finally { setSaving(null); }
-  };
 
   // --- Benefactores CRUD ---
   const createBenefactor = async (e: React.FormEvent) => {
@@ -125,63 +88,12 @@ export default function BenefactoresPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Benefactores</h1>
-              <p className="text-gray-600">Gestiona los benefactores y sus tipos</p>
+              <p className="text-gray-600">Gestiona los benefactores de proyectos</p>
             </div>
           </div>
 
           {notice && <div className="alert alert-success">{notice}</div>}
           {error && <div className="alert alert-error">{error}</div>}
-
-          {/* Tipos de Benefactor */}
-          <div className="card p-5 md:p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Tipos de Benefactor</h2>
-            </div>
-            <form onSubmit={createBTipo} className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-end">
-              <Field label="Nombre" value={bTipoForm.nombre} onChange={e => setBTipoForm({ nombre: e.target.value })} required />
-              <div className="sm:col-span-2 flex justify-end">
-                <button type="submit" className="btn btn-primary btn-md" disabled={saving === "btipo:new"}>{saving === "btipo:new" ? "Agregando..." : "Agregar tipo"}</button>
-              </div>
-            </form>
-            <div className="overflow-x-auto">
-              {loading ? <div className="p-2">Cargando...</div> : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
-                    {benefactorTipos.map(t => (
-                      <tr key={t.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
-                          {editBTipo[t.id] ? (
-                            <Field label="" value={editBTipo[t.id].nombre} onChange={e => setEditBTipo(prev => ({ ...prev, [t.id]: { nombre: e.target.value } }))} />
-                          ) : t.nombre}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <div className="flex items-center justify-end gap-2">
-                            {editBTipo[t.id] ? (
-                              <>
-                                <button className="btn btn-primary btn-sm" type="button" onClick={() => updateBTipo(t.id)} disabled={saving === `btipo:${t.id}`}>{saving === `btipo:${t.id}` ? "Guardando..." : "Guardar"}</button>
-                                <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditBTipo(p => { const c = { ...p }; delete c[t.id]; return c; })}>Cancelar</button>
-                              </>
-                            ) : (
-                              <>
-                                <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditBTipo(p => ({ ...p, [t.id]: { nombre: t.nombre } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteBTipo(t.id)} disabled={saving === `btipo:${t.id}`}>{saving === `btipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
 
           {/* Benefactores */}
           <div className="card p-5 md:p-6 space-y-4">
