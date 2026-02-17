@@ -67,6 +67,19 @@ export async function PATCH(request: Request) {
   return NextResponse.json({ success: true });
 }
 
+export async function PUT(request: Request) {
+  const { auth_user_id, password } = await request.json();
+  if (!auth_user_id || !password) {
+    return NextResponse.json({ error: "Se requiere auth_user_id y password" }, { status: 400 });
+  }
+  if (password.length < 6) {
+    return NextResponse.json({ error: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 });
+  }
+  const { error } = await supabaseServer.auth.admin.updateUserById(auth_user_id, { password });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true });
+}
+
 export async function DELETE(request: Request) {
   const { auth_user_id } = await request.json();
   const { error: appError } = await supabaseServer

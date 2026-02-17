@@ -24,6 +24,9 @@ export default function UsuariosPage() {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [pwUser, setPwUser] = useState<string | null>(null);
+  const [pwValue, setPwValue] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
   const [roles, setRoles] = useState<{ value: string; label: string }[]>([]);
   const [sedes, setSedes] = useState<{ value: string; label: string }[]>([]);
   const [form, setForm] = useState({ email: "", password: "", role: "", sede_id: "" });
@@ -129,6 +132,27 @@ export default function UsuariosPage() {
     }
   };
 
+  const resetPassword = async (id: string) => {
+    if (pwValue.length < 6) { setError("La contraseña debe tener al menos 6 caracteres"); return; }
+    setPwSaving(true); setError(null); setNotice(null);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auth_user_id: id, password: pwValue })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo cambiar la contraseña');
+      setNotice('Contraseña actualizada');
+      setPwUser(null); setPwValue("");
+      setTimeout(() => setNotice(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cambiar contraseña');
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
   return (
     <Protected>
       <Role allow={["admin"]}>
@@ -219,14 +243,32 @@ export default function UsuariosPage() {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                          <button
-                            onClick={() => remove(u.id)}
-                            className="btn btn-danger btn-sm"
-                            type="button"
-                            disabled={deleting === u.id}
-                          >
-                            {deleting === u.id ? 'Eliminando...' : 'Eliminar'}
-                          </button>
+                          {pwUser === u.id ? (
+                            <>
+                              <input
+                                type="password"
+                                placeholder="Nueva contraseña"
+                                value={pwValue}
+                                onChange={e => setPwValue(e.target.value)}
+                                className="input input-sm w-36"
+                                minLength={6}
+                              />
+                              <button onClick={() => resetPassword(u.id)} className="btn btn-primary btn-sm" type="button" disabled={pwSaving}>{pwSaving ? '...' : 'OK'}</button>
+                              <button onClick={() => { setPwUser(null); setPwValue(""); }} className="btn btn-secondary btn-sm" type="button">✕</button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={() => { setPwUser(u.id); setPwValue(""); }} className="btn btn-secondary btn-sm" type="button" title="Cambiar contraseña">🔑</button>
+                              <button
+                                onClick={() => remove(u.id)}
+                                className="btn btn-danger btn-sm"
+                                type="button"
+                                disabled={deleting === u.id}
+                              >
+                                {deleting === u.id ? 'Eliminando...' : 'Eliminar'}
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
