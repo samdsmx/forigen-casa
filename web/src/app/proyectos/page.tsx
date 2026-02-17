@@ -28,6 +28,10 @@ interface Programa {
     id: string;
     nombre: string;
   } | null;
+  benefactor: {
+    id: string;
+    nombre: string;
+  } | null;
   _count?: {
     actividades: number;
   };
@@ -40,6 +44,7 @@ interface FormData {
   sede_id: string;
   tema_id: string;
   poblacion_grupo_id: string;
+  benefactor_id: string;
   fecha_inicio: string;
   fecha_fin: string;
   metas_clave: string;
@@ -52,6 +57,7 @@ export default function ProyectosPage() {
   const [sedes, setSedes] = useState<{ value: string; label: string }[]>([]);
   const [temas, setTemas] = useState<{ value: string; label: string }[]>([]);
   const [poblacionGrupos, setPoblacionGrupos] = useState<{ value: string; label: string }[]>([]);
+  const [benefactores, setBenefactores] = useState<{ value: string; label: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -68,6 +74,7 @@ export default function ProyectosPage() {
     sede_id: "",
     tema_id: "",
     poblacion_grupo_id: "",
+    benefactor_id: "",
     fecha_inicio: "",
     fecha_fin: "",
     metas_clave: "",
@@ -113,10 +120,11 @@ export default function ProyectosPage() {
       setLoadError(null);
 
       // Load dropdowns data
-      const [sedesRes, temasRes, poblacionRes] = await Promise.all([
+      const [sedesRes, temasRes, poblacionRes, benefactoresRes] = await Promise.all([
         supabase.from("sede").select("id, nombre, slug"),
         supabase.from("tema").select("id, nombre"),
-        supabase.from("poblacion_grupo").select("id, nombre")
+        supabase.from("poblacion_grupo").select("id, nombre"),
+        (supabase as any).from("benefactor").select("id, nombre")
       ]);
 
       if (sedesRes.data) {
@@ -131,15 +139,19 @@ export default function ProyectosPage() {
         const p = poblacionRes.data as Pick<Tables<'poblacion_grupo'>, 'id' | 'nombre'>[];
         setPoblacionGrupos(p.map(p => ({ value: p.id, label: p.nombre })));
       }
+      if (benefactoresRes.data) {
+        setBenefactores((benefactoresRes.data as any[]).map((b: any) => ({ value: b.id, label: b.nombre })));
+      }
 
       // Load programas with relations
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("programa")
         .select(`
           *,
           sede:sede_id(id, nombre, slug),
           tema:tema_id(id, nombre),
-          poblacion_grupo:poblacion_grupo_id(id, nombre)
+          poblacion_grupo:poblacion_grupo_id(id, nombre),
+          benefactor:benefactor_id(id, nombre)
         `)
         .order("created_at", { ascending: false });
 
@@ -178,12 +190,13 @@ export default function ProyectosPage() {
     setError(null);
 
     try {
-      const payload: TablesInsert<'programa'> = {
+      const payload: any = {
         nombre: formData.nombre.trim(),
         objetivo: formData.objetivo.trim() || null,
         sede_id: formData.sede_id,
         tema_id: formData.tema_id || null,
         poblacion_grupo_id: formData.poblacion_grupo_id || null,
+        benefactor_id: formData.benefactor_id || null,
         fecha_inicio: formData.fecha_inicio || null,
         fecha_fin: formData.fecha_fin || null,
         metas_clave: formData.metas_clave.trim() || null,
@@ -208,6 +221,7 @@ export default function ProyectosPage() {
         sede_id: "",
         tema_id: "",
         poblacion_grupo_id: "",
+        benefactor_id: "",
         fecha_inicio: "",
         fecha_fin: "",
         metas_clave: "",
@@ -355,6 +369,14 @@ export default function ProyectosPage() {
                     onChange={(e) => setFormData({ ...formData, poblacion_grupo_id: e.target.value })}
                     options={poblacionGrupos}
                     placeholder="Seleccione un grupo..."
+                  />
+
+                  <Select
+                    label="Benefactor"
+                    value={formData.benefactor_id}
+                    onChange={(e) => setFormData({ ...formData, benefactor_id: e.target.value })}
+                    options={benefactores}
+                    placeholder="Seleccione un benefactor..."
                   />
 
                   <Field
@@ -515,6 +537,15 @@ export default function ProyectosPage() {
                       </div>
                     )}
 
+                    {(programa as any).benefactor && (
+                      <div className="flex items-center text-xs text-gray-500">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        {(programa as any).benefactor.nombre}
+                      </div>
+                    )}
+
                     {programa.fecha_inicio && programa.fecha_fin && (
                       <div className="flex items-center text-xs text-gray-500">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -534,6 +565,7 @@ export default function ProyectosPage() {
                           sede_id: programa.sede?.id ?? "",
                           tema_id: programa.tema?.id ?? "",
                           poblacion_grupo_id: programa.poblacion_grupo?.id ?? "",
+                          benefactor_id: (programa as any).benefactor?.id ?? "",
                           fecha_inicio: (programa.fecha_inicio as any) || "",
                           fecha_fin: (programa.fecha_fin as any) || "",
                           metas_clave: programa.metas_clave ?? "",
