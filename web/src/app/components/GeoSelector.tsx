@@ -138,11 +138,11 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
     <div className="space-y-3">
       {/* Mode toggle */}
       <div className="flex items-center gap-2 text-sm">
-        <span className="text-gray-600 font-medium">Ubicación:</span>
+        <span className="text-gray-600 dark:text-gray-400 font-medium">Ubicación:</span>
         <button
           type="button"
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-            mode === "cp" ? "bg-brand-100 text-brand-800" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            mode === "cp" ? "bg-brand-100 text-brand-800 dark:bg-brand-900 dark:text-brand-200" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
           }`}
           onClick={() => setMode("cp")}
         >
@@ -151,7 +151,7 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
         <button
           type="button"
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-            mode === "cascada" ? "bg-brand-100 text-brand-800" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            mode === "cascada" ? "bg-brand-100 text-brand-800 dark:bg-brand-900 dark:text-brand-200" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
           }`}
           onClick={() => setMode("cascada")}
         >
@@ -176,7 +176,7 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
 
           {cpResults.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Localidad / Colonia
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 max-h-48 overflow-y-auto border rounded-lg p-2 bg-white dark:bg-gray-800 dark:border-gray-700">
@@ -186,14 +186,14 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
                     type="button"
                     className={`text-left px-3 py-1.5 rounded text-sm transition-colors ${
                       value.localidad_colonia === a.nombre
-                        ? "bg-brand-100 text-brand-800 font-medium"
-                        : "hover:bg-gray-100 text-gray-700"
+                        ? "bg-brand-100 text-brand-800 dark:bg-brand-900 dark:text-brand-200 font-medium"
+                        : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                     }`}
                     onClick={() => selectColonia(a.nombre)}
                   >
                     {a.nombre}
                     {a.tipo_asentamiento && (
-                      <span className="text-xs text-gray-500 ml-1">({a.tipo_asentamiento})</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">({a.tipo_asentamiento})</span>
                     )}
                   </button>
                 ))}
@@ -255,7 +255,7 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
 
       {/* Summary of selection */}
       {value.estado_clave && (
-        <div className="text-xs text-gray-500 flex items-center gap-1">
+        <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
           <span>📍</span>
           {estados.find((e) => e.clave === value.estado_clave)?.nombre}
           {value.municipio_id && `, ${municipios.find((m) => m.id === value.municipio_id)?.nombre || cpMunicipio}`}

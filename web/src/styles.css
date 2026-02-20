@@ -177,11 +177,11 @@ body {
 }
 
 .form-checkbox {
-  @apply w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500;
+  @apply w-4 h-4 text-brand-600 border-gray-300 dark:border-gray-600 rounded focus:ring-brand-500;
 }
 
 .form-radio {
-  @apply w-4 h-4 text-brand-600 border-gray-300 focus:ring-brand-500;
+  @apply w-4 h-4 text-brand-600 border-gray-300 dark:border-gray-600 focus:ring-brand-500;
 }
 
 .form-error {
@@ -211,7 +211,7 @@ body {
 }
 
 .nav-link.active {
-  @apply text-brand-600 bg-brand-50;
+  @apply text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30;
 }
 
 /* Tables */
@@ -238,23 +238,23 @@ body {
 }
 
 .badge-primary {
-  @apply bg-brand-100 text-brand-800;
+  @apply bg-brand-100 dark:bg-brand-900 text-brand-800 dark:text-brand-200;
 }
 
 .badge-success {
-  @apply bg-green-100 text-green-800;
+  @apply bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200;
 }
 
 .badge-warning {
-  @apply bg-yellow-100 text-yellow-800;
+  @apply bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200;
 }
 
 .badge-danger {
-  @apply bg-red-100 text-red-800;
+  @apply bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200;
 }
 
 .badge-gray {
-  @apply bg-gray-100 text-gray-800;
+  @apply bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200;
 }
 
 /* Alerts */
@@ -264,24 +264,24 @@ body {
 }
 
 .alert-info {
-  @apply bg-brand-50 border-brand-400 text-brand-700;
+  @apply bg-brand-50 dark:bg-brand-900/30 border-brand-400 text-brand-700 dark:text-brand-300;
 }
 
 .alert-success {
-  @apply bg-green-50 border-green-400 text-green-700;
+  @apply bg-green-50 dark:bg-green-900/30 border-green-400 text-green-700 dark:text-green-300;
 }
 
 .alert-warning {
-  @apply bg-yellow-50 border-yellow-400 text-yellow-700;
+  @apply bg-yellow-50 dark:bg-yellow-900/30 border-yellow-400 text-yellow-700 dark:text-yellow-300;
 }
 
 .alert-error {
-  @apply bg-red-50 border-red-400 text-red-700;
+  @apply bg-red-50 dark:bg-red-900/30 border-red-400 text-red-700 dark:text-red-300;
 }
 
 /* Loading States */
 .loading-spinner {
-  @apply animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-brand-600;
+  @apply animate-spin rounded-full h-4 w-4 border-2 border-gray-300 dark:border-gray-600 border-t-brand-600;
 }
 
 .loading-skeleton {
@@ -300,6 +300,10 @@ body {
 .glass-effect {
   backdrop-filter: blur(10px);
   background: rgba(255, 255, 255, 0.8);
+}
+
+.dark .glass-effect {
+  background: rgba(30, 41, 59, 0.8);
 }
 
 /* Animation Classes */

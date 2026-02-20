@@ -55,7 +55,7 @@ function LoginPageInner() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -66,16 +66,16 @@ function LoginPageInner() {
             height={64}
             className="mx-auto mb-2"
           />
-          <p className="text-gray-600 font-bold">Sistema de Gestión de Proyectos</p>
+          <p className="text-gray-600 dark:text-gray-400 font-bold">Sistema de Gestión de Proyectos</p>
 
         </div>
 
         {/* Login Form */}
         <div className="space-y-3 ">
-          <p className="text-sm text-gray-500 mt-4 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
               Ingrese sus credenciales para acceder al sistema
           </p>
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 space-y-3">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 space-y-3">
 
             <form onSubmit={onSubmit} className="space-y-6">
               <div className="space-y-4">
@@ -139,15 +139,15 @@ function LoginPageInner() {
             <div className="space-y-4">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
+                  <div className="w-full border-t border-gray-200 dark:border-gray-700" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">¿Necesita ayuda?</span>
+                  <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">¿Necesita ayuda?</span>
                 </div>
               </div>
 
               <div className="text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Contacte al administrador del sistema para obtener acceso
                 </p>
               </div>
@@ -156,7 +156,7 @@ function LoginPageInner() {
         </div>
 
         {/* Footer */}
-        <div className="text-center text-xs text-gray-500">
+        <div className="text-center text-xs text-gray-500 dark:text-gray-400">
           <p>Casa Origen - Sistema de Gestión © 2025</p>
           <p className="mt-1">Espacios de Empoderamiento Integral</p>
         </div>
