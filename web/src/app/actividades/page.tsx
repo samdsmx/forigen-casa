@@ -213,6 +213,21 @@ export default function Actividades() {
               />
               <Select label="Tipo" options={tipos} value={form.tipo_id} onChange={(e:any)=>setForm({...form,tipo_id:e.target.value})} />
               <Select label="Subtipo" options={subtipos} value={form.subtipo_id} onChange={(e:any)=>setForm({...form,subtipo_id:e.target.value})} />
+              <Select
+                label="Facilitador"
+                value={form.facilitador_id}
+                onChange={(e:any)=>setForm({...form,facilitador_id:e.target.value})}
+                options={facilitadores}
+              />
+              <Field
+                label="Cupo"
+                type="number"
+                min={0}
+                value={form.cupo}
+                onChange={(e:any)=>setForm({...form,cupo:e.target.value})}
+                error={errors.cupo}
+                help="Opcional"
+              />
               <div className="sm:col-span-2 lg:col-span-4">
                 <GeoSelector
                   value={{
@@ -224,13 +239,7 @@ export default function Actividades() {
                   onChange={(geo) => setForm({ ...form, ...geo })}
                 />
               </div>
-              <Select
-                label="Facilitador"
-                value={form.facilitador_id}
-                onChange={(e:any)=>setForm({...form,facilitador_id:e.target.value})}
-                options={facilitadores}
-              />
-              <div className="lg:col-span-4">
+              <div className="sm:col-span-2 lg:col-span-4">
                 <Textarea
                   label="Notas"
                   value={form.notas}
@@ -239,15 +248,6 @@ export default function Actividades() {
                   rows={4}
                 />
               </div>
-              <Field
-                label="Cupo"
-                type="number"
-                min={0}
-                value={form.cupo}
-                onChange={(e:any)=>setForm({...form,cupo:e.target.value})}
-                error={errors.cupo}
-                help="Opcional"
-              />
               <div className="sm:col-span-2 lg:col-span-4 flex justify-end gap-2">
                 <button
                   type="button"
