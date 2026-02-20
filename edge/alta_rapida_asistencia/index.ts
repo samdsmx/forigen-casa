@@ -36,6 +36,10 @@ serve(async (req) => {
           lengua_indigena: min.lengua_indigena ?? null,
           condicion_migrante: min.condicion_migrante ?? null,
           escolaridad: min.escolaridad ?? null,
+          estado_clave: min.estado_clave ?? null,
+          municipio_id: min.municipio_id ?? null,
+          codigo_postal: min.codigo_postal ?? null,
+          localidad_colonia: min.localidad_colonia ?? null,
         };
         const ins = await supabase.from("beneficiario").insert(payload).select("id").single();
         if (ins.error) throw ins.error;
@@ -54,6 +58,10 @@ serve(async (req) => {
         lengua_indigena: min.lengua_indigena ?? null,
         condicion_migrante: min.condicion_migrante ?? null,
         escolaridad: min.escolaridad ?? null,
+        estado_clave: min.estado_clave ?? null,
+        municipio_id: min.municipio_id ?? null,
+        codigo_postal: min.codigo_postal ?? null,
+        localidad_colonia: min.localidad_colonia ?? null,
       };
       const ins = await supabase.from("beneficiario").insert(payload).select("id").single();
       if (ins.error) throw ins.error;

@@ -16,56 +16,79 @@ export type Database = {
     Tables: {
       actividad: {
         Row: {
+          codigo_postal: string | null
           created_at: string | null
           cupo: number | null
+          estado_clave: string | null
           facilitador_id: string | null
           fecha: string
           hora_fin: string
           hora_inicio: string
           id: string
+          localidad_colonia: string | null
+          municipio_id: string | null
           notas: string | null
           programa_id: string
           sede_id: string
           subtipo_id: string | null
           tipo_id: string
-          ubicacion: string | null
         }
         Insert: {
+          codigo_postal?: string | null
           created_at?: string | null
           cupo?: number | null
+          estado_clave?: string | null
           facilitador_id?: string | null
           fecha: string
           hora_fin: string
           hora_inicio: string
           id?: string
+          localidad_colonia?: string | null
+          municipio_id?: string | null
           notas?: string | null
           programa_id: string
           sede_id: string
           subtipo_id?: string | null
           tipo_id: string
-          ubicacion?: string | null
         }
         Update: {
+          codigo_postal?: string | null
           created_at?: string | null
           cupo?: number | null
+          estado_clave?: string | null
           facilitador_id?: string | null
           fecha?: string
           hora_fin?: string
           hora_inicio?: string
           id?: string
+          localidad_colonia?: string | null
+          municipio_id?: string | null
           notas?: string | null
           programa_id?: string
           sede_id?: string
           subtipo_id?: string | null
           tipo_id?: string
-          ubicacion?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "actividad_estado_clave_fkey"
+            columns: ["estado_clave"]
+            isOneToOne: false
+            referencedRelation: "cat_estado"
+            referencedColumns: ["clave"]
+          },
           {
             foreignKeyName: "actividad_facilitador_id_fkey"
             columns: ["facilitador_id"]
             isOneToOne: false
             referencedRelation: "app_user"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "actividad_municipio_id_fkey"
+            columns: ["municipio_id"]
+            isOneToOne: false
+            referencedRelation: "cat_municipio"
             referencedColumns: ["id"]
           },
           {
@@ -247,13 +270,17 @@ export type Database = {
       }
       beneficiario: {
         Row: {
+          codigo_postal: string | null
           condicion_migrante: string | null
           created_at: string | null
           curp: string | null
           escolaridad: string | null
+          estado_clave: string | null
           fecha_nacimiento: string
           id: string
           lengua_indigena: string | null
+          localidad_colonia: string | null
+          municipio_id: string | null
           nombre: string
           poblacion_indigena: string | null
           primer_apellido: string
@@ -261,13 +288,17 @@ export type Database = {
           sexo: string
         }
         Insert: {
+          codigo_postal?: string | null
           condicion_migrante?: string | null
           created_at?: string | null
           curp?: string | null
           escolaridad?: string | null
+          estado_clave?: string | null
           fecha_nacimiento: string
           id?: string
           lengua_indigena?: string | null
+          localidad_colonia?: string | null
+          municipio_id?: string | null
           nombre: string
           poblacion_indigena?: string | null
           primer_apellido: string
@@ -275,20 +306,39 @@ export type Database = {
           sexo: string
         }
         Update: {
+          codigo_postal?: string | null
           condicion_migrante?: string | null
           created_at?: string | null
           curp?: string | null
           escolaridad?: string | null
+          estado_clave?: string | null
           fecha_nacimiento?: string
           id?: string
           lengua_indigena?: string | null
+          localidad_colonia?: string | null
+          municipio_id?: string | null
           nombre?: string
           poblacion_indigena?: string | null
           primer_apellido?: string
           segundo_apellido?: string | null
           sexo?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "beneficiario_estado_clave_fkey"
+            columns: ["estado_clave"]
+            isOneToOne: false
+            referencedRelation: "cat_estado"
+            referencedColumns: ["clave"]
+          },
+          {
+            foreignKeyName: "beneficiario_municipio_id_fkey"
+            columns: ["municipio_id"]
+            isOneToOne: false
+            referencedRelation: "cat_municipio"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       beneficiario_sede: {
         Row: {
@@ -320,6 +370,85 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sede"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      cat_asentamiento: {
+        Row: {
+          id: number
+          codigo_postal: string
+          nombre: string
+          tipo_asentamiento: string | null
+          municipio_id: string
+          ciudad: string | null
+        }
+        Insert: {
+          id?: number
+          codigo_postal: string
+          nombre: string
+          tipo_asentamiento?: string | null
+          municipio_id: string
+          ciudad?: string | null
+        }
+        Update: {
+          id?: number
+          codigo_postal?: string
+          nombre?: string
+          tipo_asentamiento?: string | null
+          municipio_id?: string
+          ciudad?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cat_asentamiento_municipio_id_fkey"
+            columns: ["municipio_id"]
+            isOneToOne: false
+            referencedRelation: "cat_municipio"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cat_estado: {
+        Row: {
+          clave: string
+          nombre: string
+        }
+        Insert: {
+          clave: string
+          nombre: string
+        }
+        Update: {
+          clave?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
+      cat_municipio: {
+        Row: {
+          id: string
+          clave_estado: string
+          clave_municipio: string
+          nombre: string
+        }
+        Insert: {
+          id: string
+          clave_estado: string
+          clave_municipio: string
+          nombre: string
+        }
+        Update: {
+          id?: string
+          clave_estado?: string
+          clave_municipio?: string
+          nombre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cat_municipio_clave_estado_fkey"
+            columns: ["clave_estado"]
+            isOneToOne: false
+            referencedRelation: "cat_estado"
+            referencedColumns: ["clave"]
           },
         ]
       }

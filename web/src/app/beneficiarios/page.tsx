@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { Field, Select, FormCard, SearchInput } from "../components/Forms";
+import GeoSelector, { type GeoValue } from "../components/GeoSelector";
 import { supabase } from "../lib/supabaseClient";
 import { ensureClientSession } from "../lib/clientSession";
 import type { Tables, TablesInsert, TablesUpdate } from "../types/supabase";
@@ -32,7 +33,11 @@ export default function BeneficiariosPage() {
     escolaridad: "",
     lengua_indigena: "",
     poblacion_indigena: "",
-    condicion_migrante: ""
+    condicion_migrante: "",
+    estado_clave: "",
+    municipio_id: "",
+    codigo_postal: "",
+    localidad_colonia: "",
   });
 
   useEffect(() => {
@@ -97,7 +102,11 @@ export default function BeneficiariosPage() {
       escolaridad: "",
       lengua_indigena: "",
       poblacion_indigena: "",
-      condicion_migrante: ""
+      condicion_migrante: "",
+      estado_clave: "",
+      municipio_id: "",
+      codigo_postal: "",
+      localidad_colonia: "",
     });
   };
 
@@ -119,6 +128,10 @@ export default function BeneficiariosPage() {
       lengua_indigena: b.lengua_indigena ?? "",
       poblacion_indigena: b.poblacion_indigena ?? "",
       condicion_migrante: b.condicion_migrante ?? "",
+      estado_clave: b.estado_clave ?? "",
+      municipio_id: b.municipio_id ?? "",
+      codigo_postal: b.codigo_postal ?? "",
+      localidad_colonia: b.localidad_colonia ?? "",
     });
     setShowForm(true);
   };
@@ -227,6 +240,19 @@ export default function BeneficiariosPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Field label="Condición migrante/refugiada" value={formData.condicion_migrante || ''}
                     onChange={(e) => setFormData({ ...formData, condicion_migrante: (e.target as HTMLInputElement).value })}
+                  />
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Procedencia Geográfica</h3>
+                  <GeoSelector
+                    value={{
+                      estado_clave: (formData.estado_clave as string) || "",
+                      municipio_id: (formData.municipio_id as string) || "",
+                      codigo_postal: (formData.codigo_postal as string) || "",
+                      localidad_colonia: (formData.localidad_colonia as string) || "",
+                    }}
+                    onChange={(geo) => setFormData({ ...formData, ...geo })}
                   />
                 </div>
 

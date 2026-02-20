@@ -6,6 +6,7 @@ import type { Tables } from "app/types/supabase";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Field, Select, SearchInput, Textarea } from "../components/Forms";
+import GeoSelector, { type GeoValue } from "../components/GeoSelector";
 
 export default function Actividades() {
   const [programas, setProgramas] = useState<{ value: string; label: string }[]>([]);
@@ -24,7 +25,8 @@ export default function Actividades() {
   const [filterSedeId, setFilterSedeId] = useState("");
 
   const [form, setForm] = useState<any>({
-    programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:"", ubicacion:"", notas:""
+    programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:"", notas:"",
+    estado_clave:"", municipio_id:"", codigo_postal:"", localidad_colonia:""
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showForm, setShowForm] = useState(false);
@@ -119,7 +121,10 @@ export default function Actividades() {
       subtipo_id: form.subtipo_id || null,
       facilitador_id: form.facilitador_id || null,
       cupo: form.cupo ? Number(form.cupo) : null,
-      ubicacion: form.ubicacion || null,
+      estado_clave: form.estado_clave || null,
+      municipio_id: form.municipio_id || null,
+      codigo_postal: form.codigo_postal || null,
+      localidad_colonia: form.localidad_colonia || null,
       notas: form.notas || null,
     };
 
@@ -138,7 +143,7 @@ export default function Actividades() {
         .select("id,fecha,hora_inicio,hora_fin,programa_id, facilitador_id, tipo:tipo_id(nombre), subtipo:subtipo_id(nombre), sede:sede_id(nombre), programa:programa_id(nombre)")
         .order("fecha",{ascending:false});
       setList(((a as any[]) || []) as any);
-      setForm({programa_id:"",fecha:"",hora_inicio:"",hora_fin:"",tipo_id:"",subtipo_id:"",facilitador_id:"",cupo:"", ubicacion:"", notas:""});
+      setForm({programa_id:"",fecha:"",hora_inicio:"",hora_fin:"",tipo_id:"",subtipo_id:"",facilitador_id:"",cupo:"", notas:"", estado_clave:"", municipio_id:"", codigo_postal:"", localidad_colonia:""});
       setEditingId(null);
       setErrors({});
     }
@@ -208,12 +213,17 @@ export default function Actividades() {
               />
               <Select label="Tipo" options={tipos} value={form.tipo_id} onChange={(e:any)=>setForm({...form,tipo_id:e.target.value})} />
               <Select label="Subtipo" options={subtipos} value={form.subtipo_id} onChange={(e:any)=>setForm({...form,subtipo_id:e.target.value})} />
-              <Field
-                label="Ubicación"
-                value={form.ubicacion}
-                onChange={(e:any)=>setForm({...form,ubicacion:e.target.value})}
-                placeholder="Lugar donde se realiza"
-              />
+              <div className="sm:col-span-2 lg:col-span-4">
+                <GeoSelector
+                  value={{
+                    estado_clave: form.estado_clave,
+                    municipio_id: form.municipio_id,
+                    codigo_postal: form.codigo_postal,
+                    localidad_colonia: form.localidad_colonia,
+                  }}
+                  onChange={(geo) => setForm({ ...form, ...geo })}
+                />
+              </div>
               <Select
                 label="Facilitador"
                 value={form.facilitador_id}
@@ -243,7 +253,7 @@ export default function Actividades() {
                   type="button"
                   className="btn btn-secondary btn-md"
                   onClick={() => {
-                    setForm({ programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:"", ubicacion:"", notas:"" });
+                    setForm({ programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:"", notas:"", estado_clave:"", municipio_id:"", codigo_postal:"", localidad_colonia:"" });
                     setEditingId(null);
                   }}
                 >
@@ -397,8 +407,11 @@ export default function Actividades() {
                           subtipo_id: act.subtipo_id || '',
                           facilitador_id: act.facilitador_id || '',
                           cupo: act.cupo?.toString() || '',
-                          ubicacion: act.ubicacion || '',
-                          notas: act.notas || ''
+                          notas: act.notas || '',
+                          estado_clave: act.estado_clave || '',
+                          municipio_id: act.municipio_id || '',
+                          codigo_postal: act.codigo_postal || '',
+                          localidad_colonia: act.localidad_colonia || '',
                         });
                         setEditingId(a.id);
                         setShowForm(true);

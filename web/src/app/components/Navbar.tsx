@@ -175,6 +175,14 @@ export default function Navbar() {
                             <span>🏛️</span>
                             Benefactores
                           </Link>
+                          <Link
+                            href="/reportes/cobertura"
+                            className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <span>📊</span>
+                            Cobertura Geográfica
+                          </Link>
                           {appUser?.role === 'admin' && (
                             <Link
                               href="/usuarios"
