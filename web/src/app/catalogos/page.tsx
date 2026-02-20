@@ -260,8 +260,8 @@ export default function CatalogosPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Catálogos</h1>
-              <p className="text-gray-600">Gestiona Temas, Tipos de actividad, Subtipos, Tipos de benefactor y Componentes</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Catálogos</h1>
+              <p className="text-gray-600 dark:text-gray-400">Gestiona Temas, Tipos de actividad, Subtipos, Tipos de benefactor y Componentes</p>
             </div>
           </div>
 
@@ -271,7 +271,7 @@ export default function CatalogosPage() {
           {/* Temas */}
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Temas</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Temas</h2>
             </div>
             <form onSubmit={createTema} className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-end">
               <Field label="Nombre" value={temaForm.nombre} onChange={e => setTemaForm({ nombre: e.target.value })} required />
@@ -281,17 +281,17 @@ export default function CatalogosPage() {
             </form>
             <div className="overflow-x-auto">
               {loading ? <div className="p-2">Cargando...</div> : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-900/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                     {temas.map(t => (
                       <tr key={t.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[220px]">
                           {editTema[t.id] ? (
                             <Field label="" value={editTema[t.id].nombre} onChange={e => setEditTema(prev => ({ ...prev, [t.id]: { nombre: e.target.value } }))} />
                           ) : t.nombre}
@@ -322,7 +322,7 @@ export default function CatalogosPage() {
           {/* Tipos */}
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Tipos de actividad</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tipos de actividad</h2>
             </div>
             <form onSubmit={createTipo} className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-end">
               <Field label="Nombre" value={tipoForm.nombre} onChange={e => setTipoForm({ nombre: e.target.value })} required />
@@ -332,17 +332,17 @@ export default function CatalogosPage() {
             </form>
             <div className="overflow-x-auto">
               {loading ? <div className="p-2">Cargando...</div> : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-900/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                     {tipos.map(t => (
                       <tr key={t.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[220px]">
                           {editTipo[t.id] ? (
                             <Field label="" value={editTipo[t.id].nombre} onChange={e => setEditTipo(prev => ({ ...prev, [t.id]: { nombre: e.target.value } }))} />
                           ) : t.nombre}
@@ -373,7 +373,7 @@ export default function CatalogosPage() {
           {/* Subtipos */}
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Subtipos</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Subtipos</h2>
             </div>
             <form onSubmit={createSubtipo} className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-end">
               <Select
@@ -390,23 +390,23 @@ export default function CatalogosPage() {
             </form>
             <div className="overflow-x-auto">
               {loading ? <div className="p-2">Cargando...</div> : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-900/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Tipo</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                     {subtipos.map(s => (
                       <tr key={s.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[200px]">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[200px]">
                           {editSubtipo[s.id] ? (
                             <Select label="" value={editSubtipo[s.id].tipo_id} onChange={e => setEditSubtipo(p => ({ ...p, [s.id]: { ...p[s.id], tipo_id: e.target.value } }))} options={tipos.map(t => ({ value: t.id, label: t.nombre }))} />
                           ) : (s as any).tipo?.nombre || "—"}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[220px]">
                           {editSubtipo[s.id] ? (
                             <Field label="" value={editSubtipo[s.id].nombre} onChange={e => setEditSubtipo(p => ({ ...p, [s.id]: { ...p[s.id], nombre: e.target.value } }))} />
                           ) : s.nombre}
@@ -437,7 +437,7 @@ export default function CatalogosPage() {
           {/* Tipos de Benefactor */}
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Tipos de Benefactor</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tipos de Benefactor</h2>
             </div>
             <form onSubmit={createBTipo} className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-end">
               <Field label="Nombre" value={bTipoForm.nombre} onChange={e => setBTipoForm({ nombre: e.target.value })} required />
@@ -447,17 +447,17 @@ export default function CatalogosPage() {
             </form>
             <div className="overflow-x-auto">
               {loading ? <div className="p-2">Cargando...</div> : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-900/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                     {benefactorTipos.map(t => (
                       <tr key={t.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[220px]">
                           {editBTipo[t.id] ? (
                             <Field label="" value={editBTipo[t.id].nombre} onChange={e => setEditBTipo(prev => ({ ...prev, [t.id]: { nombre: e.target.value } }))} />
                           ) : t.nombre}
@@ -488,7 +488,7 @@ export default function CatalogosPage() {
           {/* Componentes */}
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Componentes</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Componentes</h2>
             </div>
             <form onSubmit={createComponente} className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-end">
               <Field label="Nombre" value={componenteForm.nombre} onChange={e => setComponenteForm({ nombre: e.target.value })} required />
@@ -498,17 +498,17 @@ export default function CatalogosPage() {
             </form>
             <div className="overflow-x-auto">
               {loading ? <div className="p-2">Cargando...</div> : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-900/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                     {componentes.map(c => (
                       <tr key={c.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[220px]">
                           {editComponente[c.id] ? (
                             <Field label="" value={editComponente[c.id].nombre} onChange={e => setEditComponente(prev => ({ ...prev, [c.id]: { nombre: e.target.value } }))} />
                           ) : c.nombre}

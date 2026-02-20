@@ -127,8 +127,8 @@ export default function Dashboard() {
       <div className="card-body">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</p>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{title}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value.toLocaleString()}</p>
             {trend && (
               <p className="text-xs text-green-600 mt-1">
                 <span className="inline-flex items-center">
@@ -168,8 +168,8 @@ export default function Dashboard() {
         <div className="fade-in">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-              <p className="text-gray-600">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Dashboard</h1>
+              <p className="text-gray-600 dark:text-gray-400">
                 Bienvenido al sistema de gestión de Casa Origen
                 {appUser?.role && (
                   <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
@@ -203,8 +203,8 @@ export default function Dashboard() {
               <div key={i} className="card">
                 <div className="card-body">
                   <div className="animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                   </div>
                 </div>
               </div>
@@ -259,33 +259,33 @@ export default function Dashboard() {
           <div className="lg:col-span-2">
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-semibold text-gray-900">Actividad Reciente</h3>
-                <p className="text-sm text-gray-500">Últimos movimientos en el sistema</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Actividad Reciente</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Últimos movimientos en el sistema</p>
               </div>
               <div className="card-body">
                 {loadingData ? (
                   <div className="space-y-4 animate-pulse">
-                     <div className="h-12 bg-gray-100 rounded"></div>
-                     <div className="h-12 bg-gray-100 rounded"></div>
-                     <div className="h-12 bg-gray-100 rounded"></div>
+                     <div className="h-12 bg-gray-100 dark:bg-gray-700 rounded"></div>
+                     <div className="h-12 bg-gray-100 dark:bg-gray-700 rounded"></div>
+                     <div className="h-12 bg-gray-100 dark:bg-gray-700 rounded"></div>
                   </div>
                 ) : recentActivities.length > 0 ? (
                   <div className="space-y-4">
                     {recentActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                      <div key={activity.id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:bg-gray-900/50 dark:hover:bg-gray-700 transition-colors">
                         <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                          <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                             <span className="text-sm">{activity.icon}</span>
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                             {activity.title}
                           </p>
-                          <p className="text-sm text-gray-500 truncate">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                             {activity.description}
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {new Date(activity.date).toLocaleDateString('es-MX', {
                               day: 'numeric',
                               month: 'short',
@@ -299,11 +299,11 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <svg className="mx-auto h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="mx-auto h-12 w-12 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">Sin actividad reciente</h3>
-                    <p className="mt-1 text-sm text-gray-500">Comienza creando tu primer proyecto.</p>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Sin actividad reciente</h3>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Comienza creando tu primer proyecto.</p>
                   </div>
                 )}
               </div>
@@ -315,36 +315,36 @@ export default function Dashboard() {
             {/* Quick Actions Card */}
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-semibold text-gray-900">Acciones Rápidas</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Acciones Rápidas</h3>
               </div>
               <div className="card-body">
                 <div className="space-y-3">
                   <Link
                     href="/proyectos"
-                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50 transition-all group"
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-brand-300 hover:bg-brand-50 transition-all group"
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-brand-100 rounded-lg flex items-center justify-center group-hover:bg-brand-200 transition-colors">
                         <span className="text-sm">📋</span>
                       </div>
-                      <span className="text-sm font-medium text-gray-900">Gestionar Proyectos</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Gestionar Proyectos</span>
                     </div>
-                    <svg className="w-4 h-4 text-gray-500 group-hover:text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>
 
                   <Link
                     href="/actividades"
-                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all group"
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-green-300 hover:bg-green-50 transition-all group"
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
                         <span className="text-sm">🎯</span>
                       </div>
-                      <span className="text-sm font-medium text-gray-900">Ver Actividades</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Ver Actividades</span>
                     </div>
-                    <svg className="w-4 h-4 text-gray-500 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>
@@ -355,12 +355,12 @@ export default function Dashboard() {
             {/* System Status - Simplified */}
             <div className="card">
               <div className="card-header">
-                <h3 className="text-lg font-semibold text-gray-900">Estado del Sistema</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Estado del Sistema</h3>
               </div>
               <div className="card-body">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Base de datos</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Base de datos</span>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></div>
                       Activo

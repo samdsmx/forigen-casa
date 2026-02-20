@@ -278,14 +278,14 @@ export default function ProyectosPage() {
       <Protected>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map(i => (
                 <div key={i} className="card">
                   <div className="card-body">
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
                   </div>
                 </div>
               ))}
@@ -308,10 +308,10 @@ export default function ProyectosPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               Proyectos
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Gestiona los proyectos activos y sus actividades
             </p>
           </div>
@@ -519,24 +519,24 @@ export default function ProyectosPage() {
                         {programa.estado}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       {new Date(programa.created_at ?? "").toLocaleDateString('es-MX')}
                     </div>
                   </div>
 
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
                     {programa.nombre}
                   </h3>
 
                   {programa.objetivo && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-3">
                       {programa.objetivo}
                     </p>
                   )}
 
                   <div className="space-y-2 mb-4">
                     {programa.sede && (
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -546,7 +546,7 @@ export default function ProyectosPage() {
                     )}
 
                     {programa.tema && (
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                         </svg>
@@ -555,7 +555,7 @@ export default function ProyectosPage() {
                     )}
 
                     {programa.poblacion_grupo && (
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
@@ -564,7 +564,7 @@ export default function ProyectosPage() {
                     )}
 
                     {(programa as any).benefactor && (
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
@@ -573,7 +573,7 @@ export default function ProyectosPage() {
                     )}
 
                     {(programa as any).componente && (
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                         </svg>
@@ -582,7 +582,7 @@ export default function ProyectosPage() {
                     )}
 
                     {programa.fecha_inicio && programa.fecha_fin && (
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -591,7 +591,7 @@ export default function ProyectosPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700 mt-auto">
                     <div className="flex space-x-2">
                       <button className="btn btn-secondary btn-sm" title="Editar proyecto" onClick={() => {
                         setFormData({
@@ -642,7 +642,7 @@ export default function ProyectosPage() {
                         </svg>
                       </Link>
                     </div>
-                    <div className="text-xs text-gray-500"></div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400"></div>
                   </div>
                 </div>
               </div>
@@ -650,15 +650,15 @@ export default function ProyectosPage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-12 h-12 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
               {searchTerm || filterEstado ? 'No se encontraron proyectos' : 'No hay proyectos creados'}
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
               {searchTerm || filterEstado 
                 ? 'Intenta ajustar los filtros de búsqueda'
                 : 'Comienza creando tu primer proyecto para organizar las actividades'
@@ -682,11 +682,11 @@ export default function ProyectosPage() {
 
         {/* Stats Summary */}
         {filteredProgramas.length > 0 && (
-          <div className="bg-gray-50 rounded-xl p-6">
+          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-gray-900">{filteredProgramas.length}</div>
-                <div className="text-sm text-gray-500">
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{filteredProgramas.length}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                   {filteredProgramas.length === 1 ? 'Proyecto' : 'Proyectos'}
                 </div>
               </div>
@@ -694,19 +694,19 @@ export default function ProyectosPage() {
                 <div className="text-2xl font-bold text-green-600">
                   {filteredProgramas.filter(p => p.estado === 'activo').length}
                 </div>
-                <div className="text-sm text-gray-500">Activos</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Activos</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-brand-600">
                   {filteredProgramas.filter(p => p.estado === 'completado').length}
                 </div>
-                <div className="text-sm text-gray-500">Completados</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Completados</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-orange-600">
                   {filteredProgramas.filter(p => p.estado === 'suspendido').length}
                 </div>
-                <div className="text-sm text-gray-500">Suspendidos</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Suspendidos</div>
               </div>
             </div>
           </div>

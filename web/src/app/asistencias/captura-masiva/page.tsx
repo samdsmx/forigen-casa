@@ -270,8 +270,8 @@ export default function CapturaMasivaPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Captura masiva de asistencias</h1>
-            <p className="text-gray-600">Pega desde Excel o sube un CSV, mapea columnas y procesa.</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Captura masiva de asistencias</h1>
+            <p className="text-gray-600 dark:text-gray-400">Pega desde Excel o sube un CSV, mapea columnas y procesa.</p>
           </div>
         </div>
 
@@ -298,7 +298,7 @@ export default function CapturaMasivaPage() {
         {rows.length > 0 && (
           <div className="card">
             <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900">Mapeo de columnas</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Mapeo de columnas</h3>
             </div>
             <div className="card-body grid grid-cols-1 md:grid-cols-3 gap-4">
               {Object.keys(mapIdx).map((k) => (
@@ -320,17 +320,17 @@ export default function CapturaMasivaPage() {
         {parsed.length > 0 && (
           <div className="card">
             <div className="card-body overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900/50">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Estatus</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">CURP</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sexo</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estatus</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">CURP</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fecha</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Sexo</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {parsed.map((p, idx) => (
                     <tr key={idx}>
                       <td className="px-3 py-2 text-xs">
@@ -339,10 +339,10 @@ export default function CapturaMasivaPage() {
                         {p._status === 'conflicto' && <span className="badge badge-warning">Conflicto</span>}
                         {p._status === 'error' && <span className="badge badge-error">Error</span>}
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-900">{p.nombre} {p.primer_apellido} {p.segundo_apellido || ''}</td>
-                      <td className="px-3 py-2 text-sm text-gray-900">{(p.curp || '').toUpperCase()}</td>
-                      <td className="px-3 py-2 text-sm text-gray-900">{p.fecha_nacimiento}</td>
-                      <td className="px-3 py-2 text-sm text-gray-900">
+                      <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{p.nombre} {p.primer_apellido} {p.segundo_apellido || ''}</td>
+                      <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{(p.curp || '').toUpperCase()}</td>
+                      <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">{p.fecha_nacimiento}</td>
+                      <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
                         {p.sexo}
                         {p._status==='conflicto' && (p as any)._candidates && (
                           <div className="mt-2">

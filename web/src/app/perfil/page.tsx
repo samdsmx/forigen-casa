@@ -52,27 +52,27 @@ export default function PerfilPage() {
   return (
     <Protected>
       <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Mi Perfil</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mi Perfil</h1>
 
         <div className="card p-5 md:p-6 space-y-3">
           <div>
-            <span className="text-sm font-medium text-gray-500">Email</span>
-            <p className="text-gray-900">{user?.email || "—"}</p>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</span>
+            <p className="text-gray-900 dark:text-gray-100">{user?.email || "—"}</p>
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-500">Rol</span>
-            <p className="text-gray-900">{roleLabels[appUser?.role || ""] || appUser?.role || "—"}</p>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Rol</span>
+            <p className="text-gray-900 dark:text-gray-100">{roleLabels[appUser?.role || ""] || appUser?.role || "—"}</p>
           </div>
           {(appUser as any)?.sede?.nombre && (
             <div>
-              <span className="text-sm font-medium text-gray-500">Sede</span>
-              <p className="text-gray-900">{(appUser as any).sede.nombre}</p>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Sede</span>
+              <p className="text-gray-900 dark:text-gray-100">{(appUser as any).sede.nombre}</p>
             </div>
           )}
         </div>
 
         <div className="card p-5 md:p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Cambiar contraseña</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Cambiar contraseña</h2>
           {notice && <div className="alert alert-success mb-4">{notice}</div>}
           {error && <div className="alert alert-error mb-4">{error}</div>}
           <form onSubmit={handleChangePassword} className="space-y-4">

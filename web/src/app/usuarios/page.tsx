@@ -157,7 +157,7 @@ export default function UsuariosPage() {
     <Protected>
       <Role allow={["admin"]}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          <h1 className="text-2xl font-bold text-gray-900">Administración de Usuarios</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Administración de Usuarios</h1>
 
           {notice && <div className="alert alert-success">{notice}</div>}
 
@@ -201,21 +201,21 @@ export default function UsuariosPage() {
             <div>Cargando...</div>
           ) : (
             <div className="overflow-x-auto card p-0">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Email</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Rol</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Sede</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Activo</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Email</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Rol</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Sede</th>
+                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">Activo</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                   {users.map(u => (
                     <tr key={u.id}>
-                      <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">{u.email}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 min-w-[160px]">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">{u.email}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[160px]">
                         <Select
                           label=""
                           value={u.role ?? ""}
@@ -223,7 +223,7 @@ export default function UsuariosPage() {
                           options={roles}
                         />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 min-w-[180px]">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[180px]">
                         <Select
                           label=""
                           value={u.sede_id ?? ""}
@@ -231,7 +231,7 @@ export default function UsuariosPage() {
                           options={sedes}
                         />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-center whitespace-nowrap">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 text-center whitespace-nowrap">
                         <button
                           onClick={() => toggle(u.id, u.is_active)}
                           className={"btn btn-sm " + (u.is_active ? "btn-success" : "btn-secondary")}

@@ -154,8 +154,8 @@ export default function Actividades() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Actividades</h1>
-            <p className="text-gray-600">Crea y gestiona las actividades</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Actividades</h1>
+            <p className="text-gray-600 dark:text-gray-400">Crea y gestiona las actividades</p>
           </div>
           <Role allow={['admin','supervisor_central','coordinador_sede']}>
             <div className="mt-4 sm:mt-0">
@@ -374,16 +374,16 @@ export default function Actividades() {
               <div>
                 <div className="font-medium">{a.fecha} {a.hora_inicio}-{a.hora_fin}</div>
                 {a.programa?.nombre && (
-                  <div className="text-xs text-gray-600">Proyecto: {a.programa.nombre}</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Proyecto: {a.programa.nombre}</div>
                 )}
                 {((a as any).subtipo?.nombre || (a as any).tipo?.nombre) && (
-                  <div className="text-xs text-gray-600">Tipo: {(a as any).subtipo?.nombre || (a as any).tipo?.nombre}</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Tipo: {(a as any).subtipo?.nombre || (a as any).tipo?.nombre}</div>
                 )}
                 {(a as any).sede?.nombre && (
-                  <div className="text-xs text-gray-600">Sede: {(a as any).sede?.nombre}</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Sede: {(a as any).sede?.nombre}</div>
                 )}
                 {facilLabel && (
-                  <div className="text-xs text-gray-600">Facilitador: {facilLabel}</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Facilitador: {facilLabel}</div>
                 )}
               </div>
               <div className="flex gap-2">

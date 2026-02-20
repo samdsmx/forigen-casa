@@ -209,8 +209,8 @@ export default function CoberturaPage() {
       <Role allow={["admin", "supervisor_central"]}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Cobertura Geográfica</h1>
-            <p className="text-gray-600">Reportes de cobertura territorial de actividades y procedencia de beneficiarios</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Cobertura Geográfica</h1>
+            <p className="text-gray-600 dark:text-gray-400">Reportes de cobertura territorial de actividades y procedencia de beneficiarios</p>
           </div>
 
           {/* Tabs */}
@@ -218,7 +218,7 @@ export default function CoberturaPage() {
             <button
               type="button"
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                tab === "actividades" ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                tab === "actividades" ? "bg-brand-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
               onClick={() => setTab("actividades")}
             >
@@ -227,7 +227,7 @@ export default function CoberturaPage() {
             <button
               type="button"
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                tab === "procedencia" ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                tab === "procedencia" ? "bg-brand-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
               onClick={() => setTab("procedencia")}
             >
@@ -257,78 +257,78 @@ export default function CoberturaPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="card p-4 text-center">
                   <div className="text-2xl font-bold text-brand-600">{totals.estados}</div>
-                  <div className="text-sm text-gray-600">Estados</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Estados</div>
                 </div>
                 <div className="card p-4 text-center">
                   <div className="text-2xl font-bold text-brand-600">{totals.actividades}</div>
-                  <div className="text-sm text-gray-600">Actividades</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Actividades</div>
                 </div>
                 <div className="card p-4 text-center">
                   <div className="text-2xl font-bold text-brand-600">{totals.beneficiarios}</div>
-                  <div className="text-sm text-gray-600">Beneficiarios únicos</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Beneficiarios únicos</div>
                 </div>
                 <div className="card p-4 text-center">
                   <div className="text-2xl font-bold text-brand-600">{totals.asistencias}</div>
-                  <div className="text-sm text-gray-600">Asistencias</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Asistencias</div>
                 </div>
               </div>
 
               {/* Table */}
               {loading ? (
-                <div className="card p-6 text-center text-gray-500">Cargando datos...</div>
+                <div className="card p-6 text-center text-gray-500 dark:text-gray-400">Cargando datos...</div>
               ) : estadoData.length === 0 ? (
-                <div className="card p-6 text-center text-gray-500">No hay actividades con ubicación geográfica registrada.</div>
+                <div className="card p-6 text-center text-gray-500 dark:text-gray-400">No hay actividades con ubicación geográfica registrada.</div>
               ) : (
                 <div className="card overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-900/50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actividades</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Beneficiarios</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Asistencias</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actividades</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Beneficiarios</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Asistencias</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                       {estadoData.map((row) => (
                         <>
                           <tr
                             key={row.estado}
-                            className="hover:bg-gray-50 cursor-pointer"
+                            className="hover:bg-gray-50 dark:bg-gray-900/50 dark:hover:bg-gray-700 cursor-pointer"
                             onClick={() => loadMunicipios(row.estado)}
                           >
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900 flex items-center gap-2">
-                              <span className="text-xs text-gray-400">{expandedEstado === row.estado ? "▼" : "▶"}</span>
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                              <span className="text-xs text-gray-400 dark:text-gray-500">{expandedEstado === row.estado ? "▼" : "▶"}</span>
                               {row.estado}
                             </td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-900">{row.actividades}</td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-900">{row.beneficiarios}</td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-900">{row.asistencias}</td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">{row.actividades}</td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">{row.beneficiarios}</td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">{row.asistencias}</td>
                           </tr>
                           {expandedEstado === row.estado && (
                             <tr key={`${row.estado}-detail`}>
-                              <td colSpan={4} className="px-8 py-2 bg-gray-50">
+                              <td colSpan={4} className="px-8 py-2 bg-gray-50 dark:bg-gray-900/50">
                                 {municipioLoading ? (
-                                  <div className="text-sm text-gray-500 py-2">Cargando municipios...</div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400 py-2">Cargando municipios...</div>
                                 ) : municipioData.length === 0 ? (
-                                  <div className="text-sm text-gray-500 py-2">Sin desglose por municipio</div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400 py-2">Sin desglose por municipio</div>
                                 ) : (
                                   <table className="min-w-full">
                                     <thead>
                                       <tr>
-                                        <th className="px-3 py-1 text-left text-xs font-medium text-gray-500">Municipio</th>
-                                        <th className="px-3 py-1 text-right text-xs font-medium text-gray-500">Actividades</th>
-                                        <th className="px-3 py-1 text-right text-xs font-medium text-gray-500">Beneficiarios</th>
-                                        <th className="px-3 py-1 text-right text-xs font-medium text-gray-500">Asistencias</th>
+                                        <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Municipio</th>
+                                        <th className="px-3 py-1 text-right text-xs font-medium text-gray-500 dark:text-gray-400">Actividades</th>
+                                        <th className="px-3 py-1 text-right text-xs font-medium text-gray-500 dark:text-gray-400">Beneficiarios</th>
+                                        <th className="px-3 py-1 text-right text-xs font-medium text-gray-500 dark:text-gray-400">Asistencias</th>
                                       </tr>
                                     </thead>
                                     <tbody>
                                       {municipioData.map((mr) => (
-                                        <tr key={mr.municipio} className="hover:bg-gray-100">
-                                          <td className="px-3 py-1 text-sm text-gray-700">{mr.municipio}</td>
-                                          <td className="px-3 py-1 text-sm text-right text-gray-700">{mr.actividades}</td>
-                                          <td className="px-3 py-1 text-sm text-right text-gray-700">{mr.beneficiarios}</td>
-                                          <td className="px-3 py-1 text-sm text-right text-gray-700">{mr.asistencias}</td>
+                                        <tr key={mr.municipio} className="hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-700">
+                                          <td className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300">{mr.municipio}</td>
+                                          <td className="px-3 py-1 text-sm text-right text-gray-700 dark:text-gray-300">{mr.actividades}</td>
+                                          <td className="px-3 py-1 text-sm text-right text-gray-700 dark:text-gray-300">{mr.beneficiarios}</td>
+                                          <td className="px-3 py-1 text-sm text-right text-gray-700 dark:text-gray-300">{mr.asistencias}</td>
                                         </tr>
                                       ))}
                                     </tbody>
@@ -352,39 +352,39 @@ export default function CoberturaPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="card p-4 text-center">
                   <div className="text-2xl font-bold text-brand-600">{procTotals.estados}</div>
-                  <div className="text-sm text-gray-600">Estados</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Estados</div>
                 </div>
                 <div className="card p-4 text-center">
                   <div className="text-2xl font-bold text-brand-600">{procTotals.municipios}</div>
-                  <div className="text-sm text-gray-600">Municipios</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Municipios</div>
                 </div>
                 <div className="card p-4 text-center">
                   <div className="text-2xl font-bold text-brand-600">{procTotals.beneficiarios}</div>
-                  <div className="text-sm text-gray-600">Beneficiarios con procedencia</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Beneficiarios con procedencia</div>
                 </div>
               </div>
 
               {/* Table */}
               {loading ? (
-                <div className="card p-6 text-center text-gray-500">Cargando datos...</div>
+                <div className="card p-6 text-center text-gray-500 dark:text-gray-400">Cargando datos...</div>
               ) : procedenciaData.length === 0 ? (
-                <div className="card p-6 text-center text-gray-500">No hay beneficiarios con procedencia geográfica registrada.</div>
+                <div className="card p-6 text-center text-gray-500 dark:text-gray-400">No hay beneficiarios con procedencia geográfica registrada.</div>
               ) : (
                 <div className="card overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-900/50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Municipio</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Beneficiarios</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Municipio</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Beneficiarios</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                       {procedenciaData.map((row) => (
-                        <tr key={`${row.estado}-${row.municipio}`} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm text-gray-900">{row.estado}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{row.municipio}</td>
-                          <td className="px-4 py-3 text-sm text-right text-gray-900">{row.beneficiarios}</td>
+                        <tr key={`${row.estado}-${row.municipio}`} className="hover:bg-gray-50 dark:bg-gray-900/50 dark:hover:bg-gray-700">
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{row.estado}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{row.municipio}</td>
+                          <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">{row.beneficiarios}</td>
                         </tr>
                       ))}
                     </tbody>

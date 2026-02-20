@@ -87,8 +87,8 @@ export default function BenefactoresPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Benefactores</h1>
-              <p className="text-gray-600">Gestiona los benefactores de proyectos</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Benefactores</h1>
+              <p className="text-gray-600 dark:text-gray-400">Gestiona los benefactores de proyectos</p>
             </div>
           </div>
 
@@ -98,7 +98,7 @@ export default function BenefactoresPage() {
           {/* Benefactores */}
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Benefactores</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Benefactores</h2>
             </div>
             <form onSubmit={createBenefactor} className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 items-end">
               <Select
@@ -115,23 +115,23 @@ export default function BenefactoresPage() {
             </form>
             <div className="overflow-x-auto">
               {loading ? <div className="p-2">Cargando...</div> : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-900/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Tipo</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                     {benefactores.map(b => (
                       <tr key={b.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[200px]">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[200px]">
                           {editBenefactor[b.id] ? (
                             <Select label="" value={editBenefactor[b.id].tipo_id} onChange={e => setEditBenefactor(p => ({ ...p, [b.id]: { ...p[b.id], tipo_id: e.target.value } }))} options={benefactorTipos.map(t => ({ value: t.id, label: t.nombre }))} />
                           ) : b.tipo?.nombre || "\u2014"}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[220px]">
                           {editBenefactor[b.id] ? (
                             <Field label="" value={editBenefactor[b.id].nombre} onChange={e => setEditBenefactor(p => ({ ...p, [b.id]: { ...p[b.id], nombre: e.target.value } }))} />
                           ) : b.nombre}

@@ -141,8 +141,8 @@ export default function SedesPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Sedes</h1>
-              <p className="text-gray-600">Administra sedes (nombre y estado)</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Sedes</h1>
+              <p className="text-gray-600 dark:text-gray-400">Administra sedes (nombre y estado)</p>
             </div>
           </div>
 
@@ -176,28 +176,28 @@ export default function SedesPage() {
             {loading ? (
               <div className="p-6">Cargando...</div>
             ) : (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nombre</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Estado</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Acciones</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Estado</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                   {sedes.map(s => {
                     const isEditing = !!editing[s.id];
                     const form = editing[s.id] || { nombre: s.nombre, estado: s.estado as any };
                     return (
                       <tr key={s.id}>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[220px]">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[220px]">
                           {isEditing ? (
                             <Field label="" value={form.nombre} onChange={e => setEditing(prev => ({ ...prev, [s.id]: { ...form, nombre: e.target.value } }))} />
                           ) : (
                             s.nombre
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 min-w-[160px]">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[160px]">
                           {isEditing ? (
                             <Field label="" value={(form.estado as any) || ""} onChange={e => setEditing(prev => ({ ...prev, [s.id]: { ...form, estado: e.target.value as any } }))} />
                           ) : (
