@@ -2,6 +2,7 @@ import "../styles.css";
 import NavbarWrapper from "./components/NavbarWrapper";
 import SessionHydrator from "./components/SessionHydrator";
 import { UserProvider } from "./context/UserContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import type { Viewport } from "next";
 
 export const metadata = {
@@ -32,6 +33,12 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+        {/* Anti-FOUC: apply dark class before React hydrates */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}})();`,
+          }}
+        />
         {/* Runtime public env injection to avoid stale chunk env issues */}
         <script
           dangerouslySetInnerHTML={{
@@ -43,7 +50,8 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full bg-gray-50 text-gray-900 antialiased">
+      <body className="min-h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased">
+        <ThemeProvider>
         <UserProvider>
           <div className="min-h-screen flex flex-col">
             <SessionHydrator />
@@ -51,6 +59,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
           </div>
         </UserProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

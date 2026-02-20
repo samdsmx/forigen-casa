@@ -40,7 +40,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(({
       <div className="relative">
         {icon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <div className="text-gray-600">
+            <div className="text-gray-400 dark:text-gray-500">
               {icon}
             </div>
           </div>
@@ -291,22 +291,26 @@ export function FormCard({
 
 // Search Input Component
 interface SearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
   onClear?: () => void;
 }
 
 export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
+  label,
   onClear,
   value,
   className = "",
   ...props
 }, ref) => {
   return (
-    <div className="relative">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </div>
+    <div>
+      {label && <label className="form-label">{label}</label>}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
       <input
         ref={ref}
         type="search"
@@ -319,7 +323,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
           <button
             type="button"
             onClick={onClear}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -327,6 +331,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 });

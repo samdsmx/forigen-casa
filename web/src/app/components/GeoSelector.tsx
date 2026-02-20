@@ -170,12 +170,8 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
               required={required}
               help={cpLoading ? "Buscando..." : cpInput.length === 5 && cpResults.length === 0 ? "CP no encontrado" : ""}
             />
-            {cpEstado && (
-              <Field label="Estado" value={cpEstado} readOnly />
-            )}
-            {cpMunicipio && (
-              <Field label="Municipio" value={cpMunicipio} readOnly />
-            )}
+            <Field label="Estado" value={cpEstado} readOnly placeholder="—" />
+            <Field label="Municipio" value={cpMunicipio} readOnly placeholder="—" />
           </div>
 
           {cpResults.length > 0 && (
@@ -183,7 +179,7 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Localidad / Colonia
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 max-h-48 overflow-y-auto border rounded-lg p-2 bg-gray-50">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 max-h-48 overflow-y-auto border rounded-lg p-2 bg-white dark:bg-gray-800 dark:border-gray-700">
                 {cpResults.map((a) => (
                   <button
                     key={a.id}

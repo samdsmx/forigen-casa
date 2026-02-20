@@ -271,6 +271,7 @@ export default function Actividades() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="lg:col-span-2">
                 <SearchInput
+                  label="Buscar"
                   placeholder="Buscar por nombre de proyecto..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm((e.target as HTMLInputElement).value)}
