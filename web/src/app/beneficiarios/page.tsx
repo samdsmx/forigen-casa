@@ -274,6 +274,8 @@ export default function BeneficiariosPage() {
           </div>
         )}
 
+        {!showForm && (
+          <>
         {/* Buscador */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
@@ -374,6 +376,8 @@ export default function BeneficiariosPage() {
               </Role>
             )}
           </div>
+        )}
+          </>
         )}
       </div>
     </Protected>

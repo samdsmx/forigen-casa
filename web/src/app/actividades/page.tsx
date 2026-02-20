@@ -265,6 +265,8 @@ export default function Actividades() {
           </Role>
         )}
 
+        {!showForm && (
+          <>
         {/* Filtros de lista */}
         <div className="card">
           <div className="card-body">
@@ -431,6 +433,8 @@ export default function Actividades() {
             </div>
           );})}
         </section>
+          </>
+        )}
       </div>
     </Protected>
   );
