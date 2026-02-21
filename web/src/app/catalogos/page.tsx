@@ -26,6 +26,7 @@ export default function CatalogosPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'temas' | 'tipos' | 'subtipos' | 'benefactor_tipos' | 'componentes'>('temas');
 
   // Forms
   const [temaForm, setTemaForm] = useState<Pick<Tema, 'nombre'>>({ nombre: "" });
@@ -268,7 +269,39 @@ export default function CatalogosPage() {
           {notice && <div className="alert alert-success">{notice}</div>}
           {error && <div className="alert alert-error">{error}</div>}
 
+          {/* Tabs */}
+          <div className="flex gap-1 overflow-x-auto border-b border-gray-200 dark:border-gray-700 pb-px">
+            {([
+              { key: 'temas', label: 'Temas', count: temas.length },
+              { key: 'tipos', label: 'Tipos', count: tipos.length },
+              { key: 'subtipos', label: 'Subtipos', count: subtipos.length },
+              { key: 'benefactor_tipos', label: 'Tipos de Benefactor', count: benefactorTipos.length },
+              { key: 'componentes', label: 'Componentes', count: componentes.length },
+            ] as const).map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab.key
+                    ? 'border-brand-600 text-brand-600'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                {tab.label}
+                <span className={`ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs ${
+                  activeTab === tab.key
+                    ? 'bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200'
+                    : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
           {/* Temas */}
+          {activeTab === 'temas' && (
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Temas</h2>
@@ -318,8 +351,10 @@ export default function CatalogosPage() {
               )}
             </div>
           </div>
+          )}
 
           {/* Tipos */}
+          {activeTab === 'tipos' && (
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tipos de actividad</h2>
@@ -369,8 +404,10 @@ export default function CatalogosPage() {
               )}
             </div>
           </div>
+          )}
 
           {/* Subtipos */}
+          {activeTab === 'subtipos' && (
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Subtipos</h2>
@@ -433,8 +470,10 @@ export default function CatalogosPage() {
               )}
             </div>
           </div>
+          )}
 
           {/* Tipos de Benefactor */}
+          {activeTab === 'benefactor_tipos' && (
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tipos de Benefactor</h2>
@@ -484,8 +523,10 @@ export default function CatalogosPage() {
               )}
             </div>
           </div>
+          )}
 
           {/* Componentes */}
+          {activeTab === 'componentes' && (
           <div className="card p-5 md:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Componentes</h2>
@@ -535,6 +576,7 @@ export default function CatalogosPage() {
               )}
             </div>
           </div>
+          )}
         </div>
       </Role>
     </Protected>
