@@ -44,22 +44,27 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
     let mounted = true;
     (async () => {
       try {
-        // Ensure session exists before protected queries
         await ensureClientSession();
         const userSlug = await getUserSedeSlug();
         let slug = userSlug;
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('actividad')
-          .select('fecha,hora_inicio,hora_fin,cupo, ubicacion, programa:programa_id ( nombre ), tipo:tipo_id ( nombre ), subtipo:subtipo_id ( nombre ), sede:sede_id ( slug, nombre )')
+          .select('fecha,hora_inicio,hora_fin,cupo, programa:programa_id ( nombre ), tipo:tipo_id ( nombre ), subtipo:subtipo_id ( nombre ), sede:sede_id ( slug, nombre )')
           .eq('id', actividadId)
           .single();
+        if (error) {
+          console.error('Error loading actividad:', error);
+          if (mounted) { setActividadInfo(null); setSedeSlug(null); }
+          return;
+        }
         const sede = (data as any)?.sede;
         if (!slug) slug = sede?.slug ?? null;
         if (mounted) {
           setActividadInfo(data);
           setSedeSlug(slug);
         }
-      } catch (_) {
+      } catch (err) {
+        console.error('Error loading actividad:', err);
         if (mounted) {
           setActividadInfo(null);
           setSedeSlug(null);
@@ -282,7 +287,15 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Registrar asistencia</h1>
 
         {/* Activity info card */}
-        {actividadInfo && (
+        {loadingSede && (
+          <div className="card p-4 md:p-5">
+            <div className="flex items-center gap-3">
+              <div className="loading-spinner"></div>
+              <span className="text-gray-500 dark:text-gray-400">Cargando información de la actividad...</span>
+            </div>
+          </div>
+        )}
+        {!loadingSede && actividadInfo && (
           <div className="card p-4 md:p-5">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <div>
