@@ -33,6 +33,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
   const [selectedBenefId, setSelectedBenefId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [editingExisting, setEditingExisting] = useState(false);
+  const [showNewForm, setShowNewForm] = useState(false);
   const [kiosk, setKiosk] = useState(false);
   const [duplicateCandidates, setDuplicateCandidates] = useState<any[]>([]);
   const [forceNew, setForceNew] = useState(false);
@@ -211,6 +212,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
         setHighlight(-1);
         setMsg(null);
         setEditingExisting(false);
+        setShowNewForm(false);
         setTimeout(() => searchRef.current?.focus(), 0);
       }
     };
@@ -277,6 +279,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
       setResults([]);
       setCountToday((c) => c + 1);
       setEditingExisting(false);
+      setShowNewForm(false);
       setTimeout(() => searchRef.current?.focus(), 0);
     }
   };
@@ -482,75 +485,105 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
             </div>
           )}
 
-          {/* State A: No selection, new beneficiary */}
+          {/* State A: No selection */}
           {!selectedBenefId && (
-            <div className="card p-5 md:p-6 space-y-4">
-              <div>
-                <label className="form-label">Buscar beneficiario (CURP o nombre)</label>
-                <SearchInput
-                  ref={searchRef as any}
-                  value={search}
-                  onChange={(e: any) => setSearch(e.target.value)}
-                  onClear={() => setSearch("")}
-                  placeholder="Ej. CURP o 'Juana Pérez'"
-                />
-                {results.length > 0 && (
-                  <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-lg divide-y bg-white dark:bg-gray-800 shadow-sm max-h-56 overflow-auto">
-                    {results.map((r: any, idx: number) => (
-                      <button type="button" key={r.id} className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:bg-gray-900/50 dark:hover:bg-gray-700 ${idx===highlight?"bg-gray-100 dark:bg-gray-700":""}`}
-                        onClick={() => {
-                          setSelectedBenefId(r.id);
-                          setBenef({
-                            nombre: r.nombre || '',
-                            primer_apellido: r.primer_apellido || '',
-                            segundo_apellido: r.segundo_apellido || '',
-                            fecha_nacimiento: r.fecha_nacimiento || '',
-                            sexo: r.sexo || '',
-                            poblacion_indigena: r.poblacion_indigena || '',
-                            lengua_indigena: r.lengua_indigena || '',
-                            condicion_migrante: r.condicion_migrante || '',
-                            escolaridad: r.escolaridad || '',
-                            estado_clave: r.estado_clave || '',
-                            municipio_id: r.municipio_id || '',
-                            codigo_postal: r.codigo_postal || '',
-                            localidad_colonia: r.localidad_colonia || ''
-                          });
-                          setCurp(r.curp || '');
-                          setProvisional(false);
-                          setResults([]);
-                          setSearch("");
-                        }}
-                      >
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{r.nombre} {r.primer_apellido} {r.segundo_apellido || ''}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{(r.curp || '').toUpperCase()} {r.fecha_nacimiento ? `• ${r.fecha_nacimiento}` : ''}</div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {duplicateCandidates.length > 0 && !selectedBenefId && !curp && (
-                  <div className="mt-3 p-3 rounded-lg border border-yellow-300 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-900/30">
-                    <div className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">Posibles duplicados</div>
-                    <div className="space-y-2">
-                      {duplicateCandidates.map((r:any) => (
-                        <div key={r.id} className="flex items-center justify-between">
-                          <div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100">{r.nombre} {r.primer_apellido} {r.segundo_apellido || ''}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">{(r.curp || '').toUpperCase()} {r.fecha_nacimiento ? `• ${r.fecha_nacimiento}` : ''}</div>
-                          </div>
-                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setSelectedBenefId(r.id); setCurp(r.curp || curp); }}>
-                            Usar existente
-                          </button>
-                        </div>
+            <div className="space-y-4">
+              {/* Search */}
+              <div className="card p-5 md:p-6 space-y-4">
+                <div>
+                  <label className="form-label">Buscar beneficiario (CURP o nombre)</label>
+                  <SearchInput
+                    ref={searchRef as any}
+                    value={search}
+                    onChange={(e: any) => setSearch(e.target.value)}
+                    onClear={() => setSearch("")}
+                    placeholder="Ej. CURP o 'Juana Pérez'"
+                  />
+                  {results.length > 0 && (
+                    <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-lg divide-y bg-white dark:bg-gray-800 shadow-sm max-h-56 overflow-auto">
+                      {results.map((r: any, idx: number) => (
+                        <button type="button" key={r.id} className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:bg-gray-900/50 dark:hover:bg-gray-700 ${idx===highlight?"bg-gray-100 dark:bg-gray-700":""}`}
+                          onClick={() => {
+                            setSelectedBenefId(r.id);
+                            setBenef({
+                              nombre: r.nombre || '',
+                              primer_apellido: r.primer_apellido || '',
+                              segundo_apellido: r.segundo_apellido || '',
+                              fecha_nacimiento: r.fecha_nacimiento || '',
+                              sexo: r.sexo || '',
+                              poblacion_indigena: r.poblacion_indigena || '',
+                              lengua_indigena: r.lengua_indigena || '',
+                              condicion_migrante: r.condicion_migrante || '',
+                              escolaridad: r.escolaridad || '',
+                              estado_clave: r.estado_clave || '',
+                              municipio_id: r.municipio_id || '',
+                              codigo_postal: r.codigo_postal || '',
+                              localidad_colonia: r.localidad_colonia || ''
+                            });
+                            setCurp(r.curp || '');
+                            setProvisional(false);
+                            setResults([]);
+                            setSearch("");
+                            setShowNewForm(false);
+                          }}
+                        >
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{r.nombre} {r.primer_apellido} {r.segundo_apellido || ''}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{(r.curp || '').toUpperCase()} {r.fecha_nacimiento ? `• ${r.fecha_nacimiento}` : ''}</div>
+                        </button>
                       ))}
                     </div>
-                    <div className="mt-3">
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setForceNew(true); formRef.current?.requestSubmit(); }}>
-                        Registrar como nuevo de todos modos
-                      </button>
+                  )}
+                  {duplicateCandidates.length > 0 && !selectedBenefId && !curp && (
+                    <div className="mt-3 p-3 rounded-lg border border-yellow-300 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-900/30">
+                      <div className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">Posibles duplicados</div>
+                      <div className="space-y-2">
+                        {duplicateCandidates.map((r:any) => (
+                          <div key={r.id} className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm text-gray-900 dark:text-gray-100">{r.nombre} {r.primer_apellido} {r.segundo_apellido || ''}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{(r.curp || '').toUpperCase()} {r.fecha_nacimiento ? `• ${r.fecha_nacimiento}` : ''}</div>
+                            </div>
+                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setSelectedBenefId(r.id); setCurp(r.curp || curp); }}>
+                              Usar existente
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3">
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setForceNew(true); formRef.current?.requestSubmit(); }}>
+                          Registrar como nuevo de todos modos
+                        </button>
+                      </div>
                     </div>
+                  )}
+                </div>
+
+                {!showNewForm && (
+                  <div className="flex items-center gap-3">
+                    <button type="button" className="btn btn-primary btn-md" onClick={() => setShowNewForm(true)}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Nuevo beneficiario
+                    </button>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">¿No lo encuentras? Regístralo como nuevo.</span>
                   </div>
                 )}
+
+                {msg && !showNewForm && (
+                  <div className={`alert ${isError ? 'alert-error' : 'alert-success'}`}>{msg}</div>
+                )}
               </div>
+
+              {/* New beneficiary form — only when requested */}
+              {showNewForm && (
+              <div className="card p-5 md:p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Nuevo beneficiario</h3>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowNewForm(false)}>
+                    Cancelar
+                  </button>
+                </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -625,6 +658,8 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
                   <div className={`alert ${isError ? 'alert-error' : 'alert-success'}`}>{msg}</div>
                 )}
               </div>
+              </div>
+              )}
             </div>
           )}
         </form>
