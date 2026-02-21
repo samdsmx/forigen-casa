@@ -32,6 +32,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
   const [results, setResults] = useState<any[]>([]);
   const [selectedBenefId, setSelectedBenefId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const [editingExisting, setEditingExisting] = useState(false);
   const [kiosk, setKiosk] = useState(false);
   const [duplicateCandidates, setDuplicateCandidates] = useState<any[]>([]);
   const [forceNew, setForceNew] = useState(false);
@@ -204,6 +205,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
         setForceNew(false);
         setHighlight(-1);
         setMsg(null);
+        setEditingExisting(false);
         setTimeout(() => searchRef.current?.focus(), 0);
       }
     };
@@ -269,6 +271,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
       setSearch("");
       setResults([]);
       setCountToday((c) => c + 1);
+      setEditingExisting(false);
       setTimeout(() => searchRef.current?.focus(), 0);
     }
   };
@@ -276,176 +279,341 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
   return (
     <Protected>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Registrar asistencia</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              {actividadInfo ? (
-                <>
-                  {actividadInfo?.programa?.nombre ? `${actividadInfo.programa.nombre} • ` : ''}
-                  {fechaDMY(actividadInfo?.fecha)}{actividadInfo?.hora_inicio ? ` ${actividadInfo.hora_inicio}` : ''}
-                  {actividadInfo?.hora_fin ? ` - ${actividadInfo.hora_fin}` : ''}
-                  {actividadInfo?.sede?.nombre || actividadInfo?.sede?.slug ? ` • Sede: ${actividadInfo?.sede?.nombre || actividadInfo?.sede?.slug}` : ''}
-                </>
-              ) : (
-                'Cargando información de la actividad...'
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Registrar asistencia</h1>
+
+        {/* Activity info card */}
+        {actividadInfo && (
+          <div className="card p-4 md:p-5">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Proyecto</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">{actividadInfo?.programa?.nombre || '—'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fecha</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">{fechaDMY(actividadInfo?.fecha)}</div>
+              </div>
+              {(actividadInfo?.hora_inicio || actividadInfo?.hora_fin) && (
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Horario</div>
+                  <div className="font-semibold text-gray-900 dark:text-gray-100">{actividadInfo.hora_inicio || ''}{actividadInfo.hora_fin ? ` - ${actividadInfo.hora_fin}` : ''}</div>
+                </div>
               )}
-            </p>
-            {actividadInfo && (
-              <p className="text-gray-600 dark:text-gray-400">
-                {(actividadInfo?.tipo?.nombre || actividadInfo?.subtipo?.nombre) ? `Tipo: ${actividadInfo?.subtipo?.nombre || actividadInfo?.tipo?.nombre}` : ''}
-                {actividadInfo?.ubicacion ? ` • Ubicación: ${actividadInfo.ubicacion}` : ''}
-              </p>
-            )}
-            <div className="mt-2">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
-                Registrados hoy: {countToday}{typeof (actividadInfo as any)?.cupo === 'number' ? ` / ${(actividadInfo as any).cupo}` : ''}
-              </span>
+              {(actividadInfo?.sede?.nombre || actividadInfo?.sede?.slug) && (
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sede</div>
+                  <div className="font-semibold text-gray-900 dark:text-gray-100">{actividadInfo?.sede?.nombre || actividadInfo?.sede?.slug}</div>
+                </div>
+              )}
+              {(actividadInfo?.tipo?.nombre || actividadInfo?.subtipo?.nombre) && (
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tipo</div>
+                  <div className="font-semibold text-gray-900 dark:text-gray-100">{actividadInfo?.subtipo?.nombre || actividadInfo?.tipo?.nombre}</div>
+                </div>
+              )}
+              <div className="ml-auto">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-brand-100 dark:bg-brand-900 text-brand-800 dark:text-brand-200">
+                  📋 {countToday}{typeof actividadInfo?.cupo === 'number' ? ` / ${actividadInfo.cupo}` : ''} registrados
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+        {!actividadInfo && !loadingSede && (
+          <div className="alert alert-warning">No se encontró la actividad.</div>
+        )}
 
-        <form onSubmit={registrar} ref={formRef} className="card p-5 md:p-6 space-y-4">
-          <div>
-            <label className="form-label">Buscar beneficiario (CURP o nombre)</label>
-            <SearchInput
-              ref={searchRef as any}
-              value={search}
-              onChange={(e: any) => setSearch(e.target.value)}
-              onClear={() => setSearch("")}
-              placeholder="Ej. CURP o 'Juana Pérez'"
-            />
-            {results.length > 0 && (
-              <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-lg divide-y bg-white dark:bg-gray-800 shadow-sm max-h-56 overflow-auto">
-                {results.map((r: any, idx: number) => (
-                  <button type="button" key={r.id} className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:bg-gray-900/50 dark:hover:bg-gray-700 ${idx===highlight?"bg-gray-100 dark:bg-gray-700":""}`}
-                    onClick={() => {
-                      setSelectedBenefId(r.id);
-                      setBenef({
-                        nombre: r.nombre || '',
-                        primer_apellido: r.primer_apellido || '',
-                        segundo_apellido: r.segundo_apellido || '',
-                        fecha_nacimiento: r.fecha_nacimiento || '',
-                        sexo: r.sexo || '',
-                        poblacion_indigena: r.poblacion_indigena || '',
-                        lengua_indigena: r.lengua_indigena || '',
-                        condicion_migrante: r.condicion_migrante || '',
-                        escolaridad: r.escolaridad || '',
-                        estado_clave: r.estado_clave || '',
-                        municipio_id: r.municipio_id || '',
-                        codigo_postal: r.codigo_postal || '',
-                        localidad_colonia: r.localidad_colonia || ''
-                      });
-                      setCurp(r.curp || '');
-                      setProvisional(false);
-                      setResults([]);
-                      setSearch("");
-                    }}
-                  >
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{r.nombre} {r.primer_apellido} {r.segundo_apellido || ''}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{(r.curp || '').toUpperCase()} {r.fecha_nacimiento ? `• ${r.fecha_nacimiento}` : ''}</div>
+        <form onSubmit={registrar} ref={formRef}>
+          {/* State B: Selected beneficiary, view summary */}
+          {selectedBenefId && !editingExisting && (
+            <div className="card p-5 md:p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Beneficiario seleccionado</h3>
+                <div className="flex gap-2">
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditingExisting(true)}>
+                    Editar datos
                   </button>
-                ))}
-              </div>
-            )}
-            {duplicateCandidates.length > 0 && !selectedBenefId && !curp && (
-              <div className="mt-3 p-3 rounded-lg border border-yellow-300 bg-yellow-50">
-                <div className="text-sm font-medium text-yellow-800 mb-2">Posibles duplicados</div>
-                <div className="space-y-2">
-                  {duplicateCandidates.map((r:any) => (
-                    <div key={r.id} className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm text-gray-900 dark:text-gray-100">{r.nombre} {r.primer_apellido} {r.segundo_apellido || ''}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{(r.curp || '').toUpperCase()} {r.fecha_nacimiento ? `• ${r.fecha_nacimiento}` : ''}</div>
-                      </div>
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setSelectedBenefId(r.id); setCurp(r.curp || curp); }}>
-                        Usar existente
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3">
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setForceNew(true); formRef.current?.requestSubmit(); }}>
-                    Registrar como nuevo de todos modos
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => {
+                    setSelectedBenefId(null);
+                    setCurp('');
+                    setBenef({nombre:'',primer_apellido:'',segundo_apellido:'',fecha_nacimiento:'',sexo:'',poblacion_indigena:'',lengua_indigena:'',condicion_migrante:'',escolaridad:'',estado_clave:'',municipio_id:'',codigo_postal:'',localidad_colonia:''});
+                    setEditingExisting(false);
+                    setMsg(null);
+                  }}>
+                    Cambiar
                   </button>
                 </div>
               </div>
-            )}
-          </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Nombre</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{benef.nombre} {benef.primer_apellido} {benef.segundo_apellido || ''}</div>
+                </div>
+                {curp && (
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">CURP</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{curp}</div>
+                  </div>
+                )}
+                {benef.fecha_nacimiento && (
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Fecha de nacimiento</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{fechaDMY(benef.fecha_nacimiento)}</div>
+                  </div>
+                )}
+                {benef.sexo && (
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Sexo</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{benef.sexo === 'F' ? 'Femenino' : benef.sexo === 'M' ? 'Masculino' : benef.sexo}</div>
+                  </div>
+                )}
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="form-label">CURP</label>
-              <input className="form-input" value={curp} onChange={(e) => setCurp(e.target.value.toUpperCase())} placeholder="AAAA000000HDFRRN00" />
-              <div className="form-help">
-                Si no trae CURP, marque &quot;Provisional&quot; y capture datos mínimos.
+              <div className="flex items-center gap-3">
+                <button className="btn btn-primary btn-md" type="submit" disabled={!sedeSlug || loadingSede}>
+                  {loadingSede ? 'Cargando...' : 'Registrar asistencia'}
+                </button>
+                {!loadingSede && !sedeSlug && (
+                  <div className="alert alert-error">No se pudo determinar la sede.</div>
+                )}
+                {msg && (
+                  <div className={`alert ${isError ? 'alert-error' : 'alert-success'}`}>{msg}</div>
+                )}
               </div>
             </div>
-            <div className="flex items-center gap-3 md:mt-6">
-              <input id="prov" className="form-checkbox" type="checkbox" checked={provisional} onChange={(e) => setProvisional(e.target.checked)} />
-              <label htmlFor="prov" className="form-label cursor-pointer !mb-0">Provisional (sin CURP)</label>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Field label="Nombre(s)" value={benef.nombre} onChange={(e: any) => setBenef({ ...benef, nombre: e.target.value })} required />
-            <Field label="Primer apellido" value={benef.primer_apellido} onChange={(e: any) => setBenef({ ...benef, primer_apellido: e.target.value })} required />
-            <Field label="Segundo apellido" value={benef.segundo_apellido} onChange={(e: any) => setBenef({ ...benef, segundo_apellido: e.target.value })} />
-            <Field
-              label="Fecha de nacimiento"
-              type="date"
-              value={benef.fecha_nacimiento}
-              onChange={(e: any) => setBenef({ ...benef, fecha_nacimiento: e.target.value })}
-              required
-            />
-            <Select label="Sexo" value={benef.sexo} onChange={(e: any) => setBenef({ ...benef, sexo: e.target.value })}
-              options={[{ value: "F", label: "Femenino" }, { value: "M", label: "Masculino" }, { value: "X", label: "No especifica" }]} />
-          </div>
-
-          {!kiosk && (
-            <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Select label="Población indígena" value={benef.poblacion_indigena} onChange={(e: any) => setBenef({ ...benef, poblacion_indigena: e.target.value })}
-                options={[{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }, { value: "Prefiere no decir", label: "Prefiere no decir" }]} />
-              <Field label="Lengua indígena" value={benef.lengua_indigena} onChange={(e: any) => setBenef({ ...benef, lengua_indigena: e.target.value })} />
-              <Select label="Condición migrante/refugiada" value={benef.condicion_migrante} onChange={(e: any) => setBenef({ ...benef, condicion_migrante: e.target.value })}
-                options={[{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }, { value: "Prefiere no decir", label: "Prefiere no decir" }]} />
-              <Select label="Escolaridad" value={benef.escolaridad} onChange={(e: any) => setBenef({ ...benef, escolaridad: e.target.value })}
-                options={[
-                  { value: "Primaria", label: "Primaria" },
-                  { value: "Secundaria", label: "Secundaria" },
-                  { value: "Media superior", label: "Media superior" },
-                  { value: "Superior", label: "Superior" },
-                  { value: "Otra", label: "Otra" }
-                ]} />
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Procedencia Geográfica</h3>
-              <GeoSelector
-                value={{
-                  estado_clave: benef.estado_clave || "",
-                  municipio_id: benef.municipio_id || "",
-                  codigo_postal: benef.codigo_postal || "",
-                  localidad_colonia: benef.localidad_colonia || "",
-                }}
-                onChange={(geo) => setBenef({ ...benef, ...geo })}
-              />
-            </div>
-            </>
           )}
 
-          <div className="flex items-center gap-3">
-            <button className="btn btn-primary btn-md" type="submit" disabled={!sedeSlug || loadingSede}>
-              {loadingSede ? 'Cargando...' : 'Registrar'}
-            </button>
-            {!loadingSede && !sedeSlug && (
-              <div className="alert alert-error">No se pudo determinar la sede.</div>
-            )}
-            {msg && (
-              <div className={`alert ${isError ? 'alert-error' : 'alert-success'}`}>{msg}</div>
-            )}
-          </div>
+          {/* State C: Selected beneficiary, editing */}
+          {selectedBenefId && editingExisting && (
+            <div className="card p-5 md:p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Editando datos del beneficiario</h3>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingExisting(false)}>
+                  Cancelar edición
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">CURP</label>
+                  <input className="form-input" value={curp} onChange={(e) => setCurp(e.target.value.toUpperCase())} placeholder="AAAA000000HDFRRN00" />
+                  <div className="form-help">
+                    Si no trae CURP, marque &quot;Provisional&quot; y capture datos mínimos.
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 md:mt-6">
+                  <input id="prov-edit" className="form-checkbox" type="checkbox" checked={provisional} onChange={(e) => setProvisional(e.target.checked)} />
+                  <label htmlFor="prov-edit" className="form-label cursor-pointer !mb-0">Provisional (sin CURP)</label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Field label="Nombre(s)" value={benef.nombre} onChange={(e: any) => setBenef({ ...benef, nombre: e.target.value })} required />
+                <Field label="Primer apellido" value={benef.primer_apellido} onChange={(e: any) => setBenef({ ...benef, primer_apellido: e.target.value })} required />
+                <Field label="Segundo apellido" value={benef.segundo_apellido} onChange={(e: any) => setBenef({ ...benef, segundo_apellido: e.target.value })} />
+                <Field
+                  label="Fecha de nacimiento"
+                  type="date"
+                  value={benef.fecha_nacimiento}
+                  onChange={(e: any) => setBenef({ ...benef, fecha_nacimiento: e.target.value })}
+                  required
+                />
+                <Select label="Sexo" value={benef.sexo} onChange={(e: any) => setBenef({ ...benef, sexo: e.target.value })}
+                  options={[{ value: "F", label: "Femenino" }, { value: "M", label: "Masculino" }, { value: "X", label: "No especifica" }]} />
+              </div>
+
+              {!kiosk && (
+                <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Select label="Población indígena" value={benef.poblacion_indigena} onChange={(e: any) => setBenef({ ...benef, poblacion_indigena: e.target.value })}
+                    options={[{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }, { value: "Prefiere no decir", label: "Prefiere no decir" }]} />
+                  <Field label="Lengua indígena" value={benef.lengua_indigena} onChange={(e: any) => setBenef({ ...benef, lengua_indigena: e.target.value })} />
+                  <Select label="Condición migrante/refugiada" value={benef.condicion_migrante} onChange={(e: any) => setBenef({ ...benef, condicion_migrante: e.target.value })}
+                    options={[{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }, { value: "Prefiere no decir", label: "Prefiere no decir" }]} />
+                  <Select label="Escolaridad" value={benef.escolaridad} onChange={(e: any) => setBenef({ ...benef, escolaridad: e.target.value })}
+                    options={[
+                      { value: "Primaria", label: "Primaria" },
+                      { value: "Secundaria", label: "Secundaria" },
+                      { value: "Media superior", label: "Media superior" },
+                      { value: "Superior", label: "Superior" },
+                      { value: "Otra", label: "Otra" }
+                    ]} />
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Procedencia Geográfica</h3>
+                  <GeoSelector
+                    value={{
+                      estado_clave: benef.estado_clave || "",
+                      municipio_id: benef.municipio_id || "",
+                      codigo_postal: benef.codigo_postal || "",
+                      localidad_colonia: benef.localidad_colonia || "",
+                    }}
+                    onChange={(geo) => setBenef({ ...benef, ...geo })}
+                  />
+                </div>
+                </>
+              )}
+
+              <div className="flex items-center gap-3">
+                <button className="btn btn-primary btn-md" type="submit" disabled={!sedeSlug || loadingSede}>
+                  {loadingSede ? 'Cargando...' : 'Guardar y registrar asistencia'}
+                </button>
+                {!loadingSede && !sedeSlug && (
+                  <div className="alert alert-error">No se pudo determinar la sede.</div>
+                )}
+                {msg && (
+                  <div className={`alert ${isError ? 'alert-error' : 'alert-success'}`}>{msg}</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* State A: No selection, new beneficiary */}
+          {!selectedBenefId && (
+            <div className="card p-5 md:p-6 space-y-4">
+              <div>
+                <label className="form-label">Buscar beneficiario (CURP o nombre)</label>
+                <SearchInput
+                  ref={searchRef as any}
+                  value={search}
+                  onChange={(e: any) => setSearch(e.target.value)}
+                  onClear={() => setSearch("")}
+                  placeholder="Ej. CURP o 'Juana Pérez'"
+                />
+                {results.length > 0 && (
+                  <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-lg divide-y bg-white dark:bg-gray-800 shadow-sm max-h-56 overflow-auto">
+                    {results.map((r: any, idx: number) => (
+                      <button type="button" key={r.id} className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:bg-gray-900/50 dark:hover:bg-gray-700 ${idx===highlight?"bg-gray-100 dark:bg-gray-700":""}`}
+                        onClick={() => {
+                          setSelectedBenefId(r.id);
+                          setBenef({
+                            nombre: r.nombre || '',
+                            primer_apellido: r.primer_apellido || '',
+                            segundo_apellido: r.segundo_apellido || '',
+                            fecha_nacimiento: r.fecha_nacimiento || '',
+                            sexo: r.sexo || '',
+                            poblacion_indigena: r.poblacion_indigena || '',
+                            lengua_indigena: r.lengua_indigena || '',
+                            condicion_migrante: r.condicion_migrante || '',
+                            escolaridad: r.escolaridad || '',
+                            estado_clave: r.estado_clave || '',
+                            municipio_id: r.municipio_id || '',
+                            codigo_postal: r.codigo_postal || '',
+                            localidad_colonia: r.localidad_colonia || ''
+                          });
+                          setCurp(r.curp || '');
+                          setProvisional(false);
+                          setResults([]);
+                          setSearch("");
+                        }}
+                      >
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{r.nombre} {r.primer_apellido} {r.segundo_apellido || ''}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{(r.curp || '').toUpperCase()} {r.fecha_nacimiento ? `• ${r.fecha_nacimiento}` : ''}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {duplicateCandidates.length > 0 && !selectedBenefId && !curp && (
+                  <div className="mt-3 p-3 rounded-lg border border-yellow-300 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-900/30">
+                    <div className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">Posibles duplicados</div>
+                    <div className="space-y-2">
+                      {duplicateCandidates.map((r:any) => (
+                        <div key={r.id} className="flex items-center justify-between">
+                          <div>
+                            <div className="text-sm text-gray-900 dark:text-gray-100">{r.nombre} {r.primer_apellido} {r.segundo_apellido || ''}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{(r.curp || '').toUpperCase()} {r.fecha_nacimiento ? `• ${r.fecha_nacimiento}` : ''}</div>
+                          </div>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setSelectedBenefId(r.id); setCurp(r.curp || curp); }}>
+                            Usar existente
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3">
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setForceNew(true); formRef.current?.requestSubmit(); }}>
+                        Registrar como nuevo de todos modos
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label">CURP</label>
+                  <input className="form-input" value={curp} onChange={(e) => setCurp(e.target.value.toUpperCase())} placeholder="AAAA000000HDFRRN00" />
+                  <div className="form-help">
+                    Si no trae CURP, marque &quot;Provisional&quot; y capture datos mínimos.
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 md:mt-6">
+                  <input id="prov" className="form-checkbox" type="checkbox" checked={provisional} onChange={(e) => setProvisional(e.target.checked)} />
+                  <label htmlFor="prov" className="form-label cursor-pointer !mb-0">Provisional (sin CURP)</label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Field label="Nombre(s)" value={benef.nombre} onChange={(e: any) => setBenef({ ...benef, nombre: e.target.value })} required />
+                <Field label="Primer apellido" value={benef.primer_apellido} onChange={(e: any) => setBenef({ ...benef, primer_apellido: e.target.value })} required />
+                <Field label="Segundo apellido" value={benef.segundo_apellido} onChange={(e: any) => setBenef({ ...benef, segundo_apellido: e.target.value })} />
+                <Field
+                  label="Fecha de nacimiento"
+                  type="date"
+                  value={benef.fecha_nacimiento}
+                  onChange={(e: any) => setBenef({ ...benef, fecha_nacimiento: e.target.value })}
+                  required
+                />
+                <Select label="Sexo" value={benef.sexo} onChange={(e: any) => setBenef({ ...benef, sexo: e.target.value })}
+                  options={[{ value: "F", label: "Femenino" }, { value: "M", label: "Masculino" }, { value: "X", label: "No especifica" }]} />
+              </div>
+
+              {!kiosk && (
+                <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Select label="Población indígena" value={benef.poblacion_indigena} onChange={(e: any) => setBenef({ ...benef, poblacion_indigena: e.target.value })}
+                    options={[{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }, { value: "Prefiere no decir", label: "Prefiere no decir" }]} />
+                  <Field label="Lengua indígena" value={benef.lengua_indigena} onChange={(e: any) => setBenef({ ...benef, lengua_indigena: e.target.value })} />
+                  <Select label="Condición migrante/refugiada" value={benef.condicion_migrante} onChange={(e: any) => setBenef({ ...benef, condicion_migrante: e.target.value })}
+                    options={[{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }, { value: "Prefiere no decir", label: "Prefiere no decir" }]} />
+                  <Select label="Escolaridad" value={benef.escolaridad} onChange={(e: any) => setBenef({ ...benef, escolaridad: e.target.value })}
+                    options={[
+                      { value: "Primaria", label: "Primaria" },
+                      { value: "Secundaria", label: "Secundaria" },
+                      { value: "Media superior", label: "Media superior" },
+                      { value: "Superior", label: "Superior" },
+                      { value: "Otra", label: "Otra" }
+                    ]} />
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Procedencia Geográfica</h3>
+                  <GeoSelector
+                    value={{
+                      estado_clave: benef.estado_clave || "",
+                      municipio_id: benef.municipio_id || "",
+                      codigo_postal: benef.codigo_postal || "",
+                      localidad_colonia: benef.localidad_colonia || "",
+                    }}
+                    onChange={(geo) => setBenef({ ...benef, ...geo })}
+                  />
+                </div>
+                </>
+              )}
+
+              <div className="flex items-center gap-3">
+                <button className="btn btn-primary btn-md" type="submit" disabled={!sedeSlug || loadingSede}>
+                  {loadingSede ? 'Cargando...' : 'Crear y registrar asistencia'}
+                </button>
+                {!loadingSede && !sedeSlug && (
+                  <div className="alert alert-error">No se pudo determinar la sede.</div>
+                )}
+                {msg && (
+                  <div className={`alert ${isError ? 'alert-error' : 'alert-success'}`}>{msg}</div>
+                )}
+              </div>
+            </div>
+          )}
         </form>
       </div>
     </Protected>
