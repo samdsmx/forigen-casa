@@ -268,7 +268,7 @@ export default function Navbar() {
       {/* Overlay para cerrar menú */}
       {isMenuOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-25 md:hidden"
+          className="fixed inset-0 z-40 md:bg-transparent bg-black bg-opacity-25"
           onClick={() => setIsMenuOpen(false)}
         />
       )}
