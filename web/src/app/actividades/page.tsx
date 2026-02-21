@@ -201,7 +201,6 @@ export default function Actividades() {
                 type="time"
                 value={form.hora_inicio}
                 onChange={(e:any)=>setForm({...form,hora_inicio:e.target.value})}
-                help="Opcional"
               />
               <Field
                 label="Hora fin"
@@ -209,7 +208,6 @@ export default function Actividades() {
                 value={form.hora_fin}
                 onChange={(e:any)=>setForm({...form,hora_fin:e.target.value})}
                 error={errors.hora_fin}
-                help="Opcional"
               />
               <Select label="Tipo" options={tipos} value={form.tipo_id} onChange={(e:any)=>setForm({...form,tipo_id:e.target.value})} />
               <Select label="Subtipo" options={subtipos} value={form.subtipo_id} onChange={(e:any)=>setForm({...form,subtipo_id:e.target.value})} />
@@ -226,7 +224,6 @@ export default function Actividades() {
                 value={form.cupo}
                 onChange={(e:any)=>setForm({...form,cupo:e.target.value})}
                 error={errors.cupo}
-                help="Opcional"
               />
               <div className="sm:col-span-2 lg:col-span-4">
                 <GeoSelector
