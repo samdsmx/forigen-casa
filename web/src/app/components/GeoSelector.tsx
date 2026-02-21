@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Field, Select } from "./Forms";
 
@@ -22,6 +22,8 @@ type Asentamiento = { id: number; nombre: string; codigo_postal: string; tipo_as
 
 export default function GeoSelector({ value, onChange, required }: GeoSelectorProps) {
   const [mode, setMode] = useState<"cp" | "cascada">("cp");
+  const hasData = !!(value.estado_clave || value.codigo_postal || value.localidad_colonia);
+  const [editing, setEditing] = useState(!hasData);
 
   const [estados, setEstados] = useState<Estado[]>([]);
   const [municipios, setMunicipios] = useState<Municipio[]>([]);
@@ -32,6 +34,7 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
   const [cpResults, setCpResults] = useState<Asentamiento[]>([]);
   const [cpEstado, setCpEstado] = useState("");
   const [cpMunicipio, setCpMunicipio] = useState("");
+  const didAutoSearch = useRef(false);
 
   // Load estados on mount
   useEffect(() => {
@@ -42,7 +45,19 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
       .then(({ data }) => setEstados((data as Estado[]) || []));
   }, []);
 
-  // Load municipios when estado changes (cascada mode)
+  // Auto-search CP on mount when value has existing CP
+  useEffect(() => {
+    if (didAutoSearch.current) return;
+    if (estados.length === 0) return;
+    const cp = value.codigo_postal || "";
+    if (cp.length === 5) {
+      didAutoSearch.current = true;
+      setCpInput(cp);
+      searchCp(cp);
+    }
+  }, [estados, value.codigo_postal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load municipios when estado changes
   useEffect(() => {
     if (!value.estado_clave) {
       setMunicipios([]);
@@ -88,7 +103,6 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
     setCpResults(results);
 
     if (results.length > 0) {
-      // Lookup municipio and estado from first result
       const { data: mun } = await supabase
         .from("cat_municipio")
         .select("id,nombre,clave_estado")
@@ -127,12 +141,58 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
     onChange({ ...value, localidad_colonia: nombre });
   };
 
+  // In cascada mode, auto-fill CP from selected colonia
+  const selectColoniaCascada = (nombre: string) => {
+    const found = asentamientos.find((a) => a.nombre === nombre);
+    onChange({
+      ...value,
+      localidad_colonia: nombre,
+      codigo_postal: found?.codigo_postal || value.codigo_postal || "",
+    });
+  };
+
   const estadoOptions = estados.map((e) => ({ value: e.clave, label: e.nombre }));
   const municipioOptions = municipios.map((m) => ({ value: m.id, label: m.nombre }));
   const coloniaOptions = asentamientos.map((a) => ({
     value: a.nombre,
     label: `${a.nombre}${a.tipo_asentamiento ? ` (${a.tipo_asentamiento})` : ""}`,
   }));
+
+  // Build summary text
+  const summaryParts: string[] = [];
+  const estadoNombre = estados.find((e) => e.clave === value.estado_clave)?.nombre;
+  if (estadoNombre) summaryParts.push(estadoNombre);
+  const munNombre = municipios.find((m) => m.id === value.municipio_id)?.nombre || cpMunicipio;
+  if (munNombre) summaryParts.push(munNombre);
+  if (value.localidad_colonia) summaryParts.push(value.localidad_colonia);
+  const summaryText = summaryParts.join(", ");
+
+  // Collapsed view: show preview with edit button
+  if (!editing && hasData) {
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <div className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+            <span>📍</span>
+            <span>{summaryText || "Ubicación registrada"}</span>
+            {value.codigo_postal && (
+              <span className="text-gray-500 dark:text-gray-400">(CP {value.codigo_postal})</span>
+            )}
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => setEditing(true)}
+            title="Editar ubicación"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -157,6 +217,15 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
         >
           Por Estado / Municipio
         </button>
+        {hasData && (
+          <button
+            type="button"
+            className="ml-auto btn btn-ghost btn-sm text-xs"
+            onClick={() => setEditing(false)}
+          >
+            Listo
+          </button>
+        )}
       </div>
 
       {mode === "cp" ? (
@@ -168,7 +237,7 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
               onChange={(e) => handleCpChange((e.target as HTMLInputElement).value)}
               placeholder="Ej. 06600"
               required={required}
-              help={cpLoading ? "Buscando..." : cpInput.length === 5 && cpResults.length === 0 ? "CP no encontrado" : ""}
+              help={cpLoading ? "Buscando..." : cpInput.length === 5 && cpResults.length === 0 && !cpLoading ? "CP no encontrado en el catálogo" : ""}
             />
             <Field label="Estado" value={cpEstado} readOnly placeholder="—" />
             <Field label="Municipio" value={cpMunicipio} readOnly placeholder="—" />
@@ -225,22 +294,16 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
             value={value.municipio_id || ""}
             onChange={(e) => {
               const id = (e.target as HTMLSelectElement).value;
-              onChange({ ...value, municipio_id: id, localidad_colonia: "" });
+              onChange({ ...value, municipio_id: id, codigo_postal: "", localidad_colonia: "" });
             }}
             required={required}
-          />
-          <Field
-            label="Código Postal"
-            value={value.codigo_postal || ""}
-            onChange={(e) => onChange({ ...value, codigo_postal: (e.target as HTMLInputElement).value.replace(/\D/g, "").slice(0, 5) })}
-            placeholder="Opcional"
           />
           {coloniaOptions.length > 0 ? (
             <Select
               label="Localidad / Colonia"
               options={coloniaOptions}
               value={value.localidad_colonia || ""}
-              onChange={(e) => onChange({ ...value, localidad_colonia: (e.target as HTMLSelectElement).value })}
+              onChange={(e) => selectColoniaCascada((e.target as HTMLSelectElement).value)}
             />
           ) : (
             <Field
@@ -250,16 +313,15 @@ export default function GeoSelector({ value, onChange, required }: GeoSelectorPr
               placeholder="Localidad o colonia"
             />
           )}
+          <Field label="Código Postal" value={value.codigo_postal || ""} readOnly placeholder="Se llena con la colonia" />
         </div>
       )}
 
-      {/* Summary of selection */}
-      {value.estado_clave && (
+      {/* Summary */}
+      {summaryText && (
         <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
           <span>📍</span>
-          {estados.find((e) => e.clave === value.estado_clave)?.nombre}
-          {value.municipio_id && `, ${municipios.find((m) => m.id === value.municipio_id)?.nombre || cpMunicipio}`}
-          {value.localidad_colonia && `, ${value.localidad_colonia}`}
+          {summaryText}
           {value.codigo_postal && ` (CP ${value.codigo_postal})`}
         </div>
       )}
