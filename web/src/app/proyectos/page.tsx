@@ -202,8 +202,6 @@ export default function ProyectosPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const msg = editingId ? "¿Guardar los cambios en este proyecto?" : "¿Crear este nuevo proyecto?";
-    if (!confirm(msg)) return;
     setCreating(true);
     setError(null);
 

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
+import DeleteConfirm from "../components/DeleteConfirm";
 import { Field, Select } from "../components/Forms";
 import { supabase } from "../lib/supabaseClient";
 import { ensureClientSession } from "../lib/clientSession";
@@ -16,6 +17,7 @@ export default function BenefactoresPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const [benefactorForm, setBenefactorForm] = useState<{ nombre: string; tipo_id: string }>({ nombre: "", tipo_id: "" });
   const [editBenefactor, setEditBenefactor] = useState<Record<string, { nombre: string; tipo_id: string }>>({});
@@ -74,11 +76,10 @@ export default function BenefactoresPage() {
   };
 
   const deleteBenefactor = async (id: string) => {
-    if (!confirm("Eliminar benefactor?")) return;
     setSaving(`benefactor:${id}`);
     try { const { error } = await (supabase as any).from("benefactor").delete().eq("id", id); if (error) throw error; await load(); ok("Benefactor eliminado"); }
     catch (e) { setError(e instanceof Error ? e.message : "No se pudo eliminar (puede estar asignado a un proyecto)"); }
-    finally { setSaving(null); }
+    finally { setSaving(null); setDeleteTarget(null); }
   };
 
   return (
@@ -146,7 +147,7 @@ export default function BenefactoresPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditBenefactor(p => ({ ...p, [b.id]: { nombre: b.nombre, tipo_id: b.tipo_id || b.tipo?.id || "" } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteBenefactor(b.id)} disabled={saving === `benefactor:${b.id}`}>{saving === `benefactor:${b.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget(b.id)} disabled={saving === `benefactor:${b.id}`}>{saving === `benefactor:${b.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -158,6 +159,14 @@ export default function BenefactoresPage() {
               )}
             </div>
           </div>
+          <DeleteConfirm
+            open={!!deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={() => { if (deleteTarget) deleteBenefactor(deleteTarget); }}
+            title="Eliminar benefactor"
+            message={<p>¿Estás seguro de que deseas eliminar este benefactor? Esta acción no se puede deshacer.</p>}
+            loading={!!deleteTarget && saving === `benefactor:${deleteTarget}`}
+          />
         </div>
       </Role>
     </Protected>

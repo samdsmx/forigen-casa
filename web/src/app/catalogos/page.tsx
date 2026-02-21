@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
+import DeleteConfirm from "../components/DeleteConfirm";
 import { Field, Select } from "../components/Forms";
 import { supabase } from "../lib/supabaseClient";
 import { ensureClientSession } from "../lib/clientSession";
@@ -26,6 +27,7 @@ export default function CatalogosPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{label: string; onConfirm: () => void} | null>(null);
   const [activeTab, setActiveTab] = useState<'temas' | 'tipos' | 'subtipos' | 'benefactor_tipos' | 'componentes'>('temas');
 
   // Forms
@@ -104,7 +106,6 @@ export default function CatalogosPage() {
   };
 
   const deleteTema = async (id: string) => {
-    if (!confirm("¿Eliminar tema?")) return;
     setSaving(`tema:${id}`);
     try { const { error } = await (supabase as any).from("tema").delete().eq("id", id); if (error) throw error; await load(); ok("Tema eliminado"); }
     catch (e) { setError(e instanceof Error ? e.message : "No se pudo eliminar"); }
@@ -140,7 +141,6 @@ export default function CatalogosPage() {
   };
 
   const deleteTipo = async (id: string) => {
-    if (!confirm("¿Eliminar tipo? Los subtipos asociados quedarán huérfanos.")) return;
     setSaving(`tipo:${id}`);
     try { const { error } = await (supabase as any).from("actividad_tipo").delete().eq("id", id); if (error) throw error; await load(); ok("Tipo eliminado"); }
     catch (e) { setError(e instanceof Error ? e.message : "No se pudo eliminar"); }
@@ -178,7 +178,6 @@ export default function CatalogosPage() {
   };
 
   const deleteSubtipo = async (id: string) => {
-    if (!confirm("¿Eliminar subtipo?")) return;
     setSaving(`subtipo:${id}`);
     try { const { error } = await (supabase as any).from("actividad_subtipo").delete().eq("id", id); if (error) throw error; await load(); ok("Subtipo eliminado"); }
     catch (e) { setError(e instanceof Error ? e.message : "No se pudo eliminar"); }
@@ -213,7 +212,6 @@ export default function CatalogosPage() {
   };
 
   const deleteBTipo = async (id: string) => {
-    if (!confirm("¿Eliminar tipo de benefactor?")) return;
     setSaving(`btipo:${id}`);
     try { const { error } = await (supabase as any).from("benefactor_tipo").delete().eq("id", id); if (error) throw error; await load(); ok("Tipo de benefactor eliminado"); }
     catch (e) { setError(e instanceof Error ? e.message : "No se pudo eliminar (puede estar en uso)"); }
@@ -248,7 +246,6 @@ export default function CatalogosPage() {
   };
 
   const deleteComponente = async (id: string) => {
-    if (!confirm("¿Eliminar componente?")) return;
     setSaving(`componente:${id}`);
     try { const { error } = await (supabase as any).from("componente").delete().eq("id", id); if (error) throw error; await load(); ok("Componente eliminado"); }
     catch (e) { setError(e instanceof Error ? e.message : "No se pudo eliminar (puede estar en uso)"); }
@@ -339,7 +336,7 @@ export default function CatalogosPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditTema(p => ({ ...p, [t.id]: { nombre: t.nombre } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteTema(t.id)} disabled={saving === `tema:${t.id}`}>{saving === `tema:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget({label: `tema "${t.nombre}"`, onConfirm: () => deleteTema(t.id)})} disabled={saving === `tema:${t.id}`}>{saving === `tema:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -392,7 +389,7 @@ export default function CatalogosPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditTipo(p => ({ ...p, [t.id]: { nombre: t.nombre } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteTipo(t.id)} disabled={saving === `tipo:${t.id}`}>{saving === `tipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget({label: `tipo "${t.nombre}"`, onConfirm: () => deleteTipo(t.id)})} disabled={saving === `tipo:${t.id}`}>{saving === `tipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -458,7 +455,7 @@ export default function CatalogosPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditSubtipo(p => ({ ...p, [s.id]: { nombre: s.nombre, tipo_id: (s as any).tipo_id || (s as any).tipo?.id || "" } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteSubtipo(s.id)} disabled={saving === `subtipo:${s.id}`}>{saving === `subtipo:${s.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget({label: `subtipo "${s.nombre}"`, onConfirm: () => deleteSubtipo(s.id)})} disabled={saving === `subtipo:${s.id}`}>{saving === `subtipo:${s.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -511,7 +508,7 @@ export default function CatalogosPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditBTipo(p => ({ ...p, [t.id]: { nombre: t.nombre } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteBTipo(t.id)} disabled={saving === `btipo:${t.id}`}>{saving === `btipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget({label: `tipo de benefactor "${t.nombre}"`, onConfirm: () => deleteBTipo(t.id)})} disabled={saving === `btipo:${t.id}`}>{saving === `btipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -564,7 +561,7 @@ export default function CatalogosPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditComponente(p => ({ ...p, [c.id]: { nombre: c.nombre } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => deleteComponente(c.id)} disabled={saving === `componente:${c.id}`}>{saving === `componente:${c.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget({label: `componente "${c.nombre}"`, onConfirm: () => deleteComponente(c.id)})} disabled={saving === `componente:${c.id}`}>{saving === `componente:${c.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -577,6 +574,13 @@ export default function CatalogosPage() {
             </div>
           </div>
           )}
+          <DeleteConfirm
+            open={!!deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={() => { deleteTarget?.onConfirm(); setDeleteTarget(null); }}
+            title={`Eliminar ${deleteTarget?.label}`}
+            message={<p>¿Estás seguro? Esta acción no se puede deshacer.</p>}
+          />
         </div>
       </Role>
     </Protected>

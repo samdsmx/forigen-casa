@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
+import DeleteConfirm from "../components/DeleteConfirm";
 import { Field } from "../components/Forms";
 import { supabase } from "../lib/supabaseClient";
 import { ensureClientSession } from "../lib/clientSession";
@@ -26,6 +27,7 @@ export default function SedesPage() {
   const [saving, setSaving] = useState<string | "new" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const [newForm, setNewForm] = useState<Pick<Sede, "nombre" | "estado">>({ nombre: "", estado: "" as any });
   const [editing, setEditing] = useState<Record<string, Pick<Sede, "nombre" | "estado">>>({});
@@ -118,7 +120,6 @@ export default function SedesPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("¿Eliminar sede? Esta acción no se puede deshacer.")) return;
     setSaving(id);
     setError(null);
     setNotice(null);
@@ -132,6 +133,7 @@ export default function SedesPage() {
       setError(e instanceof Error ? e.message : "No se pudo eliminar");
     } finally {
       setSaving(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -209,7 +211,7 @@ export default function SedesPage() {
                             {!isEditing ? (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => startEdit(s)}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => remove(s.id)} disabled={saving === s.id}>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget(s.id)} disabled={saving === s.id}>
                                   {saving === s.id ? "Eliminando..." : "Eliminar"}
                                 </button>
                               </>
@@ -230,6 +232,14 @@ export default function SedesPage() {
               </table>
             )}
           </div>
+          <DeleteConfirm
+            open={!!deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={() => { if (deleteTarget) remove(deleteTarget); }}
+            title="Eliminar sede"
+            message={<p>¿Estás seguro de que deseas eliminar esta sede? Esta acción no se puede deshacer.</p>}
+            loading={!!deleteTarget && saving === deleteTarget}
+          />
         </div>
       </Role>
     </Protected>

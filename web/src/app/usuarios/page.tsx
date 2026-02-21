@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
+import DeleteConfirm from "../components/DeleteConfirm";
 import { Field, Select } from "../components/Forms";
 import { supabase } from "../lib/supabaseClient";
 import { ensureClientSession } from "../lib/clientSession";
@@ -23,6 +24,7 @@ export default function UsuariosPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{id: string; email: string} | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [pwUser, setPwUser] = useState<string | null>(null);
   const [pwValue, setPwValue] = useState("");
@@ -111,7 +113,6 @@ export default function UsuariosPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm('¿Eliminar usuario?')) return;
     setDeleting(id);
     setNotice(null);
     try {
@@ -129,10 +130,11 @@ export default function UsuariosPage() {
       setError(err instanceof Error ? err.message : 'Error inesperado al eliminar');
     } finally {
       setDeleting(null);
+      setDeleteTarget(null);
     }
   };
 
-  const resetPassword = async (id: string) => {
+  const resetPassword= async (id: string) => {
     if (pwValue.length < 6) { setError("La contraseña debe tener al menos 6 caracteres"); return; }
     setPwSaving(true); setError(null); setNotice(null);
     try {
@@ -260,7 +262,7 @@ export default function UsuariosPage() {
                             <>
                               <button onClick={() => { setPwUser(u.id); setPwValue(""); }} className="btn btn-secondary btn-sm" type="button" title="Cambiar contraseña">🔑</button>
                               <button
-                                onClick={() => remove(u.id)}
+                                onClick={() => setDeleteTarget({id: u.id, email: u.email})}
                                 className="btn btn-danger btn-sm"
                                 type="button"
                                 disabled={deleting === u.id}
@@ -277,6 +279,14 @@ export default function UsuariosPage() {
               </table>
             </div>
           )}
+          <DeleteConfirm
+            open={!!deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={() => { if (deleteTarget) remove(deleteTarget.id); }}
+            title="Eliminar usuario"
+            message={<p>¿Estás seguro de que deseas eliminar al usuario <strong>{deleteTarget?.email}</strong>? Esta acción no se puede deshacer.</p>}
+            loading={!!deleting}
+          />
         </div>
       </Role>
     </Protected>
