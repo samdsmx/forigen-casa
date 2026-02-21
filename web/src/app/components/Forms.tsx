@@ -81,9 +81,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
 }, ref) => {
   return (
     <div className="form-group">
-      <label className={`form-label ${required ? 'required' : ''}`}>
-        {label}
-      </label>
+      {label ? (
+        <label className={`form-label ${required ? 'required' : ''}`}>
+          {label}
+        </label>
+      ) : null}
       <select
         ref={ref}
         className={`form-select ${error ? 'error' : ''} ${className}`}
