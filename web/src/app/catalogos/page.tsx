@@ -27,7 +27,7 @@ export default function CatalogosPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{label: string; onConfirm: () => void} | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{label: string; onConfirm: () => void; blocked?: boolean; message?: string} | null>(null);
   const [activeTab, setActiveTab] = useState<'temas' | 'tipos' | 'subtipos' | 'benefactor_tipos' | 'componentes'>('temas');
 
   // Forms
@@ -336,7 +336,16 @@ export default function CatalogosPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditTema(p => ({ ...p, [t.id]: { nombre: t.nombre } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget({label: `tema "${t.nombre}"`, onConfirm: () => deleteTema(t.id)})} disabled={saving === `tema:${t.id}`}>{saving === `tema:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={async () => {
+                                  const { count } = await (supabase as any).from('programa').select('id', { count: 'exact', head: true }).eq('tema_id', t.id);
+                                  const c = count || 0;
+                                  setDeleteTarget({
+                                    label: `tema "${t.nombre}"`,
+                                    onConfirm: () => deleteTema(t.id),
+                                    blocked: c > 0,
+                                    message: c > 0 ? `Este tema está asignado a ${c} proyecto(s). Debes desvincularlo primero.` : undefined,
+                                  });
+                                }} disabled={saving === `tema:${t.id}`}>{saving === `tema:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -389,7 +398,24 @@ export default function CatalogosPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditTipo(p => ({ ...p, [t.id]: { nombre: t.nombre } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget({label: `tipo "${t.nombre}"`, onConfirm: () => deleteTipo(t.id)})} disabled={saving === `tipo:${t.id}`}>{saving === `tipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={async () => {
+                                  const [actRes, subRes] = await Promise.all([
+                                    (supabase as any).from('actividad').select('id', { count: 'exact', head: true }).eq('tipo_id', t.id),
+                                    (supabase as any).from('actividad_subtipo').select('id', { count: 'exact', head: true }).eq('tipo_id', t.id),
+                                  ]);
+                                  const actC = actRes.count || 0;
+                                  const subC = subRes.count || 0;
+                                  const blocked = actC > 0;
+                                  let message: string | undefined;
+                                  if (actC > 0) message = `Este tipo tiene ${actC} actividad(es) registrada(s). Debes eliminarlas primero.`;
+                                  else if (subC > 0) message = `Este tipo tiene ${subC} subtipo(s) que también se eliminarán.`;
+                                  setDeleteTarget({
+                                    label: `tipo "${t.nombre}"`,
+                                    onConfirm: () => deleteTipo(t.id),
+                                    blocked,
+                                    message,
+                                  });
+                                }} disabled={saving === `tipo:${t.id}`}>{saving === `tipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -455,7 +481,16 @@ export default function CatalogosPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditSubtipo(p => ({ ...p, [s.id]: { nombre: s.nombre, tipo_id: (s as any).tipo_id || (s as any).tipo?.id || "" } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget({label: `subtipo "${s.nombre}"`, onConfirm: () => deleteSubtipo(s.id)})} disabled={saving === `subtipo:${s.id}`}>{saving === `subtipo:${s.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={async () => {
+                                  const { count } = await (supabase as any).from('actividad').select('id', { count: 'exact', head: true }).eq('subtipo_id', s.id);
+                                  const c = count || 0;
+                                  setDeleteTarget({
+                                    label: `subtipo "${s.nombre}"`,
+                                    onConfirm: () => deleteSubtipo(s.id),
+                                    blocked: c > 0,
+                                    message: c > 0 ? `Este subtipo tiene ${c} actividad(es) registrada(s). Debes eliminarlas primero.` : undefined,
+                                  });
+                                }} disabled={saving === `subtipo:${s.id}`}>{saving === `subtipo:${s.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -508,7 +543,16 @@ export default function CatalogosPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditBTipo(p => ({ ...p, [t.id]: { nombre: t.nombre } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget({label: `tipo de benefactor "${t.nombre}"`, onConfirm: () => deleteBTipo(t.id)})} disabled={saving === `btipo:${t.id}`}>{saving === `btipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={async () => {
+                                  const { count } = await (supabase as any).from('benefactor').select('id', { count: 'exact', head: true }).eq('tipo_id', t.id);
+                                  const c = count || 0;
+                                  setDeleteTarget({
+                                    label: `tipo de benefactor "${t.nombre}"`,
+                                    onConfirm: () => deleteBTipo(t.id),
+                                    blocked: c > 0,
+                                    message: c > 0 ? `Este tipo tiene ${c} benefactor(es) asignado(s). Debes desvincularlos primero.` : undefined,
+                                  });
+                                }} disabled={saving === `btipo:${t.id}`}>{saving === `btipo:${t.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -561,7 +605,16 @@ export default function CatalogosPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditComponente(p => ({ ...p, [c.id]: { nombre: c.nombre } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget({label: `componente "${c.nombre}"`, onConfirm: () => deleteComponente(c.id)})} disabled={saving === `componente:${c.id}`}>{saving === `componente:${c.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={async () => {
+                                  const { count } = await (supabase as any).from('programa').select('id', { count: 'exact', head: true }).eq('componente_id', c.id);
+                                  const n = count || 0;
+                                  setDeleteTarget({
+                                    label: `componente "${c.nombre}"`,
+                                    onConfirm: () => deleteComponente(c.id),
+                                    blocked: n > 0,
+                                    message: n > 0 ? `Este componente está asignado a ${n} proyecto(s). Debes desvincularlo primero.` : undefined,
+                                  });
+                                }} disabled={saving === `componente:${c.id}`}>{saving === `componente:${c.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -579,7 +632,8 @@ export default function CatalogosPage() {
             onClose={() => setDeleteTarget(null)}
             onConfirm={() => { deleteTarget?.onConfirm(); setDeleteTarget(null); }}
             title={`Eliminar ${deleteTarget?.label}`}
-            message={<p>¿Estás seguro? Esta acción no se puede deshacer.</p>}
+            message={deleteTarget?.message ? <p>{deleteTarget.message}</p> : <p>¿Estás seguro? Esta acción no se puede deshacer.</p>}
+            blocked={deleteTarget?.blocked}
           />
         </div>
       </Role>

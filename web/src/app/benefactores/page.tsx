@@ -17,7 +17,8 @@ export default function BenefactoresPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [deleteBlocked, setDeleteBlocked] = useState<{ blocked: boolean; message: string; loading: boolean }>({ blocked: false, message: '', loading: true });
 
   const [benefactorForm, setBenefactorForm] = useState<{ nombre: string; tipo_id: string }>({ nombre: "", tipo_id: "" });
   const [editBenefactor, setEditBenefactor] = useState<Record<string, { nombre: string; tipo_id: string }>>({});
@@ -73,6 +74,20 @@ export default function BenefactoresPage() {
       setEditBenefactor(prev => { const p = { ...prev }; delete p[id]; return p; });
     } catch (e) { setError(e instanceof Error ? e.message : "Error al actualizar"); }
     finally { setSaving(null); }
+  };
+
+  const confirmDeleteBenefactor = async (b: Benefactor) => {
+    setDeleteTarget({ id: b.id, nombre: b.nombre });
+    setDeleteBlocked({ blocked: false, message: '', loading: true });
+    const { count } = await (supabase as any).from('programa').select('id', { count: 'exact', head: true }).eq('benefactor_id', b.id);
+    const c = count || 0;
+    setDeleteBlocked({
+      blocked: c > 0,
+      message: c > 0
+        ? `Este benefactor está asignado a ${c} proyecto(s). Debes desvincularlo primero.`
+        : '¿Estás seguro de que deseas eliminar este benefactor? Esta acción no se puede deshacer.',
+      loading: false,
+    });
   };
 
   const deleteBenefactor = async (id: string) => {
@@ -147,7 +162,7 @@ export default function BenefactoresPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditBenefactor(p => ({ ...p, [b.id]: { nombre: b.nombre, tipo_id: b.tipo_id || b.tipo?.id || "" } }))}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget(b.id)} disabled={saving === `benefactor:${b.id}`}>{saving === `benefactor:${b.id}` ? "Eliminando..." : "Eliminar"}</button>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => confirmDeleteBenefactor(b)} disabled={saving === `benefactor:${b.id}`}>{saving === `benefactor:${b.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
                           </div>
@@ -162,10 +177,15 @@ export default function BenefactoresPage() {
           <DeleteConfirm
             open={!!deleteTarget}
             onClose={() => setDeleteTarget(null)}
-            onConfirm={() => { if (deleteTarget) deleteBenefactor(deleteTarget); }}
+            onConfirm={() => { if (deleteTarget) deleteBenefactor(deleteTarget.id); }}
             title="Eliminar benefactor"
-            message={<p>¿Estás seguro de que deseas eliminar este benefactor? Esta acción no se puede deshacer.</p>}
-            loading={!!deleteTarget && saving === `benefactor:${deleteTarget}`}
+            message={
+              deleteBlocked.loading
+                ? <p>Verificando dependencias...</p>
+                : <p>{deleteBlocked.message}</p>
+            }
+            blocked={deleteBlocked.loading || deleteBlocked.blocked}
+            loading={!!deleteTarget && saving === `benefactor:${deleteTarget.id}`}
           />
         </div>
       </Role>

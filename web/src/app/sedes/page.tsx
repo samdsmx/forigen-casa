@@ -27,7 +27,8 @@ export default function SedesPage() {
   const [saving, setSaving] = useState<string | "new" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [deleteInfo, setDeleteInfo] = useState<{ programas: number; actividades: number; loading: boolean }>({ programas: 0, actividades: 0, loading: true });
 
   const [newForm, setNewForm] = useState<Pick<Sede, "nombre" | "estado">>({ nombre: "", estado: "" as any });
   const [editing, setEditing] = useState<Record<string, Pick<Sede, "nombre" | "estado">>>({});
@@ -117,6 +118,16 @@ export default function SedesPage() {
     } finally {
       setSaving(null);
     }
+  };
+
+  const confirmDelete = async (s: Sede) => {
+    setDeleteTarget({ id: s.id, nombre: s.nombre });
+    setDeleteInfo({ programas: 0, actividades: 0, loading: true });
+    const [prog, act] = await Promise.all([
+      (supabase as any).from('programa').select('id', { count: 'exact', head: true }).eq('sede_id', s.id),
+      (supabase as any).from('actividad').select('id', { count: 'exact', head: true }).eq('sede_id', s.id),
+    ]);
+    setDeleteInfo({ programas: prog.count || 0, actividades: act.count || 0, loading: false });
   };
 
   const remove = async (id: string) => {
@@ -211,7 +222,7 @@ export default function SedesPage() {
                             {!isEditing ? (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => startEdit(s)}>Editar</button>
-                                <button className="btn btn-danger btn-sm" type="button" onClick={() => setDeleteTarget(s.id)} disabled={saving === s.id}>
+                                <button className="btn btn-danger btn-sm" type="button" onClick={() => confirmDelete(s)} disabled={saving === s.id}>
                                   {saving === s.id ? "Eliminando..." : "Eliminar"}
                                 </button>
                               </>
@@ -235,10 +246,17 @@ export default function SedesPage() {
           <DeleteConfirm
             open={!!deleteTarget}
             onClose={() => setDeleteTarget(null)}
-            onConfirm={() => { if (deleteTarget) remove(deleteTarget); }}
+            onConfirm={() => { if (deleteTarget) remove(deleteTarget.id); }}
             title="Eliminar sede"
-            message={<p>¿Estás seguro de que deseas eliminar esta sede? Esta acción no se puede deshacer.</p>}
-            loading={!!deleteTarget && saving === deleteTarget}
+            message={
+              deleteInfo.loading
+                ? <p>Verificando dependencias...</p>
+                : (deleteInfo.programas > 0 || deleteInfo.actividades > 0)
+                  ? <p>Esta sede tiene {deleteInfo.programas} proyecto(s) y {deleteInfo.actividades} actividad(es). Debes eliminarlos primero.</p>
+                  : <p>¿Estás seguro de que deseas eliminar esta sede? Esta acción no se puede deshacer.</p>
+            }
+            blocked={deleteInfo.loading || deleteInfo.programas > 0 || deleteInfo.actividades > 0}
+            loading={!!deleteTarget && saving === deleteTarget.id}
           />
         </div>
       </Role>
