@@ -80,7 +80,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   ...props
 }, ref) => {
   return (
-    <div>
+    <div className="form-group">
       <label className={`form-label ${required ? 'required' : ''}`}>
         {label}
       </label>
