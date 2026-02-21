@@ -6,6 +6,7 @@ import type { Tables } from "app/types/supabase";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Field, Select, SearchInput, Textarea } from "../components/Forms";
+import DeleteConfirm from "../components/DeleteConfirm";
 import GeoSelector, { type GeoValue } from "../components/GeoSelector";
 
 export default function Actividades() {
@@ -31,6 +32,9 @@ export default function Actividades() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{id: string; fecha: string} | null>(null);
+  const [deleteInfo, setDeleteInfo] = useState<{count: number; loading: boolean}>({count: 0, loading: false});
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(()=>{
     (async()=>{
@@ -146,6 +150,35 @@ export default function Actividades() {
       setForm({programa_id:"",fecha:"",hora_inicio:"",hora_fin:"",tipo_id:"",subtipo_id:"",facilitador_id:"",cupo:"", notas:"", estado_clave:"", municipio_id:"", codigo_postal:"", localidad_colonia:""});
       setEditingId(null);
       setErrors({});
+    }
+  };
+
+  const handleDeleteActivity = async (a: any) => {
+    setDeleteTarget({id: a.id, fecha: a.fecha});
+    setDeleteInfo({count: 0, loading: true});
+    const { count } = await supabase
+      .from('asistencia')
+      .select('id', { count: 'exact', head: true })
+      .eq('actividad_id', a.id);
+    setDeleteInfo({count: count || 0, loading: false});
+  };
+
+  const confirmDeleteActivity = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('actividad').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      setDeleteTarget(null);
+      const { data: a } = await supabase
+        .from("actividad")
+        .select("id,fecha,hora_inicio,hora_fin,programa_id, facilitador_id, tipo:tipo_id(nombre), subtipo:subtipo_id(nombre), sede:sede_id(nombre), programa:programa_id(nombre)")
+        .order("fecha",{ascending:false});
+      setList(((a as any[]) || []) as any);
+    } catch (e) {
+      alert((e as any)?.message || 'No se pudo eliminar');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -425,6 +458,13 @@ export default function Actividades() {
                     </svg>
                   </button>
                 </Role>
+                <Role allow={['admin']}>
+                  <button className="btn btn-danger btn-sm" title="Eliminar actividad" onClick={() => handleDeleteActivity(a)}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </Role>
                 <Link className="btn btn-primary btn-sm" href={`/asistencia/${a.id}`}>Registrar asistencia</Link>
               </div>
             </div>
@@ -432,6 +472,22 @@ export default function Actividades() {
         </section>
           </>
         )}
+
+        <DeleteConfirm
+          open={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={confirmDeleteActivity}
+          title={`Eliminar actividad del ${deleteTarget?.fecha}`}
+          message={
+            deleteInfo.loading ? "Verificando dependencias..." :
+            deleteInfo.count > 0 ? (
+              <p>Esta actividad tiene <strong>{deleteInfo.count} asistencia{deleteInfo.count !== 1 ? 's' : ''}</strong> registrada{deleteInfo.count !== 1 ? 's' : ''}. Al eliminarla se perderán esas asistencias. ¿Deseas continuar?</p>
+            ) : (
+              <p>¿Estás seguro de que deseas eliminar esta actividad? Esta acción no se puede deshacer.</p>
+            )
+          }
+          loading={deleting}
+        />
       </div>
     </Protected>
   );

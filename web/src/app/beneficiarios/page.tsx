@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { Field, Select, FormCard, SearchInput } from "../components/Forms";
+import DeleteConfirm from "../components/DeleteConfirm";
 import GeoSelector, { type GeoValue } from "../components/GeoSelector";
 import { supabase } from "../lib/supabaseClient";
 import { ensureClientSession } from "../lib/clientSession";
@@ -22,6 +23,9 @@ export default function BeneficiariosPage() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{id: string; nombre: string} | null>(null);
+  const [deleteInfo, setDeleteInfo] = useState<{count: number; loading: boolean}>({count: 0, loading: false});
+  const [deleting, setDeleting] = useState(false);
 
   const [formData, setFormData] = useState<TablesInsert<'beneficiario'>>({
     nombre: "",
@@ -163,6 +167,31 @@ export default function BeneficiariosPage() {
       setError(err instanceof Error ? err.message : 'Error al guardar');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteBeneficiary = async (b: any) => {
+    setDeleteTarget({id: b.id, nombre: `${b.nombre} ${b.primer_apellido}`});
+    setDeleteInfo({count: 0, loading: true});
+    const { count } = await supabase
+      .from('asistencia')
+      .select('id', { count: 'exact', head: true })
+      .eq('beneficiario_id', b.id);
+    setDeleteInfo({count: count || 0, loading: false});
+  };
+
+  const confirmDeleteBeneficiary = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('beneficiario').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      setDeleteTarget(null);
+      await loadBeneficiarios();
+    } catch (e) {
+      alert((e as any)?.message || 'No se pudo eliminar');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -345,6 +374,13 @@ export default function BeneficiariosPage() {
                             </svg>
                           </button>
                         </Role>
+                        <Role allow={['admin']}>
+                          <button className="btn btn-danger btn-sm" title="Eliminar beneficiario" onClick={() => handleDeleteBeneficiary(b)}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </Role>
                       </td>
                     </tr>
                   ))}
@@ -379,6 +415,22 @@ export default function BeneficiariosPage() {
         )}
           </>
         )}
+
+        <DeleteConfirm
+          open={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={confirmDeleteBeneficiary}
+          title={`Eliminar beneficiario "${deleteTarget?.nombre}"`}
+          message={
+            deleteInfo.loading ? "Verificando dependencias..." :
+            deleteInfo.count > 0 ? (
+              <p>Este beneficiario ha asistido a <strong>{deleteInfo.count} actividad{deleteInfo.count !== 1 ? 'es' : ''}</strong>. Al eliminarlo se quitarán esas asistencias. ¿Deseas continuar?</p>
+            ) : (
+              <p>¿Estás seguro de que deseas eliminar este beneficiario? Esta acción no se puede deshacer.</p>
+            )
+          }
+          loading={deleting}
+        />
       </div>
     </Protected>
   );

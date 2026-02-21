@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabaseClient";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { Field, Select, Textarea, FormCard, SearchInput } from "../components/Forms";
+import DeleteConfirm from "../components/DeleteConfirm";
 import type { Tables, TablesInsert } from "../types/supabase";
 
 interface Programa {
@@ -73,6 +74,9 @@ export default function ProyectosPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<{id: string; nombre: string} | null>(null);
+  const [deleteInfo, setDeleteInfo] = useState<{count: number; loading: boolean}>({count: 0, loading: false});
+  const [deleting, setDeleting] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
     nombre: "",
@@ -250,6 +254,31 @@ export default function ProyectosPage() {
       setError(err instanceof Error ? err.message : 'Error al crear el programa');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDeleteProject = async (p: any) => {
+    setDeleteTarget({id: p.id, nombre: p.nombre});
+    setDeleteInfo({count: 0, loading: true});
+    const { count } = await supabase
+      .from('actividad')
+      .select('id', { count: 'exact', head: true })
+      .eq('programa_id', p.id);
+    setDeleteInfo({count: count || 0, loading: false});
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('programa').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      setDeleteTarget(null);
+      await loadData();
+    } catch (e) {
+      alert((e as any)?.message || 'No se pudo eliminar');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -641,6 +670,13 @@ export default function ProyectosPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                       </Link>
+                      <Role allow={['admin']}>
+                        <button className="btn btn-danger btn-sm" title="Eliminar proyecto" onClick={() => handleDeleteProject(programa)}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </Role>
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400"></div>
                   </div>
@@ -714,6 +750,23 @@ export default function ProyectosPage() {
 
           </>
         )}
+
+        <DeleteConfirm
+          open={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={confirmDeleteProject}
+          title={`Eliminar proyecto "${deleteTarget?.nombre}"`}
+          message={
+            deleteInfo.loading ? "Verificando dependencias..." :
+            deleteInfo.count > 0 ? (
+              <p>Este proyecto tiene <strong>{deleteInfo.count} actividad{deleteInfo.count !== 1 ? 'es' : ''}</strong> registrada{deleteInfo.count !== 1 ? 's' : ''}. Debes eliminar las actividades primero antes de poder eliminar el proyecto.</p>
+            ) : (
+              <p>¿Estás seguro de que deseas eliminar este proyecto? Esta acción no se puede deshacer.</p>
+            )
+          }
+          loading={deleting}
+          blocked={deleteInfo.loading || deleteInfo.count > 0}
+        />
       </div>
     </Protected>
   );
