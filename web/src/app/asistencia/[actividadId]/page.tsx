@@ -413,14 +413,13 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
                 <div>
                   <label className="form-label">CURP</label>
                   <input className="form-input" value={curp} onChange={(e) => setCurp(e.target.value.toUpperCase())} placeholder="AAAA000000HDFRRN00" />
-                  <div className="form-help">
-                    Si no trae CURP, marque &quot;Provisional&quot; y capture datos mínimos.
-                  </div>
                 </div>
+                {!curp && (
                 <div className="flex items-center gap-3 md:mt-6">
                   <input id="prov-edit" className="form-checkbox" type="checkbox" checked={provisional} onChange={(e) => setProvisional(e.target.checked)} />
                   <label htmlFor="prov-edit" className="form-label cursor-pointer !mb-0">Provisional (sin CURP)</label>
                 </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
