@@ -351,24 +351,6 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-
-            {/* System Status - Simplified */}
-            <div className="card">
-              <div className="card-header">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Estado del Sistema</h3>
-              </div>
-              <div className="card-body">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Base de datos</span>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></div>
-                      Activo
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
