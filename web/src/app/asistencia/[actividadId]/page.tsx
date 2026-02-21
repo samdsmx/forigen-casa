@@ -6,6 +6,7 @@ import { getUserSedeSlug } from "../../lib/auth";
 import { ensureClientSession } from "../../lib/clientSession";
 import { use, useEffect, useRef, useState } from "react";
 import { Field, Select, SearchInput } from "../../components/Forms";
+import GeoSelector from "../../components/GeoSelector";
 
 export default function Asistencia({ params }: { params: Promise<{ actividadId: string }> }) {
   const { actividadId } = use(params);
@@ -17,7 +18,9 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
     nombre: "", primer_apellido: "", segundo_apellido: "",
     fecha_nacimiento: "", sexo: "",
     poblacion_indigena: "", lengua_indigena: "",
-    condicion_migrante: "", escolaridad: ""
+    condicion_migrante: "", escolaridad: "",
+    estado_clave: "", municipio_id: "",
+    codigo_postal: "", localidad_colonia: ""
   });
   const [msg, setMsg] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
@@ -83,7 +86,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
       try {
         const { data } = await supabase
           .from('beneficiario')
-          .select('id, nombre, primer_apellido, segundo_apellido, curp, fecha_nacimiento, sexo')
+          .select('id, nombre, primer_apellido, segundo_apellido, curp, fecha_nacimiento, sexo, poblacion_indigena, lengua_indigena, condicion_migrante, escolaridad, estado_clave, municipio_id, codigo_postal, localidad_colonia')
           .or(`nombre.ilike.%${term}%,primer_apellido.ilike.%${term}%,segundo_apellido.ilike.%${term}%,curp.ilike.%${term}%`)
           .limit(10);
         setResults((data as any[]) || []);
@@ -155,10 +158,14 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
               segundo_apellido: r.segundo_apellido || '',
               fecha_nacimiento: r.fecha_nacimiento || '',
               sexo: r.sexo || '',
-              poblacion_indigena: benef.poblacion_indigena || '',
-              lengua_indigena: benef.lengua_indigena || '',
-              condicion_migrante: benef.condicion_migrante || '',
-              escolaridad: benef.escolaridad || ''
+              poblacion_indigena: r.poblacion_indigena || '',
+              lengua_indigena: r.lengua_indigena || '',
+              condicion_migrante: r.condicion_migrante || '',
+              escolaridad: r.escolaridad || '',
+              estado_clave: r.estado_clave || '',
+              municipio_id: r.municipio_id || '',
+              codigo_postal: r.codigo_postal || '',
+              localidad_colonia: r.localidad_colonia || ''
             });
             setCurp(r.curp || '');
             setProvisional(false);
@@ -188,7 +195,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
         e.preventDefault();
         // limpiar
         setCurp('');
-        setBenef({ nombre: '', primer_apellido: '', segundo_apellido: '', fecha_nacimiento: '', sexo: '', poblacion_indigena: '', lengua_indigena: '', condicion_migrante: '', escolaridad: '' });
+        setBenef({ nombre: '', primer_apellido: '', segundo_apellido: '', fecha_nacimiento: '', sexo: '', poblacion_indigena: '', lengua_indigena: '', condicion_migrante: '', escolaridad: '', estado_clave: '', municipio_id: '', codigo_postal: '', localidad_colonia: '' });
         setProvisional(false);
         setSelectedBenefId(null);
         setSearch('');
@@ -256,7 +263,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
       setMsg('¡Asistencia registrada!');
       // Reset para flujo ágil
       setCurp("");
-      setBenef({ nombre: "", primer_apellido: "", segundo_apellido: "", fecha_nacimiento: "", sexo: "", poblacion_indigena: "", lengua_indigena: "", condicion_migrante: "", escolaridad: "" });
+      setBenef({ nombre: "", primer_apellido: "", segundo_apellido: "", fecha_nacimiento: "", sexo: "", poblacion_indigena: "", lengua_indigena: "", condicion_migrante: "", escolaridad: "", estado_clave: "", municipio_id: "", codigo_postal: "", localidad_colonia: "" });
       setProvisional(false);
       setSelectedBenefId(null);
       setSearch("");
@@ -320,10 +327,14 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
                         segundo_apellido: r.segundo_apellido || '',
                         fecha_nacimiento: r.fecha_nacimiento || '',
                         sexo: r.sexo || '',
-                        poblacion_indigena: benef.poblacion_indigena || '',
-                        lengua_indigena: benef.lengua_indigena || '',
-                        condicion_migrante: benef.condicion_migrante || '',
-                        escolaridad: benef.escolaridad || ''
+                        poblacion_indigena: r.poblacion_indigena || '',
+                        lengua_indigena: r.lengua_indigena || '',
+                        condicion_migrante: r.condicion_migrante || '',
+                        escolaridad: r.escolaridad || '',
+                        estado_clave: r.estado_clave || '',
+                        municipio_id: r.municipio_id || '',
+                        codigo_postal: r.codigo_postal || '',
+                        localidad_colonia: r.localidad_colonia || ''
                       });
                       setCurp(r.curp || '');
                       setProvisional(false);
@@ -376,7 +387,7 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Field label="Nombre(s)" value={benef.nombre} onChange={(e: any) => setBenef({ ...benef, nombre: e.target.value })} required />
             <Field label="Primer apellido" value={benef.primer_apellido} onChange={(e: any) => setBenef({ ...benef, primer_apellido: e.target.value })} required />
             <Field label="Segundo apellido" value={benef.segundo_apellido} onChange={(e: any) => setBenef({ ...benef, segundo_apellido: e.target.value })} />
@@ -392,7 +403,8 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
           </div>
 
           {!kiosk && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Select label="Población indígena" value={benef.poblacion_indigena} onChange={(e: any) => setBenef({ ...benef, poblacion_indigena: e.target.value })}
                 options={[{ value: "Sí", label: "Sí" }, { value: "No", label: "No" }, { value: "Prefiere no decir", label: "Prefiere no decir" }]} />
               <Field label="Lengua indígena" value={benef.lengua_indigena} onChange={(e: any) => setBenef({ ...benef, lengua_indigena: e.target.value })} />
@@ -407,6 +419,20 @@ export default function Asistencia({ params }: { params: Promise<{ actividadId: 
                   { value: "Otra", label: "Otra" }
                 ]} />
             </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Procedencia Geográfica</h3>
+              <GeoSelector
+                value={{
+                  estado_clave: benef.estado_clave || "",
+                  municipio_id: benef.municipio_id || "",
+                  codigo_postal: benef.codigo_postal || "",
+                  localidad_colonia: benef.localidad_colonia || "",
+                }}
+                onChange={(geo) => setBenef({ ...benef, ...geo })}
+              />
+            </div>
+            </>
           )}
 
           <div className="flex items-center gap-3">
