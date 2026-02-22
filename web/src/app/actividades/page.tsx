@@ -39,9 +39,9 @@ export default function Actividades() {
 
   useEffect(()=>{
     (async()=>{
-      const { data: p } = await supabase.from("programa").select("id,nombre");
-      setProgramas(((p as Pick<Tables<'programa'>,'id'|'nombre'>[] | null) || [])
-        .map(x => ({ value: x.id, label: x.nombre })));
+      const { data: p } = await supabase.from("programa").select("id,nombre,estado");
+      const allProgramas = ((p as any[] | null) || []);
+      setProgramas(allProgramas.filter((x: any) => x.estado === 'activo').map((x: any) => ({ value: x.id, label: x.nombre })));
       const { data: t } = await supabase.from("actividad_tipo").select("id,nombre");
       setTipos(((t as Pick<Tables<'actividad_tipo'>,'id'|'nombre'>[] | null) || [])
         .map(x => ({ value: x.id, label: x.nombre })));
@@ -240,21 +240,41 @@ export default function Actividades() {
           </div>
           <Role allow={['admin','supervisor_central','coordinador_sede']}>
             <div className="mt-4 sm:mt-0">
-              <button
-                onClick={() => setShowForm(!showForm)}
-                className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} btn-md`}
-                type="button"
-              >
-                {!showForm && (
+              {programaInfo && programaInfo.estado !== 'activo' ? (
+                <button
+                  className="btn btn-secondary btn-md opacity-60 cursor-not-allowed"
+                  type="button"
+                  disabled
+                  title={`No se pueden agregar actividades a un proyecto ${programaInfo.estado}`}
+                >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                )}
-                {showForm ? 'Cancelar' : 'Nueva Actividad'}
-              </button>
+                  Nueva Actividad
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowForm(!showForm)}
+                  className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} btn-md`}
+                  type="button"
+                >
+                  {!showForm && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  )}
+                  {showForm ? 'Cancelar' : 'Nueva Actividad'}
+                </button>
+              )}
             </div>
           </Role>
         </div>
+
+        {programaInfo && programaInfo.estado !== 'activo' && (
+          <div className="alert alert-warning">
+            Este proyecto está <strong>{programaInfo.estado}</strong>. No se pueden agregar nuevas actividades.
+          </div>
+        )}
 
         {showForm && (
           <Role allow={['admin','supervisor_central','coordinador_sede']}>
