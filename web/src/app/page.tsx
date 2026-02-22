@@ -19,6 +19,7 @@ interface RecentActivity {
   title: string;
   date: string;
   icon: string;
+  href: string;
 }
 
 export default function Dashboard() {
@@ -132,28 +133,32 @@ export default function Dashboard() {
             type: 'programa' as const,
             title: `Proyecto: ${p.nombre}`,
             date: p.created_at ?? '',
-            icon: '📋'
+            icon: '📋',
+            href: `/actividades?programa_id=${p.id}`
           })),
           ...(((actividades as any[]) || [])).map(a => ({
             id: a.id,
             type: 'actividad' as const,
             title: `Actividad: ${(Array.isArray(a.programa) ? (a.programa as any[])[0]?.nombre : (a.programa as any)?.nombre) ?? ''} - ${a.fecha} ${a.hora_inicio}`,
             date: a.created_at ?? '',
-            icon: '🎯'
+            icon: '🎯',
+            href: `/asistencia/${a.id}`
           })),
           ...(((beneficiarios_recent as any[]) || [])).map(b => ({
             id: b.id,
             type: 'beneficiario' as const,
-            title: `Nuevo beneficiario: ${b.nombre} ${b.primer_apellido}`,
+            title: `Beneficiario: ${b.nombre} ${b.primer_apellido}`,
             date: b.created_at ?? '',
-            icon: '👤'
+            icon: '👤',
+            href: `/beneficiarios`
           })),
           ...(((benefactores_recent as any[]) || [])).map(b => ({
             id: b.id,
             type: 'benefactor' as const,
-            title: `Nuevo benefactor: ${b.nombre}`,
+            title: `Benefactor: ${b.nombre}`,
             date: b.created_at ?? '',
-            icon: '🏛️'
+            icon: '🏛️',
+            href: `/benefactores`
           }))
         ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
 
@@ -324,13 +329,13 @@ export default function Dashboard() {
                 ) : recentActivities.length > 0 ? (
                   <div>
                     {recentActivities.map((activity) => (
-                      <div key={`${activity.type}-${activity.id}`} className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                      <Link key={`${activity.type}-${activity.id}`} href={activity.href} className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-2 -mx-2 transition-colors">
                         <span className="text-sm flex-shrink-0">{activity.icon}</span>
                         <span className="text-sm text-gray-900 dark:text-gray-100 truncate flex-1">{activity.title}</span>
                         <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 whitespace-nowrap">
                           {new Date(activity.date).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
                         </span>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 ) : (
