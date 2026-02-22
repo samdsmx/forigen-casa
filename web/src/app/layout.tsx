@@ -3,6 +3,7 @@ import NavbarWrapper from "./components/NavbarWrapper";
 import SessionHydrator from "./components/SessionHydrator";
 import { UserProvider } from "./context/UserContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import SessionTimeout from "./components/SessionTimeout";
 import type { Viewport } from "next";
 
 export const metadata = {
@@ -56,6 +57,7 @@ export default function RootLayout({
           <div className="min-h-screen flex flex-col">
             <SessionHydrator />
             <NavbarWrapper />
+            <SessionTimeout />
             <main className="flex-1">{children}</main>
           </div>
         </UserProvider>
