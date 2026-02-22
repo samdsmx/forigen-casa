@@ -55,17 +55,18 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo y Título */}
-          <div className="flex items-center space-x-3 group">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
               <Image
                 src="/logo-casa-origen.jpg"
                 alt="Casa Origen AC"
                 width={166}
                 height={63}
                 priority
+                className="h-10 w-auto flex-shrink-0"
               />
-              <div className="flex flex-col">
-                <span className="font-bold text-white">Gestión de Proyectos</span>
-                <span className="text-xs text-white/70 hidden sm:block">Espacios de Empoderamiento Integral</span>
+              <div className="flex flex-col min-w-0 hidden sm:flex">
+                <span className="font-bold text-white text-sm sm:text-base truncate">Gestión de Proyectos</span>
+                <span className="text-xs text-white/70 hidden lg:block">Espacios de Empoderamiento Integral</span>
               </div>
           </div>
 
