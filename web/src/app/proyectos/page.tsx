@@ -63,6 +63,8 @@ export default function ProyectosPage() {
   const userSedeId = appUser?.sede_id || null;
   const userSedeName = appUser?.sede_nombre || null;
   const isAdmin = appUser?.role === 'admin' || appUser?.role === 'supervisor_central';
+  const isSedeGeneral = userSedeName?.toLowerCase().includes('general') ?? false;
+  const lockSede = userSedeId && !isAdmin && !isSedeGeneral;
 
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [filteredProgramas, setFilteredProgramas] = useState<Programa[]>([]);
@@ -129,7 +131,7 @@ export default function ProyectosPage() {
 
   useEffect(() => {
     filterProgramas();
-  }, [programas, searchTerm, filterEstado, filterSedeId, userSedeId]);
+  }, [programas, searchTerm, filterEstado, filterSedeId, lockSede, userSedeId]);
 
   const loadData = async () => {
     try {
@@ -206,7 +208,7 @@ export default function ProyectosPage() {
       filtered = filtered.filter(p => p.estado === filterEstado);
     }
 
-    const sedeFilter = userSedeId || filterSedeId;
+    const sedeFilter = lockSede ? userSedeId : filterSedeId;
     if (sedeFilter) {
       filtered = filtered.filter(p => p.sede?.id === sedeFilter);
     }
@@ -542,7 +544,7 @@ export default function ProyectosPage() {
               onClear={() => setSearchTerm("")}
             />
           </div>
-          {userSedeId ? (
+          {lockSede ? (
             <div className="flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300">
               <span>📍</span>
               <span className="ml-2 font-medium">{userSedeName || 'Mi sede'}</span>
@@ -562,11 +564,11 @@ export default function ProyectosPage() {
         {/* Stats as clickable filter buttons */}
         <div className="flex flex-wrap gap-2">
           {([
-            { key: '', label: 'Todos', count: programas.filter(p => !userSedeId || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'gray' },
-            { key: 'activo', label: 'Activos', count: programas.filter(p => p.estado === 'activo').filter(p => !userSedeId || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'green' },
-            { key: 'completado', label: 'Completados', count: programas.filter(p => p.estado === 'completado').filter(p => !userSedeId || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'brand' },
-            { key: 'suspendido', label: 'Suspendidos', count: programas.filter(p => p.estado === 'suspendido').filter(p => !userSedeId || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'orange' },
-            { key: 'inactivo', label: 'Inactivos', count: programas.filter(p => p.estado === 'inactivo').filter(p => !userSedeId || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'red' },
+            { key: '', label: 'Todos', count: programas.filter(p => !lockSede || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'gray' },
+            { key: 'activo', label: 'Activos', count: programas.filter(p => p.estado === 'activo').filter(p => !lockSede || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'green' },
+            { key: 'completado', label: 'Completados', count: programas.filter(p => p.estado === 'completado').filter(p => !lockSede || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'brand' },
+            { key: 'suspendido', label: 'Suspendidos', count: programas.filter(p => p.estado === 'suspendido').filter(p => !lockSede || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'orange' },
+            { key: 'inactivo', label: 'Inactivos', count: programas.filter(p => p.estado === 'inactivo').filter(p => !lockSede || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'red' },
           ] as const).map(s => (
             <button
               key={s.key}
