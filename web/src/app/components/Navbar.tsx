@@ -42,6 +42,7 @@ export default function Navbar() {
     { name: "Dashboard", href: "/", icon: "🏠" },
     { name: "Proyectos", href: "/proyectos", icon: "📋" },
     { name: "Actividades", href: "/actividades", icon: "🎯" },
+    { name: "Beneficiarios", href: "/beneficiarios", icon: "👤" },
   ];
 
   const navigation =
