@@ -13,12 +13,17 @@ type Beneficiario = Tables<'beneficiario'>;
 
 export default function BeneficiariosPage() {
   const [beneficiarios, setBeneficiarios] = useState<Beneficiario[]>([]);
+  const [activityCounts, setActivityCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
   const [search, setSearch] = useState("");
+
+  const [historyBenefId, setHistoryBenefId] = useState<string | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -73,11 +78,42 @@ export default function BeneficiariosPage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       setBeneficiarios((data as Beneficiario[]) || []);
+      if (data && data.length > 0) {
+        const ids = (data as Beneficiario[]).map(b => b.id);
+        const countMap: Record<string, number> = {};
+        const { data: counts } = await supabase
+          .from('asistencia')
+          .select('beneficiario_id')
+          .in('beneficiario_id', ids);
+        if (counts) {
+          for (const row of counts as any[]) {
+            countMap[row.beneficiario_id] = (countMap[row.beneficiario_id] || 0) + 1;
+          }
+        }
+        setActivityCounts(countMap);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar beneficiarios");
       setLoadError(err instanceof Error ? err.message : 'Error al cargar');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadHistory = async (benefId: string) => {
+    setHistoryBenefId(benefId);
+    setHistoryLoading(true);
+    try {
+      const { data } = await supabase
+        .from('asistencia')
+        .select('id, created_at, actividad:actividad_id(id, fecha, hora_inicio, hora_fin, programa:programa_id(nombre), tipo:tipo_id(nombre), subtipo:subtipo_id(nombre), sede:sede_id(nombre))')
+        .eq('beneficiario_id', benefId)
+        .order('created_at', { ascending: false });
+      setHistory((data as any[]) || []);
+    } catch {
+      setHistory([]);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -89,7 +125,7 @@ export default function BeneficiariosPage() {
       return (
         nombreCompleto.includes(q) ||
         (b.curp ?? '').toLowerCase().includes(q) ||
-        (b.escolaridad ?? '').toLowerCase().includes(q)
+        (b.localidad_colonia ?? '').toLowerCase().includes(q)
       );
     });
   }, [beneficiarios, search]);
@@ -323,7 +359,7 @@ export default function BeneficiariosPage() {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <SearchInput
-              placeholder="Buscar por nombre, CURP o escolaridad..."
+              placeholder="Buscar por nombre, CURP o ubicación..."
               value={search}
               onChange={(e) => setSearch((e.target as HTMLInputElement).value)}
               onClear={() => setSearch("")}
@@ -362,7 +398,8 @@ export default function BeneficiariosPage() {
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sexo</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fecha Nac.</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">CURP</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Escolaridad</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ubicación</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actividades</th>
                     <th className="px-4 py-2"></th>
                   </tr>
                 </thead>
@@ -379,7 +416,18 @@ export default function BeneficiariosPage() {
                         {b.fecha_nacimiento ? new Date(b.fecha_nacimiento).toLocaleDateString('es-MX') : ''}
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{b.curp ?? ''}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{b.escolaridad ?? ''}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                        {[b.localidad_colonia, b.codigo_postal ? `CP ${b.codigo_postal}` : ''].filter(Boolean).join(' · ') || '—'}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-center">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 text-brand-600 dark:text-brand-400 hover:underline"
+                          onClick={() => loadHistory(b.id)}
+                        >
+                          {activityCounts[b.id] || 0}
+                        </button>
+                      </td>
                       <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                         <Role allow={["admin", "supervisor_central", "coordinador_sede"]}>
                           <button className="btn btn-secondary btn-sm" title="Editar beneficiario" onClick={() => onEdit(b)}>
@@ -438,6 +486,57 @@ export default function BeneficiariosPage() {
           }
           loading={deleting}
         />
+
+        {historyBenefId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/50" onClick={() => setHistoryBenefId(null)} />
+            <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[80vh] flex flex-col">
+              <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Historial de participaciones
+                  {(() => {
+                    const b = beneficiarios.find(x => x.id === historyBenefId);
+                    return b ? ` — ${b.nombre} ${b.primer_apellido}` : '';
+                  })()}
+                </h3>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setHistoryBenefId(null)}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-5 overflow-y-auto flex-1">
+                {historyLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="loading-spinner"></div>
+                    <span className="text-gray-500 dark:text-gray-400">Cargando historial...</span>
+                  </div>
+                ) : history.length === 0 ? (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">No tiene participaciones registradas.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {history.map((h: any) => (
+                      <div key={h.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {h.actividad?.fecha || '—'}
+                            {h.actividad?.hora_inicio ? ` ${h.actividad.hora_inicio}` : ''}
+                            {h.actividad?.hora_fin ? ` - ${h.actividad.hora_fin}` : ''}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {h.actividad?.programa?.nombre ? `${h.actividad.programa.nombre}` : ''}
+                            {h.actividad?.tipo?.nombre || h.actividad?.subtipo?.nombre ? ` · ${h.actividad?.subtipo?.nombre || h.actividad?.tipo?.nombre}` : ''}
+                            {h.actividad?.sede?.nombre ? ` · ${h.actividad.sede.nombre}` : ''}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Protected>
   );
