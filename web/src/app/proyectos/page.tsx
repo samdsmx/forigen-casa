@@ -199,7 +199,6 @@ export default function ProyectosPage() {
       filtered = filtered.filter(p =>
         p.nombre.toLowerCase().includes(q) ||
         p.objetivo?.toLowerCase().includes(q) ||
-        p.sede?.nombre.toLowerCase().includes(q) ||
         p.benefactor?.nombre.toLowerCase().includes(q)
       );
     }
@@ -538,7 +537,7 @@ export default function ProyectosPage() {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <SearchInput
-              placeholder="Buscar por nombre, objetivo, sede o benefactor..."
+              placeholder="Buscar por nombre, objetivo o benefactor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onClear={() => setSearchTerm("")}
