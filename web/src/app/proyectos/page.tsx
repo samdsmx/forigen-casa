@@ -6,6 +6,7 @@ import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { Field, Select, Textarea, FormCard, SearchInput } from "../components/Forms";
 import DeleteConfirm from "../components/DeleteConfirm";
+import { useAuth } from "../context/UserContext";
 import type { Tables, TablesInsert } from "../types/supabase";
 
 interface Programa {
@@ -58,6 +59,11 @@ interface FormData {
 }
 
 export default function ProyectosPage() {
+  const { appUser } = useAuth();
+  const userSedeId = appUser?.sede_id || null;
+  const userSedeName = appUser?.sede_nombre || null;
+  const isAdmin = appUser?.role === 'admin' || appUser?.role === 'supervisor_central';
+
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [filteredProgramas, setFilteredProgramas] = useState<Programa[]>([]);
   const [sedes, setSedes] = useState<{ value: string; label: string }[]>([]);
@@ -70,6 +76,7 @@ export default function ProyectosPage() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterEstado, setFilterEstado] = useState("");
+  const [filterSedeId, setFilterSedeId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -122,7 +129,7 @@ export default function ProyectosPage() {
 
   useEffect(() => {
     filterProgramas();
-  }, [programas, searchTerm, filterEstado]);
+  }, [programas, searchTerm, filterEstado, filterSedeId, userSedeId]);
 
   const loadData = async () => {
     try {
@@ -186,15 +193,22 @@ export default function ProyectosPage() {
     let filtered = programas;
 
     if (searchTerm) {
+      const q = searchTerm.toLowerCase();
       filtered = filtered.filter(p =>
-        p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.objetivo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.sede?.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+        p.nombre.toLowerCase().includes(q) ||
+        p.objetivo?.toLowerCase().includes(q) ||
+        p.sede?.nombre.toLowerCase().includes(q) ||
+        p.benefactor?.nombre.toLowerCase().includes(q)
       );
     }
 
     if (filterEstado) {
       filtered = filtered.filter(p => p.estado === filterEstado);
+    }
+
+    const sedeFilter = userSedeId || filterSedeId;
+    if (sedeFilter) {
+      filtered = filtered.filter(p => p.sede?.id === sedeFilter);
     }
 
     setFilteredProgramas(filtered);
@@ -518,29 +532,62 @@ export default function ProyectosPage() {
         {/* Filters, Search and Grid - hidden when form is open */}
         {!showForm && (
           <>
+        {/* Search + Sede filter */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <SearchInput
-              placeholder="Buscar por nombre, objetivo o sede..."
+              placeholder="Buscar por nombre, objetivo, sede o benefactor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onClear={() => setSearchTerm("")}
             />
           </div>
-          <div className="w-full sm:w-64">
-            <Select
-              label=""
-              value={filterEstado}
-              onChange={(e) => setFilterEstado(e.target.value)}
-              options={[
-                { value: "", label: "Todos los estados" },
-                { value: "activo", label: "Activos" },
-                { value: "inactivo", label: "Inactivos" },
-                { value: "completado", label: "Completados" },
-                { value: "suspendido", label: "Suspendidos" }
-              ]}
-            />
-          </div>
+          {userSedeId ? (
+            <div className="flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm text-gray-700 dark:text-gray-300">
+              <span>📍</span>
+              <span className="ml-2 font-medium">{userSedeName || 'Mi sede'}</span>
+            </div>
+          ) : (
+            <div className="w-full sm:w-64">
+              <Select
+                label=""
+                value={filterSedeId}
+                onChange={(e) => setFilterSedeId(e.target.value)}
+                options={[{ value: "", label: "Todas las sedes" }, ...sedes]}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Stats as clickable filter buttons */}
+        <div className="flex flex-wrap gap-2">
+          {([
+            { key: '', label: 'Todos', count: programas.filter(p => !userSedeId || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'gray' },
+            { key: 'activo', label: 'Activos', count: programas.filter(p => p.estado === 'activo').filter(p => !userSedeId || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'green' },
+            { key: 'completado', label: 'Completados', count: programas.filter(p => p.estado === 'completado').filter(p => !userSedeId || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'brand' },
+            { key: 'suspendido', label: 'Suspendidos', count: programas.filter(p => p.estado === 'suspendido').filter(p => !userSedeId || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'orange' },
+            { key: 'inactivo', label: 'Inactivos', count: programas.filter(p => p.estado === 'inactivo').filter(p => !userSedeId || p.sede?.id === userSedeId).filter(p => !filterSedeId || p.sede?.id === filterSedeId).length, color: 'red' },
+          ] as const).map(s => (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => setFilterEstado(filterEstado === s.key ? '' : s.key)}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                filterEstado === s.key
+                  ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              {s.label}
+              <span className={`inline-flex items-center justify-center min-w-[1.25rem] px-1 py-0.5 rounded-full text-xs ${
+                filterEstado === s.key
+                  ? 'bg-white/20 text-white dark:bg-gray-900/20 dark:text-gray-900'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+              }`}>
+                {s.count}
+              </span>
+            </button>
+          ))}
         </div>
 
         {/* Programs Grid */}
@@ -718,38 +765,6 @@ export default function ProyectosPage() {
                 </button>
               </Role>
             )}
-          </div>
-        )}
-
-        {/* Stats Summary */}
-        {filteredProgramas.length > 0 && (
-          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{filteredProgramas.length}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {filteredProgramas.length === 1 ? 'Proyecto' : 'Proyectos'}
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-green-600">
-                  {filteredProgramas.filter(p => p.estado === 'activo').length}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Activos</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-brand-600">
-                  {filteredProgramas.filter(p => p.estado === 'completado').length}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Completados</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-orange-600">
-                  {filteredProgramas.filter(p => p.estado === 'suspendido').length}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Suspendidos</div>
-              </div>
-            </div>
           </div>
         )}
 
