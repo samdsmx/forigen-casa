@@ -15,9 +15,8 @@ interface DashboardStats {
 
 interface RecentActivity {
   id: string;
-  type: 'programa' | 'actividad' | 'asistencia';
+  type: 'programa' | 'actividad' | 'asistencia' | 'beneficiario' | 'benefactor';
   title: string;
-  description: string;
   date: string;
   icon: string;
 }
@@ -32,6 +31,7 @@ export default function Dashboard() {
     asistencia_total: 0
   });
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [trends, setTrends] = useState<Record<string, string | null>>({});
   const [loadingData, setLoadingData] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -43,6 +43,14 @@ export default function Dashboard() {
     if (authLoading || !user) return;
 
     let active = true;
+
+    const calcTrend = (current: number, previous: number): string | null => {
+      if (previous === 0) return current > 0 ? `+${current} este mes` : null;
+      const pct = Math.round(((current - previous) / previous) * 100);
+      if (pct > 0) return `+${pct}% vs mes anterior`;
+      if (pct < 0) return `${pct}% vs mes anterior`;
+      return "Sin cambio";
+    };
 
     const loadDashboardData = async () => {
       setLoadingData(true);
@@ -66,18 +74,55 @@ export default function Dashboard() {
           asistencia_total: asistenciaRes.count || 0
         });
 
-        // Cargar actividades recientes
-        const { data: programas } = await supabase
-          .from("programa")
-          .select("id, nombre, created_at")
-          .order("created_at", { ascending: false })
-          .limit(3);
+        // Trends: this month vs last month
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+        const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
 
-        const { data: actividades } = await supabase
-          .from("actividad")
-          .select("id, fecha, hora_inicio, created_at, programa:programa_id(nombre)")
-          .order("created_at", { ascending: false })
-          .limit(3);
+        const [progThis, progPrev, actThis, actPrev, benThis, benPrev, asistThis, asistPrev] = await Promise.all([
+          supabase.from("programa").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth),
+          supabase.from("programa").select("id", { count: "exact", head: true }).gte("created_at", startOfPrevMonth).lte("created_at", endOfPrevMonth),
+          supabase.from("actividad").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth),
+          supabase.from("actividad").select("id", { count: "exact", head: true }).gte("created_at", startOfPrevMonth).lte("created_at", endOfPrevMonth),
+          supabase.from("beneficiario").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth),
+          supabase.from("beneficiario").select("id", { count: "exact", head: true }).gte("created_at", startOfPrevMonth).lte("created_at", endOfPrevMonth),
+          supabase.from("asistencia").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth),
+          supabase.from("asistencia").select("id", { count: "exact", head: true }).gte("created_at", startOfPrevMonth).lte("created_at", endOfPrevMonth),
+        ]);
+
+        if (!active) return;
+
+        setTrends({
+          programas: calcTrend(progThis.count || 0, progPrev.count || 0),
+          actividades: calcTrend(actThis.count || 0, actPrev.count || 0),
+          beneficiarios: calcTrend(benThis.count || 0, benPrev.count || 0),
+          asistencia: calcTrend(asistThis.count || 0, asistPrev.count || 0),
+        });
+
+        // Cargar actividades recientes
+        const [{ data: programas }, { data: actividades }, { data: beneficiarios_recent }, { data: benefactores_recent }] = await Promise.all([
+          supabase
+            .from("programa")
+            .select("id, nombre, created_at")
+            .order("created_at", { ascending: false })
+            .limit(5),
+          supabase
+            .from("actividad")
+            .select("id, fecha, hora_inicio, created_at, programa:programa_id(nombre)")
+            .order("created_at", { ascending: false })
+            .limit(5),
+          supabase
+            .from("beneficiario")
+            .select("id, nombre, primer_apellido, created_at")
+            .order("created_at", { ascending: false })
+            .limit(5),
+          (supabase as any)
+            .from("benefactor")
+            .select("id, nombre, created_at")
+            .order("created_at", { ascending: false })
+            .limit(5),
+        ]);
 
         if (!active) return;
 
@@ -85,20 +130,32 @@ export default function Dashboard() {
           ...(((programas as any[]) || [])).map(p => ({
             id: p.id,
             type: 'programa' as const,
-            title: `Nuevo proyecto: ${p.nombre}`,
-            description: 'Proyecto creado exitosamente',
+            title: `Proyecto: ${p.nombre}`,
             date: p.created_at ?? '',
             icon: '📋'
           })),
           ...(((actividades as any[]) || [])).map(a => ({
             id: a.id,
             type: 'actividad' as const,
-            title: `Nueva actividad programada`,
-            description: `${(Array.isArray(a.programa) ? (a.programa as any[])[0]?.nombre : (a.programa as any)?.nombre) ?? ''} - ${a.fecha} ${a.hora_inicio}`,
+            title: `Actividad: ${(Array.isArray(a.programa) ? (a.programa as any[])[0]?.nombre : (a.programa as any)?.nombre) ?? ''} - ${a.fecha} ${a.hora_inicio}`,
             date: a.created_at ?? '',
             icon: '🎯'
+          })),
+          ...(((beneficiarios_recent as any[]) || [])).map(b => ({
+            id: b.id,
+            type: 'beneficiario' as const,
+            title: `Nuevo beneficiario: ${b.nombre} ${b.primer_apellido}`,
+            date: b.created_at ?? '',
+            icon: '👤'
+          })),
+          ...(((benefactores_recent as any[]) || [])).map(b => ({
+            id: b.id,
+            type: 'benefactor' as const,
+            title: `Nuevo benefactor: ${b.nombre}`,
+            date: b.created_at ?? '',
+            icon: '🏛️'
           }))
-        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
 
         setRecentActivities(activities);
       } catch (error) {
@@ -121,7 +178,7 @@ export default function Dashboard() {
     value: number;
     icon: string;
     color: string;
-    trend?: string;
+    trend?: string | null;
   }) => (
     <div className="card transition-all duration-200">
       <div className="card-body">
@@ -130,13 +187,8 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{title}</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value.toLocaleString()}</p>
             {trend && (
-              <p className="text-xs text-green-600 mt-1">
-                <span className="inline-flex items-center">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-                  </svg>
-                  {trend}
-                </span>
+              <p className={`text-xs mt-1 ${trend.startsWith('+') ? 'text-green-600' : trend.startsWith('-') ? 'text-red-600' : 'text-gray-500'}`}>
+                {trend}
               </p>
             )}
           </div>
@@ -219,7 +271,7 @@ export default function Dashboard() {
               value={stats.programas}
               icon="📋"
               color="bg-gradient-to-br from-brand-100 to-brand-200"
-              trend="+12% vs mes anterior"
+              trend={trends.programas}
             />
             </Link>
 
@@ -229,7 +281,7 @@ export default function Dashboard() {
               value={stats.actividades}
               icon="🎯"
               color="bg-gradient-to-br from-green-100 to-green-200"
-              trend="+8% vs mes anterior"
+              trend={trends.actividades}
             />
             </Link>
             <Link href="/beneficiarios" className="block">
@@ -238,7 +290,7 @@ export default function Dashboard() {
               value={stats.beneficiarios}
               icon="👥"
               color="bg-gradient-to-br from-purple-100 to-purple-200"
-              trend="+15% vs mes anterior"
+              trend={trends.beneficiarios}
             />
             </Link>
             <Link href="/asistencias" className="block">
@@ -247,7 +299,7 @@ export default function Dashboard() {
               value={stats.asistencia_total}
               icon="✅"
               color="bg-gradient-to-br from-orange-100 to-orange-200"
-              trend="+25% vs mes anterior"
+              trend={trends.asistencia}
             />
             </Link>
           </div>
@@ -270,30 +322,14 @@ export default function Dashboard() {
                      <div className="h-12 bg-gray-100 dark:bg-gray-700 rounded"></div>
                   </div>
                 ) : recentActivities.length > 0 ? (
-                  <div className="space-y-4">
+                  <div>
                     {recentActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:bg-gray-900/50 dark:hover:bg-gray-700 transition-colors">
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                            <span className="text-sm">{activity.icon}</span>
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                            {activity.title}
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                            {activity.description}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {new Date(activity.date).toLocaleDateString('es-MX', {
-                              day: 'numeric',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
+                      <div key={`${activity.type}-${activity.id}`} className="flex items-center gap-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                        <span className="text-sm flex-shrink-0">{activity.icon}</span>
+                        <span className="text-sm text-gray-900 dark:text-gray-100 truncate flex-1">{activity.title}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 whitespace-nowrap">
+                          {new Date(activity.date).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -345,6 +381,36 @@ export default function Dashboard() {
                       <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Ver Actividades</span>
                     </div>
                     <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+
+                  <Link
+                    href="/beneficiarios"
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 hover:bg-purple-50 transition-all group"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                        <span className="text-sm">👤</span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Beneficiarios</span>
+                    </div>
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+
+                  <Link
+                    href="/reportes"
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-orange-300 hover:bg-orange-50 transition-all group"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                        <span className="text-sm">📊</span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Reportes</span>
+                    </div>
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>
