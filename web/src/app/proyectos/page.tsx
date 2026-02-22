@@ -150,7 +150,7 @@ export default function ProyectosPage() {
 
       if (sedesRes.data) {
         const s = sedesRes.data as Pick<Tables<'sede'>, 'id' | 'nombre' | 'slug'>[];
-        setSedes(s.map(s => ({ value: s.id, label: s.nombre })));
+        setSedes(s.filter(x => !x.nombre.toLowerCase().includes('general')).map(s => ({ value: s.id, label: s.nombre })));
       }
       if (temasRes.data) {
         const t = temasRes.data as Pick<Tables<'tema'>, 'id' | 'nombre'>[];
