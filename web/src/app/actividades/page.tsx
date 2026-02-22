@@ -17,6 +17,7 @@ export default function Actividades() {
   const [sedes, setSedes] = useState<{ value: string; label: string }[]>([]);
   const [list, setList] = useState<(Pick<Tables<'actividad'>, 'id' | 'fecha' | 'hora_inicio' | 'hora_fin' | 'programa_id'> & { programa?: { nombre?: string } | null })[]>([]);
   const [filterProgramaId, setFilterProgramaId] = useState<string | null>(null);
+  const [programaInfo, setProgramaInfo] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTipoId, setFilterTipoId] = useState("");
   const [filterSubtipoId, setFilterSubtipoId] = useState("");
@@ -70,6 +71,16 @@ export default function Actividades() {
         pid = params.get('programa_id');
         setFilterProgramaId(pid);
       } catch { /* ignore */ }
+
+      // If viewing a specific project, fetch its info
+      if (pid) {
+        const { data: pInfo } = await supabase
+          .from('programa')
+          .select('id, nombre, estado, objetivo, sede:sede_id(nombre)')
+          .eq('id', pid)
+          .single();
+        setProgramaInfo(pInfo);
+      }
 
       // Optimize query to filter by program_id if present
       let query = supabase
@@ -185,10 +196,47 @@ export default function Actividades() {
   return (
     <Protected>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {programaInfo && (
+          <div className="space-y-3">
+            <Link href="/proyectos" className="text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+              Volver a proyectos
+            </Link>
+            <div className="card p-4 md:p-5">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Proyecto</div>
+                  <div className="font-semibold text-gray-900 dark:text-gray-100">{programaInfo.nombre}</div>
+                </div>
+                {programaInfo.sede?.nombre && (
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sede</div>
+                    <div className="font-semibold text-gray-900 dark:text-gray-100">{programaInfo.sede.nombre}</div>
+                  </div>
+                )}
+                {programaInfo.estado && (
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</div>
+                    <div className="font-semibold text-gray-900 dark:text-gray-100 capitalize">{programaInfo.estado}</div>
+                  </div>
+                )}
+                <div className="ml-auto">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-brand-100 dark:bg-brand-900 text-brand-800 dark:text-brand-200">
+                    📋 {list.length} actividad{list.length !== 1 ? 'es' : ''}
+                  </span>
+                </div>
+              </div>
+              {programaInfo.objetivo && (
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{programaInfo.objetivo}</p>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Actividades</h1>
-            <p className="text-gray-600 dark:text-gray-400">Crea y gestiona las actividades</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">{programaInfo ? 'Actividades del proyecto' : 'Actividades'}</h1>
+            {!programaInfo && <p className="text-gray-600 dark:text-gray-400">Crea y gestiona las actividades</p>}
           </div>
           <Role allow={['admin','supervisor_central','coordinador_sede']}>
             <div className="mt-4 sm:mt-0">
@@ -314,21 +362,25 @@ export default function Actividades() {
         <div className="card">
           <div className="card-body">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="lg:col-span-2">
-                <SearchInput
-                  label="Buscar"
-                  placeholder="Buscar por nombre de proyecto..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm((e.target as HTMLInputElement).value)}
-                  onClear={() => setSearchTerm("")}
-                />
-              </div>
-              <Select
-                label="Proyecto"
+              {!programaInfo && (
+                <>
+                <div className="lg:col-span-2">
+                  <SearchInput
+                    label="Buscar"
+                    placeholder="Buscar por nombre de proyecto..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm((e.target as HTMLInputElement).value)}
+                    onClear={() => setSearchTerm("")}
+                  />
+                </div>
+                <Select
+                  label="Proyecto"
                 options={programas}
                 value={filterProgramaId ?? ""}
                 onChange={(e:any) => setFilterProgramaId(e.target.value || null)}
               />
+              </>
+              )}
               <Select
                 label="Sede"
                 options={[{ value: "", label: "Todas" }, ...sedes]}
