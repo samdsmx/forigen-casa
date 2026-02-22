@@ -55,23 +55,23 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo y Título */}
-          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
               <Image
                 src="/logo-casa-origen.jpg"
                 alt="Casa Origen AC"
                 width={166}
                 height={63}
                 priority
-                className="h-10 w-auto flex-shrink-0"
+                className="h-16 w-auto flex-shrink-0 object-contain"
               />
-              <div className="flex flex-col min-w-0 hidden sm:flex">
+              <div className="flex flex-col min-w-0">
                 <span className="font-bold text-white text-sm sm:text-base truncate">Gestión de Proyectos</span>
-                <span className="text-xs text-white/70 hidden lg:block">Espacios de Empoderamiento Integral</span>
+                <span className="text-xs text-white/70 truncate">Espacios de Empoderamiento Integral</span>
               </div>
           </div>
 
-          {/* Navegación Desktop */}
-          <div className="hidden md:flex items-center space-x-1">
+          {/* Navegación Desktop — solo pantallas grandes */}
+          <div className="hidden lg:flex items-center space-x-1 flex-shrink-0">
             {baseNavigation.map((item) => (
               <Link
                 key={item.name}
@@ -137,7 +137,7 @@ export default function Navbar() {
                         </p>
                       </div>
                       
-                      <div className="md:hidden">
+                      <div className="lg:hidden">
                         {baseNavigation.map((item) => (
                           <Link
                             key={item.name}
@@ -250,19 +250,6 @@ export default function Navbar() {
                 Iniciar Sesión
               </Link>
             )}
-          </div>
-
-          {/* Botón de menú móvil */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-md hover:bg-white/20"
-              title="Menú de navegación"
-            >
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
           </div>
         </div>
       </div>
