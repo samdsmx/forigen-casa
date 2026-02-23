@@ -66,7 +66,7 @@ export default function Navbar() {
               />
               <div className="flex flex-col">
                 <span className="font-bold text-white text-sm sm:text-base whitespace-nowrap">Gestión de Proyectos</span>
-                <span className="text-xs text-white/70 whitespace-nowrap hidden sm:block">Espacios de Empoderamiento Integral</span>
+                <span className="text-xs text-white/70 whitespace-nowrap hidden sm:block lg:hidden xl:block">Espacios de Empoderamiento Integral</span>
               </div>
           </div>
 
