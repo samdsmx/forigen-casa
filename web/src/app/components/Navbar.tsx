@@ -71,7 +71,7 @@ export default function Navbar() {
           </div>
 
           {/* Navegación Desktop — solo pantallas grandes */}
-          <div className="hidden lg:flex items-center space-x-1 flex-shrink-0">
+          <div className="hidden lg:flex items-center space-x-2 flex-shrink-0 mx-4">
             {baseNavigation.map((item) => (
               <Link
                 key={item.name}
