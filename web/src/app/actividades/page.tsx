@@ -419,7 +419,12 @@ function ActividadesInner() {
                 </div>
               ) : (
                 <button
-                  onClick={() => setShowForm(!showForm)}
+                  onClick={() => {
+                    if (!showForm && urlProgramaId) {
+                      setForm((f: any) => ({ ...f, programa_id: urlProgramaId }));
+                    }
+                    setShowForm(!showForm);
+                  }}
                   className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} btn-md`}
                   type="button"
                 >
@@ -438,6 +443,7 @@ function ActividadesInner() {
         {showForm && (
           <Role allow={['admin','supervisor_central','coordinador_sede']}>
             <form onSubmit={create} className="card p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+              {!isProjectMode && (
               <Select
                 label="Proyecto"
                 options={programas}
@@ -447,6 +453,7 @@ function ActividadesInner() {
                 error={errors.programa_id}
                 help="Proyecto al que pertenece la actividad"
               />
+              )}
               <Field
                 label="Fecha"
                 type="date"
