@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Protected from "../components/Protected";
 import Role from "../components/Role";
 import DeleteConfirm from "../components/DeleteConfirm";
@@ -262,7 +263,7 @@ export default function BenefactoresPage() {
                         ) : (
                           <div className="space-y-2">
                             {detailData.programs.map((p: any) => (
-                              <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                              <Link key={p.id} href={`/actividades?programa_id=${p.id}`} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-colors cursor-pointer">
                                 <div>
                                   <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{p.nombre}</div>
                                   <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -278,7 +279,7 @@ export default function BenefactoresPage() {
                                 }`}>
                                   {p.estado}
                                 </span>
-                              </div>
+                              </Link>
                             ))}
                           </div>
                         )}
