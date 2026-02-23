@@ -10,6 +10,13 @@ import DeleteConfirm from "../components/DeleteConfirm";
 import GeoSelector, { type GeoValue } from "../components/GeoSelector";
 
 export default function Actividades() {
+  // Detect project mode synchronously from URL to avoid layout flash
+  const [isProjectMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try { return !!new URLSearchParams(window.location.search).get('programa_id'); } catch { return false; }
+  });
+  const [loading, setLoading] = useState(true);
+
   const [programas, setProgramas] = useState<{ value: string; label: string }[]>([]);
   const [tipos, setTipos] = useState<{ value: string; label: string }[]>([]);
   const [subtipos, setSubtipos] = useState<{ value: string; label: string }[]>([]);
@@ -112,6 +119,7 @@ export default function Actividades() {
           setAttendanceCounts(counts);
         }
       }
+      setLoading(false);
     })();
   },[]);
 
@@ -343,12 +351,13 @@ export default function Actividades() {
   return (
     <Protected>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {programaInfo && (
+        {isProjectMode && (
           <div className="space-y-3">
             <Link href="/proyectos" className="text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
               Volver a proyectos
             </Link>
+            {programaInfo ? (
             <div className="card p-4 md:p-5">
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                 <div>
@@ -377,13 +386,22 @@ export default function Actividades() {
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{programaInfo.objetivo}</p>
               )}
             </div>
+            ) : (
+              <div className="card p-4 md:p-5 animate-pulse">
+                <div className="flex gap-6">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">{programaInfo ? 'Actividades del proyecto' : 'Actividades'}</h1>
-            {!programaInfo && <p className="text-gray-600 dark:text-gray-400">Crea y gestiona las actividades</p>}
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">{isProjectMode ? 'Actividades del proyecto' : 'Actividades'}</h1>
+            {!isProjectMode && <p className="text-gray-600 dark:text-gray-400">Crea y gestiona las actividades</p>}
           </div>
           <Role allow={['admin','supervisor_central','coordinador_sede']}>
             <div className="mt-4 sm:mt-0">
@@ -526,7 +544,7 @@ export default function Actividades() {
         {!showForm && (
           <>
         {/* Filtros de lista */}
-        {programaInfo ? (
+        {isProjectMode ? (
           <div className="flex flex-wrap items-center gap-3">
             <Select label="" options={tipos} value={filterTipoId} onChange={(e:any) => setFilterTipoId(e.target.value)} placeholder="Tipo" />
             <Select label="" options={facilitadores.filter(f => f.value !== '')} value={filterFacilitadorId} onChange={(e:any) => setFilterFacilitadorId(e.target.value)} placeholder="Facilitador" />
@@ -637,7 +655,7 @@ export default function Actividades() {
           </div>
         )}
 
-        {programaInfo ? (
+        {isProjectMode ? (
           <div className="space-y-6">
             <div>
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
