@@ -3,18 +3,19 @@ import Protected from "../components/Protected";
 import Role from "../components/Role";
 import { supabase } from "../lib/supabaseClient";
 import type { Tables } from "app/types/supabase";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Field, Select, SearchInput, Textarea } from "../components/Forms";
 import DeleteConfirm from "../components/DeleteConfirm";
 import GeoSelector, { type GeoValue } from "../components/GeoSelector";
 
-export default function Actividades() {
-  // Detect project mode synchronously from URL to avoid layout flash
-  const [isProjectMode] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    try { return !!new URLSearchParams(window.location.search).get('programa_id'); } catch { return false; }
-  });
+import { Suspense } from "react";
+
+function ActividadesInner() {
+  const searchParams = useSearchParams();
+  const urlProgramaId = searchParams?.get('programa_id') || null;
+  const isProjectMode = !!urlProgramaId;
   const [loading, setLoading] = useState(true);
 
   const [programas, setProgramas] = useState<{ value: string; label: string }[]>([]);
@@ -75,13 +76,9 @@ export default function Actividades() {
           .map(x => ({ value: x.id, label: x.nombre })));
       } catch {}
 
-      // Determine filtered program from URL
-      let pid = null;
-      try {
-        const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : "");
-        pid = params.get('programa_id');
-        setFilterProgramaId(pid);
-      } catch { /* ignore */ }
+      // Use urlProgramaId from searchParams
+      const pid = urlProgramaId;
+      setFilterProgramaId(pid);
 
       // If viewing a specific project, fetch its info
       if (pid) {
@@ -121,7 +118,7 @@ export default function Actividades() {
       }
       setLoading(false);
     })();
-  },[]);
+  },[urlProgramaId]);
 
   const filteredList = list.filter(a => {
     if (filterProgramaId && a.programa_id !== filterProgramaId) return false;
@@ -796,5 +793,13 @@ export default function Actividades() {
         )}
       </div>
     </Protected>
+  );
+}
+
+export default function Actividades() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <ActividadesInner />
+    </Suspense>
   );
 }
