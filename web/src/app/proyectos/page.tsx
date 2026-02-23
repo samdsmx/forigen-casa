@@ -361,7 +361,7 @@ export default function ProyectosPage() {
           <Role allow={['admin', 'supervisor_central', 'coordinador_sede']}>
             <div className="mt-4 sm:mt-0">
               <button
-                onClick={() => { setShowForm(!showForm); if (!showForm) setEditingId(null); }}
+                onClick={() => { setShowForm(!showForm); if (showForm) setEditingId(null); }}
                 className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} btn-md`}
                 type="button"
               >
@@ -505,7 +505,7 @@ export default function ProyectosPage() {
                   <div className="flex justify-end space-x-3 ml-auto">
                   <button
                     type="button"
-                    onClick={() => setShowForm(false)}
+                    onClick={() => { setShowForm(false); setEditingId(null); }}
                     className="btn btn-secondary btn-md"
                     disabled={creating}
                   >
