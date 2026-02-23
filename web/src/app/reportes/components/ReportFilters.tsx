@@ -8,17 +8,20 @@ interface Filters {
   hasta: string;
   sedeId: string;
   programaId: string;
+  benefactorId: string;
 }
 
 interface ReportFiltersProps {
   filters: Filters;
   onChange: (f: Filters) => void;
   showPrograma?: boolean;
+  showBenefactor?: boolean;
 }
 
-export default function ReportFilters({ filters, onChange, showPrograma = true }: ReportFiltersProps) {
+export default function ReportFilters({ filters, onChange, showPrograma = true, showBenefactor = true }: ReportFiltersProps) {
   const [sedes, setSedes] = useState<{value:string;label:string}[]>([]);
   const [programas, setProgramas] = useState<{value:string;label:string}[]>([]);
+  const [benefactores, setBenefactores] = useState<{value:string;label:string}[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -28,6 +31,8 @@ export default function ReportFilters({ filters, onChange, showPrograma = true }
         const { data: p } = await supabase.from("programa").select("id,nombre").order("nombre");
         setProgramas(((p as any[]) || []).map(x => ({ value: x.id, label: x.nombre })));
       }
+      const { data: b } = await (supabase as any).from("benefactor").select("id,nombre").order("nombre");
+      setBenefactores(((b as any[]) || []).map(x => ({ value: x.id, label: x.nombre })));
     })();
   }, [showPrograma]);
 
@@ -39,6 +44,9 @@ export default function ReportFilters({ filters, onChange, showPrograma = true }
         <Select label="Sede" options={[{ value: "", label: "Todas" }, ...sedes]} value={filters.sedeId} onChange={(e) => onChange({ ...filters, sedeId: e.target.value })} />
         {showPrograma && (
           <Select label="Programa" options={[{ value: "", label: "Todos" }, ...programas]} value={filters.programaId} onChange={(e) => onChange({ ...filters, programaId: e.target.value })} />
+        )}
+        {showBenefactor !== false && (
+          <Select label="Benefactor" options={[{ value: "", label: "Todos" }, ...benefactores]} value={filters.benefactorId} onChange={(e) => onChange({ ...filters, benefactorId: e.target.value })} />
         )}
       </div>
     </div>

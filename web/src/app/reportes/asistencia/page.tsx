@@ -16,10 +16,10 @@ import {
 const COLORS_BAR = ["#D4651F", "#4f46e5", "#16a34a", "#eab308", "#dc2626", "#64748b"];
 const CHART_TEXT = "#6b7280";
 
-type Filters = { desde: string; hasta: string; sedeId: string; programaId: string };
+type Filters = { desde: string; hasta: string; sedeId: string; programaId: string; benefactorId: string };
 
 export default function AsistenciaPage() {
-  const [filters, setFilters] = useState<Filters>({ desde: "", hasta: "", sedeId: "", programaId: "" });
+  const [filters, setFilters] = useState<Filters>({ desde: "", hasta: "", sedeId: "", programaId: "", benefactorId: "" });
   const [loading, setLoading] = useState(true);
   const [tendencia, setTendencia] = useState<{ mes: string; total: number }[]>([]);
   const [tipoData, setTipoData] = useState<{ name: string; value: number }[]>([]);

@@ -18,10 +18,10 @@ const COLORS_PIE = ["#D4651F", "#4f46e5", "#64748b"];
 const COLORS_BAR = ["#D4651F", "#4f46e5", "#16a34a", "#eab308", "#dc2626"];
 const CHART_TEXT = "#6b7280";
 
-type Filters = { desde: string; hasta: string; sedeId: string; programaId: string };
+type Filters = { desde: string; hasta: string; sedeId: string; programaId: string; benefactorId: string };
 
 export default function ResumenPage() {
-  const [filters, setFilters] = useState<Filters>({ desde: "", hasta: "", sedeId: "", programaId: "" });
+  const [filters, setFilters] = useState<Filters>({ desde: "", hasta: "", sedeId: "", programaId: "", benefactorId: "" });
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState({ beneficiarios: 0, asistencias: 0, actividades: 0, programas: 0 });
   const [asistMes, setAsistMes] = useState<{ mes: string; total: number }[]>([]);

@@ -19,6 +19,8 @@ export default function BenefactoresPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
   const [deleteBlocked, setDeleteBlocked] = useState<{ blocked: boolean; message: string; loading: boolean }>({ blocked: false, message: '', loading: true });
+  const [detailBenefactor, setDetailBenefactor] = useState<Benefactor | null>(null);
+  const [detailData, setDetailData] = useState<{programs: any[]; activityCount: number; beneficiaryCount: number; loading: boolean}>({programs: [], activityCount: 0, beneficiaryCount: 0, loading: true});
 
   const [benefactorForm, setBenefactorForm] = useState<{ nombre: string; tipo_id: string }>({ nombre: "", tipo_id: "" });
   const [editBenefactor, setEditBenefactor] = useState<Record<string, { nombre: string; tipo_id: string }>>({});
@@ -88,6 +90,42 @@ export default function BenefactoresPage() {
         : '¿Estás seguro de que deseas eliminar este benefactor? Esta acción no se puede deshacer.',
       loading: false,
     });
+  };
+
+  const loadDetail = async (b: Benefactor) => {
+    setDetailBenefactor(b);
+    setDetailData({programs: [], activityCount: 0, beneficiaryCount: 0, loading: true});
+    try {
+      const { data: progs } = await (supabase as any)
+        .from('programa')
+        .select('id, nombre, estado, sede:sede_id(nombre), fecha_inicio, fecha_fin')
+        .eq('benefactor_id', b.id)
+        .order('created_at', { ascending: false });
+
+      const programs = (progs as any[]) || [];
+      let activityCount = 0;
+      let beneficiaryCount = 0;
+
+      if (programs.length > 0) {
+        const progIds = programs.map((p: any) => p.id);
+        const { count: actCount } = await supabase
+          .from('actividad')
+          .select('id', { count: 'exact', head: true })
+          .in('programa_id', progIds);
+        activityCount = actCount || 0;
+
+        const { data: asist } = await supabase
+          .from('asistencia')
+          .select('beneficiario_id, actividad:actividad_id!inner(programa_id)')
+          .in('actividad.programa_id', progIds);
+        const uniqueBeneficiaries = new Set((asist as any[] || []).map((a: any) => a.beneficiario_id));
+        beneficiaryCount = uniqueBeneficiaries.size;
+      }
+
+      setDetailData({programs, activityCount, beneficiaryCount, loading: false});
+    } catch {
+      setDetailData({programs: [], activityCount: 0, beneficiaryCount: 0, loading: false});
+    }
   };
 
   const deleteBenefactor = async (id: string) => {
@@ -162,6 +200,12 @@ export default function BenefactoresPage() {
                             ) : (
                               <>
                                 <button className="btn btn-secondary btn-sm" type="button" onClick={() => setEditBenefactor(p => ({ ...p, [b.id]: { nombre: b.nombre, tipo_id: b.tipo_id || b.tipo?.id || "" } }))}>Editar</button>
+                                <button className="btn btn-ghost btn-sm" type="button" title="Ver detalle" onClick={() => loadDetail(b)}>
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                  </svg>
+                                </button>
                                 <button className="btn btn-danger btn-sm" type="button" onClick={() => confirmDeleteBenefactor(b)} disabled={saving === `benefactor:${b.id}`}>{saving === `benefactor:${b.id}` ? "Eliminando..." : "Eliminar"}</button>
                               </>
                             )}
@@ -174,6 +218,77 @@ export default function BenefactoresPage() {
               )}
             </div>
           </div>
+          {detailBenefactor && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="fixed inset-0 bg-black/50" onClick={() => setDetailBenefactor(null)} />
+              <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[80vh] flex flex-col">
+                <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{detailBenefactor.nombre}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{detailBenefactor.tipo?.nombre || '—'}</p>
+                  </div>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDetailBenefactor(null)}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="p-5 overflow-y-auto flex-1 space-y-4">
+                  {detailData.loading ? (
+                    <div className="flex items-center gap-2 py-4">
+                      <div className="loading-spinner"></div>
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">Cargando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{detailData.programs.length}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Proyectos</div>
+                        </div>
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{detailData.activityCount}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Actividades</div>
+                        </div>
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{detailData.beneficiaryCount}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Beneficiarios</div>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Proyectos relacionados</h4>
+                        {detailData.programs.length === 0 ? (
+                          <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">No tiene proyectos asignados.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {detailData.programs.map((p: any) => (
+                              <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{p.nombre}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    {p.sede?.nombre || ''}
+                                    {p.fecha_inicio ? ` · ${p.fecha_inicio}` : ''}
+                                    {p.fecha_fin ? ` - ${p.fecha_fin}` : ''}
+                                  </div>
+                                </div>
+                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                  p.estado === 'activo' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
+                                  p.estado === 'completado' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' :
+                                  'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
+                                }`}>
+                                  {p.estado}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           <DeleteConfirm
             open={!!deleteTarget}
             onClose={() => setDeleteTarget(null)}
