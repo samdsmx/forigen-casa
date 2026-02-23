@@ -36,6 +36,10 @@ export default function Actividades() {
   const [deleteTarget, setDeleteTarget] = useState<{id: string; fecha: string} | null>(null);
   const [deleteInfo, setDeleteInfo] = useState<{count: number; loading: boolean}>({count: 0, loading: false});
   const [deleting, setDeleting] = useState(false);
+  const [attendanceCounts, setAttendanceCounts] = useState<Record<string, number>>({});
+  const [detailActivity, setDetailActivity] = useState<any>(null);
+  const [detailAttendees, setDetailAttendees] = useState<any[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(()=>{
     (async()=>{
@@ -94,6 +98,20 @@ export default function Actividades() {
 
       const { data: a } = await query;
       setList(((a as any[]) || []) as any);
+      if (a && (a as any[]).length > 0) {
+        const ids = (a as any[]).map((x: any) => x.id);
+        const { data: countData } = await supabase
+          .from('asistencia')
+          .select('actividad_id')
+          .in('actividad_id', ids);
+        if (countData) {
+          const counts: Record<string, number> = {};
+          for (const row of countData as any[]) {
+            counts[row.actividad_id] = (counts[row.actividad_id] || 0) + 1;
+          }
+          setAttendanceCounts(counts);
+        }
+      }
     })();
   },[]);
 
@@ -134,9 +152,25 @@ export default function Actividades() {
           {facilLabel && (
             <div className="text-xs text-gray-600 dark:text-gray-400">Facilitador: {facilLabel}</div>
           )}
+          {(attendanceCounts[a.id] || 0) > 0 && (
+            <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
+              <span>✅</span> {attendanceCounts[a.id]} asistencia{attendanceCounts[a.id] !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <Role allow={['admin','supervisor_central','coordinador_sede']}>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              title="Ver detalle"
+              onClick={() => loadDetail(a.id)}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
             <button
               className="btn btn-secondary btn-sm"
               onClick={async () => {
@@ -226,6 +260,20 @@ export default function Actividades() {
         .select("id,fecha,hora_inicio,hora_fin,programa_id, facilitador_id, tipo:tipo_id(nombre), subtipo:subtipo_id(nombre), sede:sede_id(nombre), programa:programa_id(nombre)")
         .order("fecha",{ascending:false});
       setList(((a as any[]) || []) as any);
+      if (a && (a as any[]).length > 0) {
+        const ids = (a as any[]).map((x: any) => x.id);
+        const { data: countData } = await supabase
+          .from('asistencia')
+          .select('actividad_id')
+          .in('actividad_id', ids);
+        if (countData) {
+          const cnts: Record<string, number> = {};
+          for (const row of countData as any[]) {
+            cnts[row.actividad_id] = (cnts[row.actividad_id] || 0) + 1;
+          }
+          setAttendanceCounts(cnts);
+        }
+      }
       setForm({programa_id:"",fecha:"",hora_inicio:"",hora_fin:"",tipo_id:"",subtipo_id:"",facilitador_id:"",cupo:"", notas:"", estado_clave:"", municipio_id:"", codigo_postal:"", localidad_colonia:""});
       setEditingId(null);
       setErrors({});
@@ -254,10 +302,41 @@ export default function Actividades() {
         .select("id,fecha,hora_inicio,hora_fin,programa_id, facilitador_id, tipo:tipo_id(nombre), subtipo:subtipo_id(nombre), sede:sede_id(nombre), programa:programa_id(nombre)")
         .order("fecha",{ascending:false});
       setList(((a as any[]) || []) as any);
+      if (a && (a as any[]).length > 0) {
+        const ids = (a as any[]).map((x: any) => x.id);
+        const { data: countData } = await supabase
+          .from('asistencia')
+          .select('actividad_id')
+          .in('actividad_id', ids);
+        if (countData) {
+          const cnts: Record<string, number> = {};
+          for (const row of countData as any[]) {
+            cnts[row.actividad_id] = (cnts[row.actividad_id] || 0) + 1;
+          }
+          setAttendanceCounts(cnts);
+        }
+      }
     } catch (e) {
       alert((e as any)?.message || 'No se pudo eliminar');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const loadDetail = async (actId: string) => {
+    setDetailLoading(true);
+    setDetailActivity(list.find((a: any) => a.id === actId) || null);
+    try {
+      const { data } = await supabase
+        .from('asistencia')
+        .select('id, created_at, beneficiario:beneficiario_id(id, nombre, primer_apellido, segundo_apellido, curp, sexo)')
+        .eq('actividad_id', actId)
+        .order('created_at', { ascending: false });
+      setDetailAttendees((data as any[]) || []);
+    } catch {
+      setDetailAttendees([]);
+    } finally {
+      setDetailLoading(false);
     }
   };
 
@@ -428,11 +507,14 @@ export default function Actividades() {
                   type="button"
                   className="btn btn-secondary btn-md"
                   onClick={() => {
+                    if (editingId) {
+                      setShowForm(false);
+                      setEditingId(null);
+                    }
                     setForm({ programa_id:"", fecha:"", hora_inicio:"", hora_fin:"", tipo_id:"", subtipo_id:"", facilitador_id:"", cupo:"", notas:"", estado_clave:"", municipio_id:"", codigo_postal:"", localidad_colonia:"" });
-                    setEditingId(null);
                   }}
                 >
-                  Limpiar
+                  {editingId ? 'Cancelar' : 'Limpiar'}
                 </button>
                 <button className="btn btn-primary btn-md" type="submit">{editingId ? 'Guardar cambios' : 'Crear actividad'}</button>
                 </div>
@@ -605,6 +687,95 @@ export default function Actividades() {
           }
           loading={deleting}
         />
+
+        {detailActivity && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/50" onClick={() => setDetailActivity(null)} />
+            <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[80vh] flex flex-col">
+              <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Detalle de actividad</h3>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDetailActivity(null)}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-5 overflow-y-auto flex-1 space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Fecha</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{detailActivity.fecha}</div>
+                  </div>
+                  {(detailActivity.hora_inicio || detailActivity.hora_fin) && (
+                    <div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Horario</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{detailActivity.hora_inicio || ''} - {detailActivity.hora_fin || ''}</div>
+                    </div>
+                  )}
+                  {detailActivity.programa?.nombre && (
+                    <div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Proyecto</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{detailActivity.programa.nombre}</div>
+                    </div>
+                  )}
+                  {(detailActivity.subtipo?.nombre || detailActivity.tipo?.nombre) && (
+                    <div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Tipo</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{detailActivity.subtipo?.nombre || detailActivity.tipo?.nombre}</div>
+                    </div>
+                  )}
+                  {detailActivity.sede?.nombre && (
+                    <div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Sede</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{detailActivity.sede.nombre}</div>
+                    </div>
+                  )}
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Asistentes</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{detailAttendees.length}{detailActivity.cupo ? ` / ${detailActivity.cupo}` : ''}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Lista de asistentes</h4>
+                  {detailLoading ? (
+                    <div className="flex items-center gap-2 py-4">
+                      <div className="loading-spinner"></div>
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">Cargando...</span>
+                    </div>
+                  ) : detailAttendees.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">No hay asistentes registrados.</p>
+                  ) : (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-900/50">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">#</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Nombre</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">CURP</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Sexo</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {detailAttendees.map((att: any, idx: number) => (
+                            <tr key={att.id}>
+                              <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{idx + 1}</td>
+                              <td className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">
+                                {att.beneficiario?.nombre} {att.beneficiario?.primer_apellido} {att.beneficiario?.segundo_apellido || ''}
+                              </td>
+                              <td className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{att.beneficiario?.curp || '—'}</td>
+                              <td className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{att.beneficiario?.sexo || '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Protected>
   );
