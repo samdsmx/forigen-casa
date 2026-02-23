@@ -554,7 +554,8 @@ export default function ProyectosPage() {
                 label=""
                 value={filterSedeId}
                 onChange={(e) => setFilterSedeId(e.target.value)}
-                options={[{ value: "", label: "Todas las sedes" }, ...sedes]}
+                options={sedes}
+                placeholder="Todas las sedes"
               />
             </div>
           )}
