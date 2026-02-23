@@ -226,6 +226,7 @@ module.exports = {
       },
       screens: {
         'xs': '475px',
+        'lg': '1084px',
         '3xl': '1680px',
       },
       zIndex: {
