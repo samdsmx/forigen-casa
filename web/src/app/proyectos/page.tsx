@@ -361,7 +361,16 @@ export default function ProyectosPage() {
           <Role allow={['admin', 'supervisor_central', 'coordinador_sede']}>
             <div className="mt-4 sm:mt-0">
               <button
-                onClick={() => { setShowForm(!showForm); if (showForm) setEditingId(null); }}
+                onClick={() => {
+                  if (showForm) {
+                    setShowForm(false);
+                    setEditingId(null);
+                  } else {
+                    setEditingId(null);
+                    setFormData({ nombre:"", objetivo:"", sede_id:"", tema_id:"", poblacion_grupo_id:"", benefactor_id:"", componente_id:"", fecha_inicio:"", fecha_fin:"", metas_clave:"", estado:"activo" });
+                    setShowForm(true);
+                  }
+                }}
                 className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} btn-md`}
                 type="button"
               >
