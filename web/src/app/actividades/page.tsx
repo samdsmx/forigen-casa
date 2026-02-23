@@ -113,6 +113,74 @@ export default function Actividades() {
     return true;
   });
 
+  const today = new Date().toISOString().split('T')[0];
+
+  const renderActivityCard = (a: any) => {
+    const facilId = (a as any).facilitador_id as string | undefined;
+    const facilLabel = facilId ? (facilitadores.find(f => f.value === facilId)?.label || '') : '';
+    return (
+      <div key={a.id} className="card p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <div className="font-medium">{a.fecha} {a.hora_inicio}-{a.hora_fin}</div>
+          {a.programa?.nombre && (
+            <div className="text-xs text-gray-600 dark:text-gray-400">Proyecto: {a.programa.nombre}</div>
+          )}
+          {((a as any).subtipo?.nombre || (a as any).tipo?.nombre) && (
+            <div className="text-xs text-gray-600 dark:text-gray-400">Tipo: {(a as any).subtipo?.nombre || (a as any).tipo?.nombre}</div>
+          )}
+          {(a as any).sede?.nombre && (
+            <div className="text-xs text-gray-600 dark:text-gray-400">Sede: {(a as any).sede?.nombre}</div>
+          )}
+          {facilLabel && (
+            <div className="text-xs text-gray-600 dark:text-gray-400">Facilitador: {facilLabel}</div>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Role allow={['admin','supervisor_central','coordinador_sede']}>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={async () => {
+                try {
+                  const { data, error } = await supabase
+                    .from('actividad')
+                    .select('*')
+                    .eq('id', a.id)
+                    .single();
+                  if (error) throw error;
+                  const act: any = data;
+                  setForm({
+                    programa_id: act.programa_id || '',
+                    fecha: act.fecha || '',
+                    hora_inicio: act.hora_inicio || '',
+                    hora_fin: act.hora_fin || '',
+                    tipo_id: act.tipo_id || '',
+                    subtipo_id: act.subtipo_id || '',
+                    facilitador_id: act.facilitador_id || '',
+                    cupo: act.cupo?.toString() || '',
+                    notas: act.notas || '',
+                    estado_clave: act.estado_clave || '',
+                    municipio_id: act.municipio_id || '',
+                    codigo_postal: act.codigo_postal || '',
+                    localidad_colonia: act.localidad_colonia || '',
+                  });
+                  setEditingId(a.id);
+                  setShowForm(true);
+                } catch (e) {
+                  alert((e as any)?.message || 'No se pudo cargar la actividad');
+                }
+              }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+          </Role>
+          <Link className="btn btn-primary btn-sm" href={`/asistencia/${a.id}`}>Registrar asistencia</Link>
+        </div>
+      </div>
+    );
+  };
+
   const create = async (e:any) => {
     e.preventDefault();
     // Validaciones mínimas
@@ -241,17 +309,20 @@ export default function Actividades() {
           <Role allow={['admin','supervisor_central','coordinador_sede']}>
             <div className="mt-4 sm:mt-0">
               {programaInfo && programaInfo.estado !== 'activo' ? (
-                <button
-                  className="btn btn-secondary btn-md opacity-60 cursor-not-allowed"
-                  type="button"
-                  disabled
-                  title={`No se pueden agregar actividades a un proyecto ${programaInfo.estado}`}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Nueva Actividad
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="btn btn-secondary btn-md opacity-60 cursor-not-allowed"
+                    type="button"
+                    disabled
+                    title={`No se pueden agregar actividades a un proyecto ${programaInfo.estado}`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Nueva Actividad
+                  </button>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Proyecto {programaInfo.estado}</span>
+                </div>
               ) : (
                 <button
                   onClick={() => setShowForm(!showForm)}
@@ -269,12 +340,6 @@ export default function Actividades() {
             </div>
           </Role>
         </div>
-
-        {programaInfo && programaInfo.estado !== 'activo' && (
-          <div className="alert alert-warning">
-            Este proyecto está <strong>{programaInfo.estado}</strong>. No se pueden agregar nuevas actividades.
-          </div>
-        )}
 
         {showForm && (
           <Role allow={['admin','supervisor_central','coordinador_sede']}>
@@ -379,11 +444,20 @@ export default function Actividades() {
         {!showForm && (
           <>
         {/* Filtros de lista */}
-        <div className="card">
-          <div className="card-body">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {!programaInfo && (
-                <>
+        {programaInfo ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <Select label="" options={tipos} value={filterTipoId} onChange={(e:any) => setFilterTipoId(e.target.value)} placeholder="Tipo" />
+            <Select label="" options={facilitadores.filter(f => f.value !== '')} value={filterFacilitadorId} onChange={(e:any) => setFilterFacilitadorId(e.target.value)} placeholder="Facilitador" />
+            {(filterTipoId || filterFacilitadorId) && (
+              <button type="button" className="text-xs text-brand-600 dark:text-brand-400 hover:underline" onClick={() => { setFilterTipoId(""); setFilterFacilitadorId(""); }}>
+                Limpiar filtros
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="card">
+            <div className="card-body">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="lg:col-span-2">
                   <SearchInput
                     label="Buscar"
@@ -395,159 +469,124 @@ export default function Actividades() {
                 </div>
                 <Select
                   label="Proyecto"
-                options={programas}
-                value={filterProgramaId ?? ""}
-                onChange={(e:any) => setFilterProgramaId(e.target.value || null)}
-              />
-              </>
-              )}
-              <Select
-                label="Sede"
-                options={[{ value: "", label: "Todas" }, ...sedes]}
-                value={filterSedeId}
-                onChange={(e:any) => setFilterSedeId(e.target.value)}
-              />
-              <Select
-                label="Tipo"
-                options={[{ value: "", label: "Todos" }, ...tipos]}
-                value={filterTipoId}
-                onChange={(e:any) => setFilterTipoId(e.target.value)}
-              />
-              <Select
-                label="Subtipo"
-                options={[{ value: "", label: "Todos" }, ...subtipos]}
-                value={filterSubtipoId}
-                onChange={(e:any) => setFilterSubtipoId(e.target.value)}
-              />
-              <Select
-                label="Facilitador"
-                options={[{ value: "", label: "Todos" }, ...facilitadores.filter(f => f.value !== '')]}
-                value={filterFacilitadorId}
-                onChange={(e:any) => setFilterFacilitadorId(e.target.value)}
-              />
-              <Field
-                label="Desde"
-                type="date"
-                value={filterDesde}
-                onChange={(e:any) => setFilterDesde(e.target.value)}
-              />
-              <Field
-                label="Hasta"
-                type="date"
-                value={filterHasta}
-                onChange={(e:any) => setFilterHasta(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-3 mt-4 flex-wrap">
-              {(filterProgramaId || filterSedeId || filterTipoId || filterSubtipoId || filterFacilitadorId || filterDesde || filterHasta || searchTerm) && (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => { setFilterProgramaId(null); setFilterSedeId(""); setFilterTipoId(""); setFilterSubtipoId(""); setFilterFacilitadorId(""); setFilterDesde(""); setFilterHasta(""); setSearchTerm(""); }}
-                >
-                  Limpiar filtros
-                </button>
-              )}
-              {filterProgramaId && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
-                  Proyecto: {programas.find(p => p.value === filterProgramaId)?.label || filterProgramaId}
-                  <button type="button" className="ml-2 text-brand-700 hover:text-brand-900" onClick={() => setFilterProgramaId(null)}>×</button>
-                </span>
-              )}
-              {filterSedeId && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Sede: {sedes.find(s => s.value === filterSedeId)?.label || filterSedeId}
-                  <button type="button" className="ml-2 text-green-700 hover:text-green-900" onClick={() => setFilterSedeId("")}>x</button>
-                </span>
-              )}
-              {filterTipoId && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                  Tipo: {tipos.find(t => t.value === filterTipoId)?.label || filterTipoId}
-                  <button type="button" className="ml-2 text-purple-700 hover:text-purple-900" onClick={() => setFilterTipoId("")}>x</button>
-                </span>
-              )}
-              {filterSubtipoId && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                  Subtipo: {subtipos.find(st => st.value === filterSubtipoId)?.label || filterSubtipoId}
-                  <button type="button" className="ml-2 text-orange-700 hover:text-orange-900" onClick={() => setFilterSubtipoId("")}>x</button>
-                </span>
-              )}
-              {filterFacilitadorId && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Facilitador: {facilitadores.find(f => f.value === filterFacilitadorId)?.label || filterFacilitadorId}
-                  <button type="button" className="ml-2 text-blue-700 hover:text-blue-900" onClick={() => setFilterFacilitadorId("")}>x</button>
-                </span>
-              )}
+                  options={programas}
+                  value={filterProgramaId ?? ""}
+                  onChange={(e:any) => setFilterProgramaId(e.target.value || null)}
+                />
+                <Select
+                  label="Sede"
+                  options={[{ value: "", label: "Todas" }, ...sedes]}
+                  value={filterSedeId}
+                  onChange={(e:any) => setFilterSedeId(e.target.value)}
+                />
+                <Select
+                  label="Tipo"
+                  options={[{ value: "", label: "Todos" }, ...tipos]}
+                  value={filterTipoId}
+                  onChange={(e:any) => setFilterTipoId(e.target.value)}
+                />
+                <Select
+                  label="Subtipo"
+                  options={[{ value: "", label: "Todos" }, ...subtipos]}
+                  value={filterSubtipoId}
+                  onChange={(e:any) => setFilterSubtipoId(e.target.value)}
+                />
+                <Select
+                  label="Facilitador"
+                  options={[{ value: "", label: "Todos" }, ...facilitadores.filter(f => f.value !== '')]}
+                  value={filterFacilitadorId}
+                  onChange={(e:any) => setFilterFacilitadorId(e.target.value)}
+                />
+                <Field
+                  label="Desde"
+                  type="date"
+                  value={filterDesde}
+                  onChange={(e:any) => setFilterDesde(e.target.value)}
+                />
+                <Field
+                  label="Hasta"
+                  type="date"
+                  value={filterHasta}
+                  onChange={(e:any) => setFilterHasta(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-3 mt-4 flex-wrap">
+                {(filterProgramaId || filterSedeId || filterTipoId || filterSubtipoId || filterFacilitadorId || filterDesde || filterHasta || searchTerm) && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => { setFilterProgramaId(null); setFilterSedeId(""); setFilterTipoId(""); setFilterSubtipoId(""); setFilterFacilitadorId(""); setFilterDesde(""); setFilterHasta(""); setSearchTerm(""); }}
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
+                {filterProgramaId && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
+                    Proyecto: {programas.find(p => p.value === filterProgramaId)?.label || filterProgramaId}
+                    <button type="button" className="ml-2 text-brand-700 hover:text-brand-900" onClick={() => setFilterProgramaId(null)}>×</button>
+                  </span>
+                )}
+                {filterSedeId && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Sede: {sedes.find(s => s.value === filterSedeId)?.label || filterSedeId}
+                    <button type="button" className="ml-2 text-green-700 hover:text-green-900" onClick={() => setFilterSedeId("")}>x</button>
+                  </span>
+                )}
+                {filterTipoId && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    Tipo: {tipos.find(t => t.value === filterTipoId)?.label || filterTipoId}
+                    <button type="button" className="ml-2 text-purple-700 hover:text-purple-900" onClick={() => setFilterTipoId("")}>x</button>
+                  </span>
+                )}
+                {filterSubtipoId && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    Subtipo: {subtipos.find(st => st.value === filterSubtipoId)?.label || filterSubtipoId}
+                    <button type="button" className="ml-2 text-orange-700 hover:text-orange-900" onClick={() => setFilterSubtipoId("")}>x</button>
+                  </span>
+                )}
+                {filterFacilitadorId && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Facilitador: {facilitadores.find(f => f.value === filterFacilitadorId)?.label || filterFacilitadorId}
+                    <button type="button" className="ml-2 text-blue-700 hover:text-blue-900" onClick={() => setFilterFacilitadorId("")}>x</button>
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        <section className="grid gap-3">
-          {filteredList.map((a)=> {
-            const facilId = (a as any).facilitador_id as string | undefined;
-            const facilLabel = facilId ? (facilitadores.find(f => f.value === facilId)?.label || '') : '';
-            return (
-            <div key={a.id} className="card p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <div className="font-medium">{a.fecha} {a.hora_inicio}-{a.hora_fin}</div>
-                {a.programa?.nombre && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Proyecto: {a.programa.nombre}</div>
+        {programaInfo ? (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                Próximas ({filteredList.filter(a => a.fecha >= today).length})
+              </h3>
+              <div className="grid gap-3">
+                {filteredList.filter(a => a.fecha >= today).sort((a,b) => a.fecha.localeCompare(b.fecha)).map(renderActivityCard)}
+                {filteredList.filter(a => a.fecha >= today).length === 0 && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 py-4">No hay actividades próximas.</p>
                 )}
-                {((a as any).subtipo?.nombre || (a as any).tipo?.nombre) && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Tipo: {(a as any).subtipo?.nombre || (a as any).tipo?.nombre}</div>
-                )}
-                {(a as any).sede?.nombre && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Sede: {(a as any).sede?.nombre}</div>
-                )}
-                {facilLabel && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Facilitador: {facilLabel}</div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Role allow={['admin','supervisor_central','coordinador_sede']}>
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    onClick={async () => {
-                      try {
-                        const { data, error } = await supabase
-                          .from('actividad')
-                          .select('*')
-                          .eq('id', a.id)
-                          .single();
-                        if (error) throw error;
-                        const act: any = data;
-                        setForm({
-                          programa_id: act.programa_id || '',
-                          fecha: act.fecha || '',
-                          hora_inicio: act.hora_inicio || '',
-                          hora_fin: act.hora_fin || '',
-                          tipo_id: act.tipo_id || '',
-                          subtipo_id: act.subtipo_id || '',
-                          facilitador_id: act.facilitador_id || '',
-                          cupo: act.cupo?.toString() || '',
-                          notas: act.notas || '',
-                          estado_clave: act.estado_clave || '',
-                          municipio_id: act.municipio_id || '',
-                          codigo_postal: act.codigo_postal || '',
-                          localidad_colonia: act.localidad_colonia || '',
-                        });
-                        setEditingId(a.id);
-                        setShowForm(true);
-                      } catch (e) {
-                        alert((e as any)?.message || 'No se pudo cargar la actividad');
-                      }
-                    }}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                </Role>
-                <Link className="btn btn-primary btn-sm" href={`/asistencia/${a.id}`}>Registrar asistencia</Link>
               </div>
             </div>
-          );})}
-        </section>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+                Pasadas ({filteredList.filter(a => a.fecha < today).length})
+              </h3>
+              <div className="grid gap-3">
+                {filteredList.filter(a => a.fecha < today).map(renderActivityCard)}
+                {filteredList.filter(a => a.fecha < today).length === 0 && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 py-4">No hay actividades pasadas.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <section className="grid gap-3">
+            {filteredList.map(renderActivityCard)}
+          </section>
+        )}
           </>
         )}
 
