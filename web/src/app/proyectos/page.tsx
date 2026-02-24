@@ -80,6 +80,7 @@ export default function ProyectosPage() {
   const [filterEstado, setFilterEstado] = useState("");
   const [filterSedeId, setFilterSedeId] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -287,7 +288,12 @@ export default function ProyectosPage() {
       const { error } = await supabase.from('programa').delete().eq('id', deleteTarget.id);
       if (error) throw error;
       setDeleteTarget(null);
+      setShowForm(false);
+      setEditingId(null);
+      setError(null);
+      setNotice('Proyecto eliminado correctamente');
       await loadData();
+      setTimeout(() => setNotice(null), 3000);
     } catch (e) {
       alert((e as any)?.message || 'No se pudo eliminar');
     } finally {
@@ -384,6 +390,9 @@ export default function ProyectosPage() {
             </div>
           </Role>
         </div>
+
+        {/* Notices */}
+        {notice && <div className="alert alert-success">{notice}</div>}
 
         {/* Error Alert */}
         {error && (

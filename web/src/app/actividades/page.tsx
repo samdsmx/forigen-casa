@@ -302,6 +302,8 @@ function ActividadesInner() {
       const { error } = await supabase.from('actividad').delete().eq('id', deleteTarget.id);
       if (error) throw error;
       setDeleteTarget(null);
+      setShowForm(false);
+      setEditingId(null);
       const { data: a } = await supabase
         .from("actividad")
         .select("id,fecha,hora_inicio,hora_fin,programa_id, facilitador_id, tipo:tipo_id(nombre), subtipo:subtipo_id(nombre), sede:sede_id(nombre), programa:programa_id(nombre)")
