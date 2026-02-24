@@ -32,6 +32,8 @@ export default function UsuariosPage() {
   const [roles, setRoles] = useState<{ value: string; label: string }[]>([]);
   const [sedes, setSedes] = useState<{ value: string; label: string }[]>([]);
   const [form, setForm] = useState({ email: "", password: "", role: "", sede_id: "" });
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ role: string; sede_id: string }>({ role: "", sede_id: "" });
 
   const load = async () => {
     try {
@@ -98,6 +100,25 @@ export default function UsuariosPage() {
       body: JSON.stringify({ auth_user_id: id, ...updates })
     });
     load();
+  };
+
+  const saveUserEdit = async () => {
+    if (!editingUserId) return;
+    setNotice(null);
+    setError(null);
+    try {
+      await update(editingUserId, { role: editForm.role, sede_id: editForm.sede_id || null });
+      setNotice('Usuario actualizado');
+      setEditingUserId(null);
+      setTimeout(() => setNotice(null), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al actualizar');
+    }
+  };
+
+  const startEditUser = (u: User) => {
+    setEditingUserId(u.id);
+    setEditForm({ role: u.role || '', sede_id: u.sede_id || '' });
   };
 
   const toggle = async (id: string, active: boolean) => {
@@ -218,20 +239,18 @@ export default function UsuariosPage() {
                     <tr key={u.id}>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">{u.email}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[160px]">
-                        <Select
-                          label=""
-                          value={u.role ?? ""}
-                          onChange={e => update(u.id, { role: e.target.value })}
-                          options={roles}
-                        />
+                        {editingUserId === u.id ? (
+                          <Select label="" value={editForm.role} onChange={e => setEditForm({ ...editForm, role: e.target.value })} options={roles} />
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">{u.role || '—'}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 min-w-[180px]">
-                        <Select
-                          label=""
-                          value={u.sede_id ?? ""}
-                          onChange={e => update(u.id, { sede_id: e.target.value || null })}
-                          options={sedes}
-                        />
+                        {editingUserId === u.id ? (
+                          <Select label="" value={editForm.sede_id} onChange={e => setEditForm({ ...editForm, sede_id: e.target.value })} options={sedes} placeholder="Sin sede" />
+                        ) : (
+                          <span>{u.sede || '—'}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 text-center whitespace-nowrap">
                         <button
@@ -245,14 +264,19 @@ export default function UsuariosPage() {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                          {pwUser === u.id ? (
+                          {editingUserId === u.id ? (
+                            <>
+                              <button onClick={saveUserEdit} className="btn btn-primary btn-sm" type="button">Guardar</button>
+                              <button onClick={() => setEditingUserId(null)} className="btn btn-secondary btn-sm" type="button">Cancelar</button>
+                            </>
+                          ) : pwUser === u.id ? (
                             <>
                               <input
                                 type="password"
                                 placeholder="Nueva contraseña"
                                 value={pwValue}
                                 onChange={e => setPwValue(e.target.value)}
-                                className="input input-sm w-36"
+                                className="form-input w-36 text-sm"
                                 minLength={6}
                               />
                               <button onClick={() => resetPassword(u.id)} className="btn btn-primary btn-sm" type="button" disabled={pwSaving}>{pwSaving ? '...' : 'OK'}</button>
@@ -260,6 +284,7 @@ export default function UsuariosPage() {
                             </>
                           ) : (
                             <>
+                              <button onClick={() => startEditUser(u)} className="btn btn-secondary btn-sm" type="button" title="Editar rol y sede">✏️</button>
                               <button onClick={() => { setPwUser(u.id); setPwValue(""); }} className="btn btn-secondary btn-sm" type="button" title="Cambiar contraseña">🔑</button>
                               <button
                                 onClick={() => setDeleteTarget({id: u.id, email: u.email})}
@@ -267,7 +292,7 @@ export default function UsuariosPage() {
                                 type="button"
                                 disabled={deleting === u.id}
                               >
-                                {deleting === u.id ? 'Eliminando...' : 'Eliminar'}
+                                {deleting === u.id ? '...' : '🗑️'}
                               </button>
                             </>
                           )}
