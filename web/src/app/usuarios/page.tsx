@@ -31,7 +31,8 @@ export default function UsuariosPage() {
   const [pwSaving, setPwSaving] = useState(false);
   const [roles, setRoles] = useState<{ value: string; label: string }[]>([]);
   const [sedes, setSedes] = useState<{ value: string; label: string }[]>([]);
-  const [form, setForm] = useState({ email: "", password: "", role: "", sede_id: "" });
+  const [form, setForm] = useState({ email: "", password: "", confirmPassword: "", role: "", sede_id: "" });
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ role: string; sede_id: string }>({ role: "", sede_id: "" });
 
@@ -73,17 +74,27 @@ export default function UsuariosPage() {
     e.preventDefault();
     setError(null);
     setNotice(null);
+    if (form.password !== form.confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+    if (form.password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
     setCreating(true);
     try {
+      const { confirmPassword, ...payload } = form;
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify(payload)
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo crear el usuario');
       setNotice('Usuario agregado correctamente');
-      setForm({ email: '', password: '', role: '', sede_id: '' });
+      setForm({ email: '', password: '', confirmPassword: '', role: '', sede_id: '' });
+      setShowCreateForm(false);
       load();
       setTimeout(() => setNotice(null), 3000);
     } catch (err) {
@@ -180,12 +191,36 @@ export default function UsuariosPage() {
     <Protected>
       <Role allow={["admin"]}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Administración de Usuarios</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Administración de Usuarios</h1>
+            <button
+              type="button"
+              onClick={() => {
+                if (showCreateForm) {
+                  setShowCreateForm(false);
+                } else {
+                  setForm({ email: '', password: '', confirmPassword: '', role: '', sede_id: '' });
+                  setShowCreateForm(true);
+                }
+              }}
+              className={`btn ${showCreateForm ? 'btn-secondary' : 'btn-primary'} btn-md`}
+            >
+              {showCreateForm ? 'Cancelar' : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Nuevo Usuario
+                </>
+              )}
+            </button>
+          </div>
 
           {notice && <div className="alert alert-success">{notice}</div>}
 
+          {showCreateForm && (
           <div className="card p-5 md:p-6">
-            <form onSubmit={createUser} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 items-end">
+            <form onSubmit={createUser} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 items-end">
               <Field
                 label="Email"
                 type="email"
@@ -200,6 +235,13 @@ export default function UsuariosPage() {
                 value={form.password}
                 onChange={e => setForm({ ...form, password: e.target.value })}
               />
+              <Field
+                label="Confirmar contraseña"
+                type="password"
+                required
+                value={form.confirmPassword}
+                onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
+              />
               <Select
                 label="Rol"
                 required
@@ -213,11 +255,12 @@ export default function UsuariosPage() {
                 onChange={e => setForm({ ...form, sede_id: e.target.value })}
                 options={sedes}
               />
-              <div className="sm:col-span-2 lg:col-span-4 flex justify-end">
+              <div className="flex justify-end">
                 <button type="submit" className="btn btn-primary btn-md relative" disabled={creating}>{creating ? "Agregando..." : "Agregar usuario"}</button>
               </div>
             </form>
           </div>
+          )}
 
           {error && <div className="alert alert-error">{error}</div>}
           {loading ? (
