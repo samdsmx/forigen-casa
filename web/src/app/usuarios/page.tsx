@@ -28,6 +28,7 @@ export default function UsuariosPage() {
   const [toggling, setToggling] = useState<string | null>(null);
   const [pwUser, setPwUser] = useState<string | null>(null);
   const [pwValue, setPwValue] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
   const [pwSaving, setPwSaving] = useState(false);
   const [roles, setRoles] = useState<{ value: string; label: string }[]>([]);
   const [sedes, setSedes] = useState<{ value: string; label: string }[]>([]);
@@ -166,8 +167,9 @@ export default function UsuariosPage() {
     }
   };
 
-  const resetPassword= async (id: string) => {
+  const resetPassword = async (id: string) => {
     if (pwValue.length < 6) { setError("La contraseña debe tener al menos 6 caracteres"); return; }
+    if (pwValue !== pwConfirm) { setError("Las contraseñas no coinciden"); return; }
     setPwSaving(true); setError(null); setNotice(null);
     try {
       const res = await fetch('/api/users', {
@@ -178,7 +180,7 @@ export default function UsuariosPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo cambiar la contraseña');
       setNotice('Contraseña actualizada');
-      setPwUser(null); setPwValue("");
+      setPwUser(null); setPwValue(""); setPwConfirm("");
       setTimeout(() => setNotice(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cambiar contraseña');
@@ -312,23 +314,10 @@ export default function UsuariosPage() {
                               <button onClick={saveUserEdit} className="btn btn-primary btn-sm" type="button">Guardar</button>
                               <button onClick={() => setEditingUserId(null)} className="btn btn-secondary btn-sm" type="button">Cancelar</button>
                             </>
-                          ) : pwUser === u.id ? (
-                            <>
-                              <input
-                                type="password"
-                                placeholder="Nueva contraseña"
-                                value={pwValue}
-                                onChange={e => setPwValue(e.target.value)}
-                                className="form-input w-36 text-sm"
-                                minLength={6}
-                              />
-                              <button onClick={() => resetPassword(u.id)} className="btn btn-primary btn-sm" type="button" disabled={pwSaving}>{pwSaving ? '...' : 'OK'}</button>
-                              <button onClick={() => { setPwUser(null); setPwValue(""); }} className="btn btn-secondary btn-sm" type="button">✕</button>
-                            </>
                           ) : (
                             <>
                               <button onClick={() => startEditUser(u)} className="btn btn-secondary btn-sm" type="button" title="Editar rol y sede">✏️</button>
-                              <button onClick={() => { setPwUser(u.id); setPwValue(""); }} className="btn btn-secondary btn-sm" type="button" title="Cambiar contraseña">🔑</button>
+                              <button onClick={() => { setPwUser(u.id); setPwValue(""); setPwConfirm(""); }} className="btn btn-secondary btn-sm" type="button" title="Cambiar contraseña">🔑</button>
                               <button
                                 onClick={() => setDeleteTarget({id: u.id, email: u.email})}
                                 className="btn btn-danger btn-sm"
@@ -355,6 +344,41 @@ export default function UsuariosPage() {
             message={<p>¿Estás seguro de que deseas eliminar al usuario <strong>{deleteTarget?.email}</strong>? Esta acción no se puede deshacer.</p>}
             loading={!!deleting}
           />
+          {pwUser && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="fixed inset-0 bg-black/50" onClick={() => { setPwUser(null); setPwValue(""); setPwConfirm(""); }} />
+              <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 max-w-sm w-full p-6 space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Cambiar contraseña</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {users.find(u => u.id === pwUser)?.email}
+                </p>
+                <div className="space-y-3">
+                  <Field
+                    label="Nueva contraseña"
+                    type="password"
+                    required
+                    value={pwValue}
+                    onChange={e => setPwValue(e.target.value)}
+                  />
+                  <Field
+                    label="Confirmar contraseña"
+                    type="password"
+                    required
+                    value={pwConfirm}
+                    onChange={e => setPwConfirm(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button type="button" className="btn btn-secondary btn-md" onClick={() => { setPwUser(null); setPwValue(""); setPwConfirm(""); }}>
+                    Cancelar
+                  </button>
+                  <button type="button" className="btn btn-primary btn-md" onClick={() => resetPassword(pwUser)} disabled={pwSaving}>
+                    {pwSaving ? 'Guardando...' : 'Cambiar contraseña'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </Role>
     </Protected>
