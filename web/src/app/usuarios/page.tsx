@@ -320,16 +320,17 @@ export default function UsuariosPage() {
                             <>
                               <button onClick={() => startEditUser(u)} className="btn btn-secondary btn-sm" type="button" title="Editar rol y sede">✏️</button>
                               <button onClick={() => { setPwUser(u.id); setPwValue(""); setPwConfirm(""); }} className="btn btn-secondary btn-sm" type="button" title="Cambiar contraseña">🔑</button>
-                              {u.id !== currentUser?.id && (
+                              
                               <button
                                 onClick={() => setDeleteTarget({id: u.id, email: u.email})}
                                 className="btn btn-danger btn-sm"
                                 type="button"
-                                disabled={deleting === u.id}
+                                title={u.id === currentUser?.id ? "No se puede autoborrar el usuario" : "Eliminar usuario"}
+                                disabled={deleting === u.id || u.id === currentUser?.id}
                               >
                                 {deleting === u.id ? '...' : '🗑️'}
                               </button>
-                              )}
+                              
                             </>
                           )}
                         </div>
