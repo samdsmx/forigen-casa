@@ -46,7 +46,7 @@ export default function Dashboard() {
     let active = true;
 
     const calcTrend = (current: number, previous: number): string | null => {
-      if (previous === 0) return current > 0 ? `+${current} este mes` : null;
+      if (previous === 0) return current > 0 ? `+${current} este mes` : "Sin cambio";
       const pct = Math.round(((current - previous) / previous) * 100);
       if (pct > 0) return `+${pct}% vs mes anterior`;
       if (pct < 0) return `${pct}% vs mes anterior`;
