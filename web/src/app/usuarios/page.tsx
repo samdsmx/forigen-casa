@@ -6,6 +6,7 @@ import DeleteConfirm from "../components/DeleteConfirm";
 import { Field, Select } from "../components/Forms";
 import { supabase } from "../lib/supabaseClient";
 import { ensureClientSession } from "../lib/clientSession";
+import { useAuth } from "../context/UserContext";
 import type { Tables } from "../types/supabase";
 
 interface User {
@@ -18,6 +19,7 @@ interface User {
 }
 
 export default function UsuariosPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -318,6 +320,7 @@ export default function UsuariosPage() {
                             <>
                               <button onClick={() => startEditUser(u)} className="btn btn-secondary btn-sm" type="button" title="Editar rol y sede">✏️</button>
                               <button onClick={() => { setPwUser(u.id); setPwValue(""); setPwConfirm(""); }} className="btn btn-secondary btn-sm" type="button" title="Cambiar contraseña">🔑</button>
+                              {u.id !== currentUser?.id && (
                               <button
                                 onClick={() => setDeleteTarget({id: u.id, email: u.email})}
                                 className="btn btn-danger btn-sm"
@@ -326,6 +329,7 @@ export default function UsuariosPage() {
                               >
                                 {deleting === u.id ? '...' : '🗑️'}
                               </button>
+                              )}
                             </>
                           )}
                         </div>
