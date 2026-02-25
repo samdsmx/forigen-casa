@@ -92,7 +92,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
         style={{ backgroundRepeat: "no-repeat", ...(props.style || {}) }}
         {...props}
       >
-        <option value="">{placeholder}</option>
+        {!(options.length > 0 && options[0]?.value === "") && (
+          <option value="">{placeholder}</option>
+        )}
         {options
           .filter((option): option is Option => !!option && typeof option.value === "string")
           .map((option, idx) => (
