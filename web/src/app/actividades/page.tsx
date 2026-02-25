@@ -404,7 +404,7 @@ function ActividadesInner() {
           </div>
           <Role allow={['admin', 'supervisor_central', 'coordinador_sede']}>
             <div className="mt-4 sm:mt-0">
-              {
+              {isProjectMode ? (
                 programaInfo ? (
                   programaInfo.estado !== 'activo' ? (
                     <div className="flex items-center gap-2">
@@ -440,14 +440,21 @@ function ActividadesInner() {
                       {showForm ? 'Cancelar' : 'Nueva Actividad'}
                     </button>
                   )
-                ) : (<>
-                  <div className="card p-4 md:p-5 animate-pulse">
-                    <div className="flex gap-6">
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
-                    </div>
-                  </div>
-                </>)
-              }
+                ) : null
+              ) : (
+                <button
+                  onClick={() => setShowForm(!showForm)}
+                  className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} btn-md`}
+                  type="button"
+                >
+                  {!showForm && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  )}
+                  {showForm ? 'Cancelar' : 'Nueva Actividad'}
+                </button>
+              )}
             </div>
           </Role>
         </div>
